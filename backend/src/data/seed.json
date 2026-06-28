@@ -36213,7 +36213,32 @@
             "metric": "confidence",
             "score": 0.3
           }
-        ]
+        ],
+        "recommendedStart": {
+          "nodeId": "n_incumbent",
+          "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $38,975 swing in expected value. Start here.",
+          "description": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $38,975 swing in expected value. You make the Knock Incumbent on 4 of your calls — a pattern worth drilling.",
+          "citations": [
+            {
+              "id": 1,
+              "callId": "call_hero",
+              "company": "Northwind Logistics",
+              "buyer": {
+                "name": "Sarah Chen",
+                "title": "VP of Operations"
+              },
+              "outcome": "lost",
+              "nodeId": "n_knock",
+              "nodeTitle": "Incumbent",
+              "takenTitle": "Knock Incumbent",
+              "betterTitle": "Find Pain",
+              "winTaken": 0.0714,
+              "winBest": 0.9375,
+              "evGap": 38975,
+              "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
+            }
+          ]
+        }
       }
     },
     "rec_mock": {

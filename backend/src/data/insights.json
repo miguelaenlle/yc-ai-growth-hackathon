@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-28T16:22:54.430Z",
+  "generatedAt": "2026-06-28T16:50:25.243Z",
   "salespersonId": "sp_jane",
   "perfectPractice": {
     "salespersonId": "sp_jane",
@@ -10,11 +10,11 @@
     "startNodeTitle": "Incumbent",
     "personaId": "buy_sam",
     "personaName": "Status-Quo Sam",
-    "headline": "Stop 'Knock Incumbent' at Cobalt Finance",
+    "headline": "You keep trash-talking the customer's current tool",
     "reasons": [
-      "Using 'Knock Incumbent' results in only a 7% win rate vs. 94% for 'Find Pain' [1][2][3].",
-      "There's a $93,539 EV swing when failing to leverage buyer pain points.",
-      "You've made this mistake on 4 calls; adapt to win with Status-Quo Sam."
+      "This happened on 4 calls, and all of them were lost because you attacked the tools they already use: [1][2][3][4]",
+      "Instead, asking about their issues works much better, winning about 9 of 10 times: [1]",
+      "During one call, you told Nina Becker from Cobalt Finance that Microsoft Teams is bloated and slow, but that approach did not help you win the sale: [1]"
     ],
     "citations": [
       {
@@ -70,6 +70,24 @@
         "winBest": 0.9375,
         "evGap": 31180,
         "quote": "Honestly, Google Chat is bloated and slow."
+      },
+      {
+        "id": 4,
+        "callId": "call_d_10",
+        "company": "Meridian Labs",
+        "buyer": {
+          "name": "Maria Park",
+          "title": "Head of IT"
+        },
+        "outcome": "lost",
+        "nodeId": "n_knock",
+        "nodeTitle": "Incumbent",
+        "takenTitle": "Knock Incumbent",
+        "betterTitle": "Find Pain",
+        "winTaken": 0.0714,
+        "winBest": 0.9375,
+        "evGap": 12472,
+        "quote": "Honestly, Discord is bloated and slow."
       }
     ],
     "call": {

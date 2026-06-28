@@ -185,7 +185,7 @@ export async function generateInsights(salespersonId = FEATURED_REP): Promise<In
   }
 
   const sameMistake = forks.filter((x) => x.fork.takenTitle === top.fork.takenTitle);
-  const citeSources = [top, ...sameMistake.filter((x) => x.callId !== top.callId)].slice(0, 3);
+  const citeSources = [top, ...sameMistake.filter((x) => x.callId !== top.callId)].slice(0, 4);
   const citations = citeSources.map((cf, i) => citationFrom(i + 1, cf));
   const personaName = getPersona(top.personaId)?.name ?? top.personaId;
 
@@ -223,33 +223,51 @@ async function buildNarrative(
   citations: Citation[],
   personaName: string,
 ): Promise<{ headline: string; reasons: string[]; usedLLM: boolean }> {
+  // Translate internal numbers into plain language for the layperson-facing copy.
+  const inTen = (p: number) => Math.max(1, Math.min(9, Math.round(p * 10)));
+  const top0 = citations[0];
+  const allMarkers = citations.map((c) => `[${c.id}]`).join("");
   const fallback = {
-    headline: `Replay the ${top.fork.forkTitle} on the ${top.company} deal`,
+    headline: `You keep bashing the tool the customer already uses`,
     reasons: [
-      `You played the ${top.fork.takenTitle} (${pct(top.fork.takenP)}% win) at the ${top.fork.forkTitle} — the ${top.fork.bestTitle} wins ${pct(top.fork.bestP)}%, about a ${money(top.fork.gapEV)} swing. [1]`,
       recurCount > 1
-        ? `It's a pattern: you make the ${top.fork.takenTitle} on ${recurCount} of your calls${citations.length > 1 ? " " + citations.slice(1).map((c) => `[${c.id}]`).join("") : ""}.`
-        : `It's the single biggest missed move across your recent calls.`,
-      `You'll face ${personaName} — the buyer you had on that call.`,
+        ? `On ${recurCount} of your recent calls, the moment a prospect mentioned the tool they already use, you jumped to bashing it — and the deals went cold ${allMarkers}.`
+        : `On the ${top.company} deal, when the prospect mentioned the tool they already use, you jumped to bashing it — and the deal went cold [1].`,
+      `Top reps do the opposite: they ask what's frustrating about the current setup and let the prospect talk themselves into switching. That wins about ${inTen(top.fork.bestP)} of 10 times; bashing it wins about ${inTen(top.fork.takenP)} in 10 [1].`,
+      top0
+        ? `On the ${top0.company} call, ${top0.buyer.name} mentioned their current tool — you told them it was bloated and slow, and they went quiet [1].`
+        : `Replay that moment and try asking about their problems instead.`,
     ],
     usedLLM: false,
   };
 
   const cites = citations
-    .map((c) => `[${c.id}] ${c.company} (${c.outcome}) — at the ${c.nodeTitle}, the rep said: "${c.quote}" (played ${c.takenTitle} ${pct(c.winTaken)}% vs ${c.betterTitle} ${pct(c.winBest)}%)`)
+    .map((c) => `[${c.id}] ${c.company} (${c.outcome}) — buyer ${c.buyer.name} (${c.buyer.title}). The rep said: "${c.quote}". Internal stats: rep's move won ${pct(c.winTaken)}%, the better move (asking about their problems) won ${pct(c.winBest)}%.`)
     .join("\n");
 
   const system =
-    "You are a sharp sales coach. Write a SHORT, punchy practice recommendation grounded ONLY in the data given. " +
-    "Cite evidence with [n] markers that map to the numbered citations. Do not invent numbers, quotes, or calls. Respond ONLY with JSON.";
+    "You are a sales coach writing for a brand-new salesperson who has NEVER seen a sales dashboard. " +
+    "Write in plain, everyday English a layperson can read at a glance. STRICT RULES:\n" +
+    "- NEVER print internal jargon: no move names (e.g. 'Knock Incumbent', 'Find Pain'), no persona names (e.g. 'Status-Quo Sam'), no 'EV swing', no dollar figures, no 'fork' or 'node'.\n" +
+    "- NEVER print raw percentages like '7%' or '94%'. Translate win-rates to plain odds like 'about 9 of 10 times' or '1 in 10'.\n" +
+    "- Describe what the rep DID in plain words (e.g. 'you bashed the tool they already use'), not by its label.\n" +
+    "- Ground everything ONLY in the data given; do not invent numbers, quotes, buyers, or calls.\n" +
+    "- Keep [n] markers that map to the numbered citations. Respond ONLY with JSON.";
   const user =
     `REP: ${repName}\n` +
-    `BIGGEST MISTAKE: played "${top.fork.takenTitle}" (${pct(top.fork.takenP)}% win) at the "${top.fork.forkTitle}" on the ${top.company} deal, ` +
-    `where "${top.fork.bestTitle}" wins ${pct(top.fork.bestP)}% — a ${money(top.fork.gapEV)} EV swing. Buyer persona: ${personaName}.\n` +
-    `RECURRENCE: makes the "${top.fork.takenTitle}" move on ${recurCount} call(s).\n` +
-    `CITATIONS (real transcript quotes):\n${cites}\n\n` +
-    `Return JSON: { "headline": string (<= 8 words, names the move + company), ` +
-    `"reasons": string[] (2-3 short lines; embed [n] markers citing the quotes above; mention the EV swing, the recurring pattern, and the buyer they'll face) }`;
+    `THE HABIT: when a prospect mentions the tool they already use, this rep attacks it instead of asking what's wrong with it. ` +
+    `That approach wins about ${inTen(top.fork.takenP)} in 10; asking about their problems wins about ${inTen(top.fork.bestP)} of 10.\n` +
+    `HOW OFTEN: they did this on ${recurCount} recent call(s).\n` +
+    `CITATIONS (real transcript quotes — translate the stats, never echo the raw numbers):\n${cites}\n\n` +
+    `Return JSON in this exact shape:\n` +
+    `{\n` +
+    `  "headline": string — one plain sentence describing the HABIT (not a move name or company), e.g. "You keep trash-talking the customer's current tool",\n` +
+    `  "reasons": [\n` +
+    `    string — THE PATTERN: how many calls it happened on and what went wrong, end with one marker for EVERY losing call: ${allMarkers},\n` +
+    `    string — WHAT WORKS INSTEAD: in human terms, using plain odds (e.g. 'about 9 of 10'), end with [1],\n` +
+    `    string — ONE CONCRETE STORY: use citation [1] (the exact call shown below to replay) — name that buyer and what they said/did, end with [1]\n` +
+    `  ]\n` +
+    `}`;
 
   const parsed = await callLLM(system, user);
   if (!parsed) return fallback;

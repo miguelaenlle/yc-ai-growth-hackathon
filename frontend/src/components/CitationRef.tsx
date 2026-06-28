@@ -19,7 +19,7 @@ export function CitationRef({ citation }: { citation: Citation }) {
         {citation.id}
       </span>
       <span
-        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 hidden w-72 -translate-x-1/2 group-hover:block"
+        className="pointer-events-none absolute top-full left-1/2 z-50 mt-1.5 hidden w-72 -translate-x-1/2 group-hover:block"
         role="tooltip"
       >
         <span className="block rounded-lg border border-border-strong bg-surface/98 p-3 text-left shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-sm">
@@ -28,10 +28,15 @@ export function CitationRef({ citation }: { citation: Citation }) {
             <span className={"text-[11px] font-semibold uppercase tracking-wide " + o.cls}>{o.label}</span>
           </span>
           <span className="mt-0.5 block text-xs text-text-muted">
-            {citation.buyer.name} · {citation.buyer.title}
+            with {citation.buyer.name} · {citation.buyer.title}
           </span>
-          <span className="mt-2 block border-l-2 border-signal-low/60 pl-2 text-[13px] italic leading-snug text-text">
-            “{citation.quote}”
+          <span className="mt-2 block border-l-2 border-signal-low/60 pl-2">
+            <span className="block text-[10px] font-semibold uppercase tracking-wide text-text-faint">
+              You said
+            </span>
+            <span className="mt-0.5 block text-[13px] italic leading-snug text-text">
+              “{citation.quote}”
+            </span>
           </span>
           <span className="mt-2 block text-[11px] text-text-faint">
             Played <span className="text-text-muted">{citation.takenTitle}</span> ({Math.round(citation.winTaken * 100)}% win) ·{" "}

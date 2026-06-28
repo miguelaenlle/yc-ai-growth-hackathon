@@ -68,8 +68,8 @@ export function PerfectPracticeCard() {
             </h2>
             <ul className="mt-2 space-y-1">
               {reco.reasons.map((reason, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-text-muted">
-                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent" />
+                <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-text-muted">
+                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                   <span>
                     <CitedText text={reason} citations={reco.citations} />
                   </span>
@@ -88,16 +88,7 @@ export function PerfectPracticeCard() {
             </div>
           )}
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-text-faint">
-              <span className="rounded-md border border-border bg-surface px-2 py-1">
-                Buyer: <span className="text-text">{reco.personaName}</span>
-              </span>
-              <span className="rounded-md border border-border bg-surface px-2 py-1">
-                Start: <span className="text-text">{reco.startNodeTitle}</span>
-              </span>
-            </div>
-
+          <div className="flex justify-end">
             <button
               onClick={startPractice}
               className="flex shrink-0 items-center gap-2 self-start rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98] sm:self-auto"
