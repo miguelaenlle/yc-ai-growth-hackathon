@@ -4,7 +4,7 @@ import { uploadCall } from "../lib/api";
 
 // Hardcoded estimate for the progress bar — the real completion signal is the SSE
 // "done" event, this just gives the bar something to animate against meanwhile.
-const ESTIMATE_MS = 90_000;
+const ESTIMATE_MS = 25_000;
 
 const STEPS = ["Uploading", "Transcribing", "Analyzing", "Building tree", "Done"] as const;
 // SSE processing.status → step index.
@@ -254,7 +254,7 @@ function Progress({ stepIdx, progress }: { stepIdx: number; progress: number }) 
         {STEPS[Math.min(stepIdx, STEPS.length - 1)]}
         {stepIdx < 4 && <span className="text-text-faint">…</span>}
       </p>
-      <p className="mt-1 text-xs text-text-faint">Generating the call &amp; tree — about 1–2 min.</p>
+      <p className="mt-1 text-xs text-text-faint">Generating the call &amp; tree — about 20–30 seconds.</p>
 
       <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-surface-2">
         <div
