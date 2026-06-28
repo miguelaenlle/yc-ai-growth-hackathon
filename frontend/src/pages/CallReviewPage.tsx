@@ -293,7 +293,7 @@ function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, 
           color="var(--color-border)"
         />
         {recommendation && !isSummarizePlaying && (
-          <Panel position="top-left" className="max-w-sm">
+          <Panel position="top-left" className="w-[28rem] max-w-[28rem]">
             <div className="rounded-xl border border-accent/40 bg-surface/95 p-4 shadow-[0_8px_40px_rgba(0,0,0,0.5)] backdrop-blur-sm">
               <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent/80">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -311,8 +311,8 @@ function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, 
               {recommendation.reasons && recommendation.reasons.length > 0 ? (
                 <ul className="mt-1.5 space-y-1">
                   {recommendation.reasons.map((r, i) => (
-                    <li key={i} className="flex items-start gap-2 text-[13px] leading-relaxed text-text-muted">
-                      <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent" />
+                    <li key={i} className="flex items-start gap-2.5 text-[13px] leading-relaxed text-text-muted">
+                      <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                       <span>
                         <CitedText text={r} citations={recommendation.citations} />
                       </span>

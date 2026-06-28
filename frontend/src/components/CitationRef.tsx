@@ -39,8 +39,8 @@ export function CitationRef({ citation }: { citation: Citation }) {
             </span>
           </span>
           <span className="mt-2 block text-[11px] text-text-faint">
-            Played <span className="text-text-muted">{citation.takenTitle}</span> ({Math.round(citation.winTaken * 100)}% win) ·{" "}
-            <span className="text-text-muted">{citation.betterTitle}</span> wins {Math.round(citation.winBest * 100)}%
+            This move won <span className="text-text-muted">{citation.takenWins} of {citation.takenVisits} times</span> ·{" "}
+            a stronger move won <span className="text-text-muted">{citation.bestWins} of {citation.bestVisits}</span>
           </span>
         </span>
       </span>

@@ -76,6 +76,7 @@ interface PracticeTarget { nodeId: Id; reason: string; drill: string; metric: ke
 interface AiFeedback {
   summary: string; strengths: string[]; weaknesses: string[]; practiceTargets: PracticeTarget[];
   recommendedStart?: { nodeId: Id; heading?: string; reason: string; description?: string; reasons?: string[]; citations?: Citation[] }; // top "start practicing here" pick (System 2) — plain-language bullets, cites in-call signal + history
+// Citation { id; callId; company; buyer{name,title}; outcome; nodeId; nodeTitle; takenTitle; betterTitle; winTaken; winBest; takenWins; takenVisits; bestWins; bestVisits; evGap; quote } — winTaken/winBest are Beta-smoothed; *Wins/*Visits are observed real counts for plain "X of Y times" copy
 }
 
 // ---------- Derived / transport (not persisted) ----------

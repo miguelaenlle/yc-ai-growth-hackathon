@@ -146,6 +146,10 @@ export interface Citation {
   betterTitle: string;
   winTaken: number;
   winBest: number;
+  takenWins: number;
+  takenVisits: number;
+  bestWins: number;
+  bestVisits: number;
   evGap: number;
   quote: string;
 }

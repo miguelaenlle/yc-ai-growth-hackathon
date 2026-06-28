@@ -30,7 +30,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const INSIGHTS_PATH = join(__dirname, "data", "insights.json");
 
 const FEATURED_REP = "sp_jane";
-const pct = (x: number) => Math.round(x * 100);
 
 // ---------------------------------------------------------------------------
 // Data layer — real regret forks + the exact quote where each happened
@@ -106,6 +105,10 @@ function citationFrom(id: number, cf: CallFork): Citation {
     betterTitle: cf.fork.bestTitle,
     winTaken: cf.fork.takenP,
     winBest: cf.fork.bestP,
+    takenWins: cf.fork.takenWins,
+    takenVisits: cf.fork.takenVisits,
+    bestWins: cf.fork.bestWins,
+    bestVisits: cf.fork.bestVisits,
     evGap: cf.fork.gapEV,
     quote: cf.quote,
   };
@@ -236,17 +239,17 @@ async function buildNarrative(
   citations: Citation[],
   personaName: string,
 ): Promise<{ headline: string; reasons: string[]; usedLLM: boolean }> {
-  // Translate internal numbers into plain language for the layperson-facing copy.
-  const inTen = (p: number) => Math.max(1, Math.min(9, Math.round(p * 10)));
   const top0 = citations[0];
   const allMarkers = citations.map((c) => `[${c.id}]`).join("");
+  const took = `${top.fork.takenWins} of ${top.fork.takenVisits} times`;
+  const better = `${top.fork.bestWins} of ${top.fork.bestVisits} times`;
   const fallback = {
     headline: `You keep bashing the tool the customer already uses`,
     reasons: [
       recurCount > 1
         ? `On ${recurCount} of your recent calls, the moment a prospect mentioned the tool they already use, you jumped to bashing it — and the deals went cold ${allMarkers}.`
         : `On the ${top.company} deal, when the prospect mentioned the tool they already use, you jumped to bashing it — and the deal went cold [1].`,
-      `Top reps do the opposite: they ask what's frustrating about the current setup and let the prospect talk themselves into switching. That wins about ${inTen(top.fork.bestP)} of 10 times; bashing it wins about ${inTen(top.fork.takenP)} in 10 [1].`,
+      `Top reps do the opposite: they ask what's frustrating about the current setup and let the prospect talk themselves into switching. That won ${better}; bashing it won ${took} [1].`,
       top0
         ? `On the ${top0.company} call, ${top0.buyer.name} mentioned their current tool — you told them it was bloated and slow, and they went quiet [1].`
         : `Replay that moment and try asking about their problems instead.`,
@@ -255,29 +258,29 @@ async function buildNarrative(
   };
 
   const cites = citations
-    .map((c) => `[${c.id}] ${c.company} (${c.outcome}) — buyer ${c.buyer.name} (${c.buyer.title}). The rep said: "${c.quote}". Internal stats: rep's move won ${pct(c.winTaken)}%, the better move (asking about their problems) won ${pct(c.winBest)}%.`)
+    .map((c) => `[${c.id}] ${c.company} (${c.outcome}) — buyer ${c.buyer.name} (${c.buyer.title}). The rep said: "${c.quote}". Real counts: rep's move won ${c.takenWins} of ${c.takenVisits} times, the better move (asking about their problems) won ${c.bestWins} of ${c.bestVisits} times.`)
     .join("\n");
 
   const system =
     "You are a sales coach writing for a brand-new salesperson who has NEVER seen a sales dashboard. " +
     "Write in plain, everyday English a layperson can read at a glance. STRICT RULES:\n" +
     "- NEVER print internal jargon: no move names (e.g. 'Knock Incumbent', 'Find Pain'), no persona names (e.g. 'Status-Quo Sam'), no 'EV swing', no dollar figures, no 'fork' or 'node'.\n" +
-    "- NEVER print raw percentages like '7%' or '94%'. Translate win-rates to plain odds like 'about 9 of 10 times' or '1 in 10'.\n" +
+    "- State how often a move works using the EXACT real counts given, phrased as 'won X of Y times'. NEVER use percentages and NEVER invent or round the counts.\n" +
     "- Describe what the rep DID in plain words (e.g. 'you bashed the tool they already use'), not by its label.\n" +
     "- Ground everything ONLY in the data given; do not invent numbers, quotes, buyers, or calls.\n" +
     "- Keep [n] markers that map to the numbered citations. Respond ONLY with JSON.";
   const user =
     `REP: ${repName}\n` +
     `THE HABIT: when a prospect mentions the tool they already use, this rep attacks it instead of asking what's wrong with it. ` +
-    `That approach wins about ${inTen(top.fork.takenP)} in 10; asking about their problems wins about ${inTen(top.fork.bestP)} of 10.\n` +
+    `That move won ${took}; asking about their problems won ${better}. Use these EXACT counts, phrased "won X of Y times".\n` +
     `HOW OFTEN: they did this on ${recurCount} recent call(s).\n` +
-    `CITATIONS (real transcript quotes — translate the stats, never echo the raw numbers):\n${cites}\n\n` +
+    `CITATIONS (real transcript quotes — use the exact counts, never percentages):\n${cites}\n\n` +
     `Return JSON in this exact shape:\n` +
     `{\n` +
     `  "headline": string — one plain sentence describing the HABIT (not a move name or company), e.g. "You keep trash-talking the customer's current tool",\n` +
     `  "reasons": [\n` +
     `    string — THE PATTERN: how many calls it happened on and what went wrong, end with one marker for EVERY losing call: ${allMarkers},\n` +
-    `    string — WHAT WORKS INSTEAD: in human terms, using plain odds (e.g. 'about 9 of 10'), end with [1],\n` +
+    `    string — WHAT WORKS INSTEAD: in human terms, with the exact counts (asking about problems won ${better}; bashing it won ${took}), end with [1],\n` +
     `    string — ONE CONCRETE STORY: use citation [1] (the exact call shown below to replay) — name that buyer and what they said/did, end with [1]\n` +
     `  ]\n` +
     `}`;
@@ -302,13 +305,12 @@ async function buildPerCallNarrative(
   cf: CallFork,
   citations: Citation[],
 ): Promise<{ heading: string; reasons: string[] }> {
-  const inTen = (p: number) => Math.max(1, Math.min(9, Math.round(p * 10)));
   const otherMarkers = citations.slice(1).map((c) => `[${c.id}]`).join("");
   const othersCited = citations.length - 1; // distinct other calls we can point at
   const otherCalls = `${othersCited} other call${othersCited === 1 ? "" : "s"}`;
   const won = cf.outcome === "won";
-  const tookOdds = inTen(cf.fork.takenP);
-  const betterOdds = inTen(cf.fork.bestP);
+  const took = `${cf.fork.takenWins} of ${cf.fork.takenVisits} times`;
+  const better = `${cf.fork.bestWins} of ${cf.fork.bestVisits} times`;
 
   // Deterministic plain-language bullets when the LLM is unavailable.
   const fallback = {
@@ -317,39 +319,39 @@ async function buildPerCallNarrative(
       won
         ? `You **won** — but a stronger move was right here. [1]`
         : `This is **where the call fell off**. [1]`,
-      `Asking **what's frustrating** about their current tool wins about **${betterOdds} of 10**; your move landed about **${tookOdds} in 10**. [1]`,
+      `Asking **what's frustrating** about their current tool won **${better}**; your move won **${took}**. [1]`,
       ...(othersCited > 0 ? [`Same slip on **${otherCalls}**. ${otherMarkers}`] : []),
     ],
   };
 
   const cites = citations
-    .map((c) => `[${c.id}] ${c.company} (${c.outcome}) — buyer ${c.buyer.name} (${c.buyer.title}). The rep said: "${c.quote}". Internal stats: this move won ${pct(c.winTaken)}%, the better move ("${c.betterTitle}") won ${pct(c.winBest)}%.`)
+    .map((c) => `[${c.id}] ${c.company} (${c.outcome}) — buyer ${c.buyer.name} (${c.buyer.title}). The rep said: "${c.quote}". Real counts: this move won ${c.takenWins} of ${c.takenVisits} times, the better move ("${c.betterTitle}") won ${c.bestWins} of ${c.bestVisits} times.`)
     .join("\n");
 
   const system =
     "You are a sales coach writing for a brand-new salesperson who has NEVER seen a sales dashboard. " +
     "Write in plain, everyday English a layperson can read at a glance. STRICT RULES:\n" +
     "- NEVER print internal jargon: no move names (e.g. 'Coexist', 'Find Pain', 'Knock Incumbent'), no persona names, no 'EV swing', no dollar figures, no 'fork' or 'node'.\n" +
-    "- NEVER print raw percentages like '79%' or '94%'. Translate win-rates to plain odds like 'about 9 of 10 times' or '8 in 10'.\n" +
+    "- State how often a move works using the EXACT real counts given, phrased as 'won X of Y times'. NEVER use percentages and NEVER invent or round the counts.\n" +
     "- Describe what the rep DID and the BETTER move in plain words (translate the move labels into a concrete action, e.g. 'ask what's frustrating about their current tool').\n" +
-    "- Use **bold** (markdown) to emphasize the ONE key phrase in each bullet — the action or the odds. Keep bullets SHORT (max ~14 words).\n" +
+    "- Use **bold** (markdown) to emphasize the ONE key phrase in each bullet — the action or the 'X of Y times' count. Keep bullets SHORT (max ~16 words).\n" +
     "- Ground everything ONLY in the data given; do not invent numbers, quotes, buyers, or calls.\n" +
     "- Keep [n] markers that map to the numbered citations. Respond ONLY with JSON.";
   const user =
     `THIS CALL: ${cf.company} — outcome: ${cf.outcome.toUpperCase()}.\n` +
     `THE MOMENT (citation [1]): the rep said "${cf.quote}". The smarter move here was "${cf.fork.bestTitle}" (translate that into a plain action).\n` +
-    `ODDS: the move taken works about ${tookOdds} in 10; the better move works about ${betterOdds} of 10.\n` +
+    `REAL COUNTS: the move taken won ${took}; the better move won ${better}. Use these EXACT counts, phrased "won X of Y times".\n` +
     `FRAMING: ${won
       ? "This call was WON — frame it as a good outcome where an even stronger move was available; a common slip worth drilling. Be encouraging."
       : "This call was LOST/STALLED — frame it as the moment where the call started to fall off."}\n` +
     `HOW OFTEN: besides this call, the same slip shows up on ${otherCalls} you can cite.\n` +
-    `CITATIONS (translate the stats, never echo the raw numbers):\n${cites}\n\n` +
+    `CITATIONS:\n${cites}\n\n` +
     `Return JSON in this exact shape:\n` +
     `{\n` +
     `  "heading": string — a short plain phrase naming the MOMENT (4-7 words, no move labels), e.g. "When their current tool came up",\n` +
     `  "reasons": [  // 2-3 SHORT bullets, each with one **bold** phrase\n` +
     `    string — WHAT HAPPENED here (${won ? "you won, but…" : "this is where it slipped"}), end with [1],\n` +
-    `    string — THE BETTER MOVE in plain words with plain odds (e.g. 'wins about 9 of 10'), end with [1]${othersCited > 0 ? `,\n    string — it RECURS: exactly "Same slip on **${otherCalls}**." then the markers ${otherMarkers}` : ""}\n` +
+    `    string — THE BETTER MOVE in plain words, with the exact counts (the better move won ${better}; your move won ${took}), end with [1]${othersCited > 0 ? `,\n    string — it RECURS: exactly "Same slip on **${otherCalls}**." then the markers ${otherMarkers}` : ""}\n` +
     `  ]\n` +
     `}`;
 

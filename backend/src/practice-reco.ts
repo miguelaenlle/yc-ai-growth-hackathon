@@ -58,9 +58,13 @@ export interface RegretFork {
   takenNodeId: Id; // the move node the rep actually played (for the transcript quote)
   takenTitle: string;
   takenP: number;
+  takenWins: number; // observed wins/visits for the move taken (real counts, not smoothed)
+  takenVisits: number;
   bestTitle: string;
   bestNodeId: Id;
   bestP: number;
+  bestWins: number; // observed wins/visits for the better move
+  bestVisits: number;
   gapEV: number; // bestChild.EV − takenChild.EV (realized-value swing)
 }
 
@@ -92,9 +96,13 @@ export function bestRegretFork(tree: Tree, traversal: Traversal): RegretFork | n
         takenNodeId: taken.id,
         takenTitle: taken.title,
         takenP: taken.successProbability,
+        takenWins: taken.stats?.wins ?? 0,
+        takenVisits: taken.stats?.visits ?? 0,
         bestTitle: bestChild.title,
         bestNodeId: bestChild.id,
         bestP: bestChild.successProbability,
+        bestWins: bestChild.stats?.wins ?? 0,
+        bestVisits: bestChild.stats?.visits ?? 0,
         gapEV,
       };
     }

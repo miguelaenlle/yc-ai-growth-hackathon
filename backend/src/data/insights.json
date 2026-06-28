@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-28T17:26:37.460Z",
+  "generatedAt": "2026-06-28T17:40:01.833Z",
   "salespersonId": "sp_jane",
   "perfectPractice": {
     "salespersonId": "sp_jane",
@@ -12,9 +12,9 @@
     "personaName": "Status-Quo Sam",
     "headline": "You keep trash-talking the customer's current tool",
     "reasons": [
-      "This happened on 4 of your recent calls, and each time, the buyer chose not to go with you: [1][2][3][4]",
-      "Instead, asking about their problems works much better, winning about 9 of 10 times: [1]",
-      "In one call, you spoke with Nina Becker from Cobalt Finance. You said, 'Honestly, Microsoft Teams is bloated and slow.' After that, they decided not to move forward with you: [1]"
+      "This happened on 4 recent calls where you criticized the tools they already use and lost all of them: [1][2][3][4]",
+      "Instead, you should ask about their problems; that approach won 14 of 14 times while bashing the tools won 0 of 12 times: [1]",
+      "For example, in one call, you spoke with Nina Becker from Cobalt Finance, where you said, 'Honestly, Microsoft Teams is bloated and slow,' and unfortunately, that did not work: [1]"
     ],
     "citations": [
       {
@@ -32,6 +32,10 @@
         "betterTitle": "Find Pain",
         "winTaken": 0.0714,
         "winBest": 0.9375,
+        "takenWins": 0,
+        "takenVisits": 12,
+        "bestWins": 14,
+        "bestVisits": 14,
         "evGap": 93539,
         "quote": "Honestly, Microsoft Teams is bloated and slow."
       },
@@ -50,6 +54,10 @@
         "betterTitle": "Find Pain",
         "winTaken": 0.0714,
         "winBest": 0.9375,
+        "takenWins": 0,
+        "takenVisits": 12,
+        "bestWins": 14,
+        "bestVisits": 14,
         "evGap": 38975,
         "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
       },
@@ -68,6 +76,10 @@
         "betterTitle": "Find Pain",
         "winTaken": 0.0714,
         "winBest": 0.9375,
+        "takenWins": 0,
+        "takenVisits": 12,
+        "bestWins": 14,
+        "bestVisits": 14,
         "evGap": 31180,
         "quote": "Honestly, Google Chat is bloated and slow."
       },
@@ -86,6 +98,10 @@
         "betterTitle": "Find Pain",
         "winTaken": 0.0714,
         "winBest": 0.9375,
+        "takenWins": 0,
+        "takenVisits": 12,
+        "bestWins": 14,
+        "bestVisits": 14,
         "evGap": 12472,
         "quote": "Honestly, Discord is bloated and slow."
       }
@@ -112,1026 +128,13 @@
     }
   },
   "perCall": {
-    "call_a_33": {
-      "nodeId": "n_incumbent",
-      "heading": "When explaining tool compatibility",
-      "reason": "You won the call, but a **stronger action** was possible. [1] Asking about frustrations wins **about 9 of 10 times**. [1] Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "You won the call, but a **stronger action** was possible. [1]",
-        "Asking about frustrations wins **about 9 of 10 times**. [1]",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_a_33",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Maria Nair",
-            "title": "Head of Customer Success"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        },
-        {
-          "id": 2,
-          "callId": "call_showcase",
-          "company": "Sundial Commerce",
-          "buyer": {
-            "name": "Rachel Kim",
-            "title": "VP of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
-        },
-        {
-          "id": 3,
-          "callId": "call_a_21",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Lena Carter",
-            "title": "Director of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3964,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        },
-        {
-          "id": 4,
-          "callId": "call_a_05",
-          "company": "Lumen Health",
-          "buyer": {
-            "name": "Lena Lopez",
-            "title": "VP of People"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3699,
-          "quote": "Runs alongside Google Chat — no rip-and-replace."
-        }
-      ]
-    },
-    "call_a_29": {
-      "nodeId": "n_incumbent",
-      "heading": "Discussing legacy tools with buyers",
-      "reason": "You won the call, but could have asked about frustrations instead. [1] Asking about frustrations wins about 9 of 10 times. [1] Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "You won the call, but could have asked about frustrations instead. [1]",
-        "Asking about frustrations wins about 9 of 10 times. [1]",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_a_29",
-          "company": "Vantage Security",
-          "buyer": {
-            "name": "Sofia Carter",
-            "title": "Head of IT"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 2379,
-          "quote": "Runs alongside a legacy chat tool — no rip-and-replace."
-        },
-        {
-          "id": 2,
-          "callId": "call_showcase",
-          "company": "Sundial Commerce",
-          "buyer": {
-            "name": "Rachel Kim",
-            "title": "VP of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
-        },
-        {
-          "id": 3,
-          "callId": "call_a_13",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Sofia Lopez",
-            "title": "COO"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        },
-        {
-          "id": 4,
-          "callId": "call_a_21",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Lena Carter",
-            "title": "Director of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3964,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        }
-      ]
-    },
-    "call_a_05": {
-      "nodeId": "n_incumbent",
-      "heading": "Highlighting integration options",
-      "reason": "You secured a win, but there was a **stronger way to connect**. [1] Asking about frustrations with their current tool **wins about 9 of 10**. [1] Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "You secured a win, but there was a **stronger way to connect**. [1]",
-        "Asking about frustrations with their current tool **wins about 9 of 10**. [1]",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_a_05",
-          "company": "Lumen Health",
-          "buyer": {
-            "name": "Lena Lopez",
-            "title": "VP of People"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3699,
-          "quote": "Runs alongside Google Chat — no rip-and-replace."
-        },
-        {
-          "id": 2,
-          "callId": "call_showcase",
-          "company": "Sundial Commerce",
-          "buyer": {
-            "name": "Rachel Kim",
-            "title": "VP of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
-        },
-        {
-          "id": 3,
-          "callId": "call_a_13",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Sofia Lopez",
-            "title": "COO"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        },
-        {
-          "id": 4,
-          "callId": "call_a_21",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Lena Carter",
-            "title": "Director of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3964,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        }
-      ]
-    },
-    "call_hero": {
-      "nodeId": "n_incumbent",
-      "heading": "When the tool's efficiency was discussed",
-      "reason": "The rep suggested efficiency but missed buyer concerns. [1] Asking about frustrations could win about 9 of 10 times. [1] Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "The rep suggested efficiency but missed buyer concerns. [1]",
-        "Asking about frustrations could win about 9 of 10 times. [1]",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_hero",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Sarah Chen",
-            "title": "VP of Operations"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 38975,
-          "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
-        },
-        {
-          "id": 2,
-          "callId": "call_d_02",
-          "company": "Cobalt Finance",
-          "buyer": {
-            "name": "Nina Becker",
-            "title": "Director of Engineering"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 93539,
-          "quote": "Honestly, Microsoft Teams is bloated and slow."
-        },
-        {
-          "id": 3,
-          "callId": "call_d_06",
-          "company": "Quill",
-          "buyer": {
-            "name": "Sofia Becker",
-            "title": "CTO"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 31180,
-          "quote": "Honestly, Google Chat is bloated and slow."
-        },
-        {
-          "id": 4,
-          "callId": "call_d_10",
-          "company": "Meridian Labs",
-          "buyer": {
-            "name": "Maria Park",
-            "title": "Head of IT"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 12472,
-          "quote": "Honestly, Discord is bloated and slow."
-        }
-      ]
-    },
-    "call_b_08": {
-      "nodeId": "n_coexist",
-      "heading": "When timing objections arose",
-      "reason": "The rep said, **'Not now — bad timing.'** [1] Better to **ask why now isn’t good**; it wins about 9 of 10. [1] Same slip on **1 other call**. [2]",
-      "reasons": [
-        "The rep said, **'Not now — bad timing.'** [1]",
-        "Better to **ask why now isn’t good**; it wins about 9 of 10. [1]",
-        "Same slip on **1 other call**. [2]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_b_08",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Nina Nair",
-            "title": "VP of People"
-          },
-          "outcome": "lost",
-          "nodeId": "n_unconvinced",
-          "nodeTitle": "Coexist",
-          "takenTitle": "Pushback",
-          "betterTitle": "Curious",
-          "winTaken": 0.08,
-          "winBest": 0.9714,
-          "evGap": 24068,
-          "quote": "Not now — bad timing."
-        },
-        {
-          "id": 2,
-          "callId": "call_b_04",
-          "company": "Driftwave",
-          "buyer": {
-            "name": "Lena Nair",
-            "title": "VP of Operations"
-          },
-          "outcome": "lost",
-          "nodeId": "n_unconvinced",
-          "nodeTitle": "Coexist",
-          "takenTitle": "Pushback",
-          "betterTitle": "Curious",
-          "winTaken": 0.08,
-          "winBest": 0.9714,
-          "evGap": 9627,
-          "quote": "We just standardized on Discord."
-        }
-      ]
-    },
-    "call_a_25": {
-      "nodeId": "n_incumbent",
-      "heading": "When discussing integration options",
-      "reason": "You won the call, but could've done better with deeper questions about frustrations [1]. Asking about their current frustrations wins about 9 of 10 times [1]. Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "You won the call, but could've done better with deeper questions about frustrations [1].",
-        "Asking about their current frustrations wins about 9 of 10 times [1].",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_a_25",
-          "company": "Lumen Health",
-          "buyer": {
-            "name": "Nina Carter",
-            "title": "CTO"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3699,
-          "quote": "Runs alongside Google Chat — no rip-and-replace."
-        },
-        {
-          "id": 2,
-          "callId": "call_showcase",
-          "company": "Sundial Commerce",
-          "buyer": {
-            "name": "Rachel Kim",
-            "title": "VP of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
-        },
-        {
-          "id": 3,
-          "callId": "call_a_13",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Sofia Lopez",
-            "title": "COO"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        },
-        {
-          "id": 4,
-          "callId": "call_a_21",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Lena Carter",
-            "title": "Director of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3964,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        }
-      ]
-    },
-    "call_d_10": {
-      "nodeId": "n_incumbent",
-      "heading": "When their current tool was mentioned",
-      "reason": "The rep criticized Discord, which caused the call to slip. [1] Asking about frustrations with their current tool wins **about 9 of 10 times**. [1] Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "The rep criticized Discord, which caused the call to slip. [1]",
-        "Asking about frustrations with their current tool wins **about 9 of 10 times**. [1]",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_d_10",
-          "company": "Meridian Labs",
-          "buyer": {
-            "name": "Maria Park",
-            "title": "Head of IT"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 12472,
-          "quote": "Honestly, Discord is bloated and slow."
-        },
-        {
-          "id": 2,
-          "callId": "call_d_02",
-          "company": "Cobalt Finance",
-          "buyer": {
-            "name": "Nina Becker",
-            "title": "Director of Engineering"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 93539,
-          "quote": "Honestly, Microsoft Teams is bloated and slow."
-        },
-        {
-          "id": 3,
-          "callId": "call_hero",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Sarah Chen",
-            "title": "VP of Operations"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 38975,
-          "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
-        },
-        {
-          "id": 4,
-          "callId": "call_d_06",
-          "company": "Quill",
-          "buyer": {
-            "name": "Sofia Becker",
-            "title": "CTO"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 31180,
-          "quote": "Honestly, Google Chat is bloated and slow."
-        }
-      ]
-    },
-    "call_g_01": {
-      "nodeId": "n_price",
-      "heading": "When the call started to fall off",
-      "reason": "The rep suggested **offering a discount to win** the deal. [1] The better option was to **highlight the value**; it wins about 7 of 10. [1] It **recurs**: Same slip on **2 other calls**. [2][3]",
-      "reasons": [
-        "The rep suggested **offering a discount to win** the deal. [1]",
-        "The better option was to **highlight the value**; it wins about 7 of 10. [1]",
-        "It **recurs**: Same slip on **2 other calls**. [2][3]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_g_01",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Nina Idris",
-            "title": "VP of Engineering"
-          },
-          "outcome": "open",
-          "nodeId": "n_discount",
-          "nodeTitle": "Price Ask",
-          "takenTitle": "Discount",
-          "betterTitle": "Anchor Value",
-          "winTaken": 0.0714,
-          "winBest": 0.6522,
-          "evGap": 15681,
-          "quote": "Open with a discount to win it."
-        },
-        {
-          "id": 2,
-          "callId": "call_g_05",
-          "company": "Lumen Health",
-          "buyer": {
-            "name": "Sofia Idris",
-            "title": "Director of Engineering"
-          },
-          "outcome": "open",
-          "nodeId": "n_discount",
-          "nodeTitle": "Price Ask",
-          "takenTitle": "Discount",
-          "betterTitle": "Anchor Value",
-          "winTaken": 0.0714,
-          "winBest": 0.6522,
-          "evGap": 14636,
-          "quote": "Open with a discount to win it."
-        },
-        {
-          "id": 3,
-          "callId": "call_g_09",
-          "company": "Arboretum",
-          "buyer": {
-            "name": "Maria Cohen",
-            "title": "CTO"
-          },
-          "outcome": "open",
-          "nodeId": "n_discount",
-          "nodeTitle": "Price Ask",
-          "takenTitle": "Discount",
-          "betterTitle": "Anchor Value",
-          "winTaken": 0.0714,
-          "winBest": 0.6522,
-          "evGap": 11500,
-          "quote": "Open with a discount to win it."
-        }
-      ]
-    },
-    "call_d_02": {
-      "nodeId": "n_incumbent",
-      "heading": "When the tool's problems were mentioned",
-      "reason": "The rep said, **'Microsoft Teams is bloated and slow.'** [1] The better move is to **ask what’s frustrating about their current tool**; it wins about 9 of 10. [1] Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "The rep said, **'Microsoft Teams is bloated and slow.'** [1]",
-        "The better move is to **ask what’s frustrating about their current tool**; it wins about 9 of 10. [1]",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_d_02",
-          "company": "Cobalt Finance",
-          "buyer": {
-            "name": "Nina Becker",
-            "title": "Director of Engineering"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 93539,
-          "quote": "Honestly, Microsoft Teams is bloated and slow."
-        },
-        {
-          "id": 2,
-          "callId": "call_hero",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Sarah Chen",
-            "title": "VP of Operations"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 38975,
-          "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
-        },
-        {
-          "id": 3,
-          "callId": "call_d_06",
-          "company": "Quill",
-          "buyer": {
-            "name": "Sofia Becker",
-            "title": "CTO"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 31180,
-          "quote": "Honestly, Google Chat is bloated and slow."
-        },
-        {
-          "id": 4,
-          "callId": "call_d_10",
-          "company": "Meridian Labs",
-          "buyer": {
-            "name": "Maria Park",
-            "title": "Head of IT"
-          },
-          "outcome": "lost",
-          "nodeId": "n_knock",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Knock Incumbent",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.0714,
-          "winBest": 0.9375,
-          "evGap": 12472,
-          "quote": "Honestly, Discord is bloated and slow."
-        }
-      ]
-    },
-    "call_f_04": {
-      "nodeId": "n_value",
-      "heading": "Where the call started to slip",
-      "reason": "The rep said **still too expensive**. The call started to fall off. [1] The better move is to **ask for proof**. It wins about 9 of 10. [1]",
-      "reasons": [
-        "The rep said **still too expensive**. The call started to fall off. [1]",
-        "The better move is to **ask for proof**. It wins about 9 of 10. [1]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_f_04",
-          "company": "Driftwave",
-          "buyer": {
-            "name": "Lena Idris",
-            "title": "COO"
-          },
-          "outcome": "lost",
-          "nodeId": "n_pushprice",
-          "nodeTitle": "Anchor Value",
-          "takenTitle": "Too Pricey",
-          "betterTitle": "Proof Ask",
-          "winTaken": 0.08,
-          "winBest": 0.9375,
-          "evGap": 9261,
-          "quote": "Still too expensive."
-        }
-      ]
-    },
-    "call_g_05": {
-      "nodeId": "n_price",
-      "heading": "When the call started to fall off",
-      "reason": "The rep said **open with a discount** to win it, leading to a stall. [1] The better approach is to **anchor value**, which wins about **7 of 10**. [1] It RECURS: Same slip on **2 other calls**. [2][3]",
-      "reasons": [
-        "The rep said **open with a discount** to win it, leading to a stall. [1]",
-        "The better approach is to **anchor value**, which wins about **7 of 10**. [1]",
-        "It RECURS: Same slip on **2 other calls**. [2][3]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_g_05",
-          "company": "Lumen Health",
-          "buyer": {
-            "name": "Sofia Idris",
-            "title": "Director of Engineering"
-          },
-          "outcome": "open",
-          "nodeId": "n_discount",
-          "nodeTitle": "Price Ask",
-          "takenTitle": "Discount",
-          "betterTitle": "Anchor Value",
-          "winTaken": 0.0714,
-          "winBest": 0.6522,
-          "evGap": 14636,
-          "quote": "Open with a discount to win it."
-        },
-        {
-          "id": 2,
-          "callId": "call_g_01",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Nina Idris",
-            "title": "VP of Engineering"
-          },
-          "outcome": "open",
-          "nodeId": "n_discount",
-          "nodeTitle": "Price Ask",
-          "takenTitle": "Discount",
-          "betterTitle": "Anchor Value",
-          "winTaken": 0.0714,
-          "winBest": 0.6522,
-          "evGap": 15681,
-          "quote": "Open with a discount to win it."
-        },
-        {
-          "id": 3,
-          "callId": "call_g_09",
-          "company": "Arboretum",
-          "buyer": {
-            "name": "Maria Cohen",
-            "title": "CTO"
-          },
-          "outcome": "open",
-          "nodeId": "n_discount",
-          "nodeTitle": "Price Ask",
-          "takenTitle": "Discount",
-          "betterTitle": "Anchor Value",
-          "winTaken": 0.0714,
-          "winBest": 0.6522,
-          "evGap": 11500,
-          "quote": "Open with a discount to win it."
-        }
-      ]
-    },
-    "call_a_17": {
-      "nodeId": "n_incumbent",
-      "heading": "When the tool compatibility was mentioned",
-      "reason": "You won the call, but **a stronger question was available**. [1] Asking about frustrations can win **about 9 of 10 times**. [1] Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "You won the call, but **a stronger question was available**. [1]",
-        "Asking about frustrations can win **about 9 of 10 times**. [1]",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_a_17",
-          "company": "Driftwave",
-          "buyer": {
-            "name": "Maria Carter",
-            "title": "VP of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 1585,
-          "quote": "Runs alongside Discord — no rip-and-replace."
-        },
-        {
-          "id": 2,
-          "callId": "call_showcase",
-          "company": "Sundial Commerce",
-          "buyer": {
-            "name": "Rachel Kim",
-            "title": "VP of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
-        },
-        {
-          "id": 3,
-          "callId": "call_a_13",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Sofia Lopez",
-            "title": "COO"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        },
-        {
-          "id": 4,
-          "callId": "call_a_21",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Lena Carter",
-            "title": "Director of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3964,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        }
-      ]
-    },
-    "call_showcase": {
-      "nodeId": "n_incumbent",
-      "heading": "When engineering decisions were discussed",
-      "reason": "You won the call, but **a stronger move** was available. [1] Asking about frustrations has better odds — **about 9 in 10**. [1] Same slip on **3 other calls**. [2][3][4]",
-      "reasons": [
-        "You won the call, but **a stronger move** was available. [1]",
-        "Asking about frustrations has better odds — **about 9 in 10**. [1]",
-        "Same slip on **3 other calls**. [2][3][4]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_showcase",
-          "company": "Sundial Commerce",
-          "buyer": {
-            "name": "Rachel Kim",
-            "title": "VP of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
-        },
-        {
-          "id": 2,
-          "callId": "call_a_13",
-          "company": "Northwind Logistics",
-          "buyer": {
-            "name": "Sofia Lopez",
-            "title": "COO"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 6606,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        },
-        {
-          "id": 3,
-          "callId": "call_a_21",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Lena Carter",
-            "title": "Director of Engineering"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3964,
-          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-        },
-        {
-          "id": 4,
-          "callId": "call_a_05",
-          "company": "Lumen Health",
-          "buyer": {
-            "name": "Lena Lopez",
-            "title": "VP of People"
-          },
-          "outcome": "won",
-          "nodeId": "n_coexist",
-          "nodeTitle": "Incumbent",
-          "takenTitle": "Coexist",
-          "betterTitle": "Find Pain",
-          "winTaken": 0.7907,
-          "winBest": 0.9375,
-          "evGap": 3699,
-          "quote": "Runs alongside Google Chat — no rip-and-replace."
-        }
-      ]
-    },
-    "call_b_04": {
-      "nodeId": "n_coexist",
-      "heading": "When they mentioned standardizing on Discord",
-      "reason": "The rep said they standardized on Discord, causing the call to stall. [1] Asking what they find frustrating about their current tool wins about 9 of 10. [1] Same slip on **1 other call**. [2]",
-      "reasons": [
-        "The rep said they standardized on Discord, causing the call to stall. [1]",
-        "Asking what they find frustrating about their current tool wins about 9 of 10. [1]",
-        "Same slip on **1 other call**. [2]"
-      ],
-      "citations": [
-        {
-          "id": 1,
-          "callId": "call_b_04",
-          "company": "Driftwave",
-          "buyer": {
-            "name": "Lena Nair",
-            "title": "VP of Operations"
-          },
-          "outcome": "lost",
-          "nodeId": "n_unconvinced",
-          "nodeTitle": "Coexist",
-          "takenTitle": "Pushback",
-          "betterTitle": "Curious",
-          "winTaken": 0.08,
-          "winBest": 0.9714,
-          "evGap": 9627,
-          "quote": "We just standardized on Discord."
-        },
-        {
-          "id": 2,
-          "callId": "call_b_08",
-          "company": "Helio Robotics",
-          "buyer": {
-            "name": "Nina Nair",
-            "title": "VP of People"
-          },
-          "outcome": "lost",
-          "nodeId": "n_unconvinced",
-          "nodeTitle": "Coexist",
-          "takenTitle": "Pushback",
-          "betterTitle": "Curious",
-          "winTaken": 0.08,
-          "winBest": 0.9714,
-          "evGap": 24068,
-          "quote": "Not now — bad timing."
-        }
-      ]
-    },
     "call_a_09": {
       "nodeId": "n_incumbent",
-      "heading": "When legacy tools were mentioned",
-      "reason": "You won the call, but could have done better by asking about their frustrations. [1] The better move is to ask about their challenges; it wins about 9 of 10. [1] Same slip on **3 other calls**. [2][3][4]",
+      "heading": "When avoiding tool replacements came up",
+      "reason": "We won, but an even stronger approach was available. [1] The better choice was to ask what frustrates them. It won 14 of 14 times; your move won 33 of 41 times. [1] Same slip on **3 other calls**. [2][3][4]",
       "reasons": [
-        "You won the call, but could have done better by asking about their frustrations. [1]",
-        "The better move is to ask about their challenges; it wins about 9 of 10. [1]",
+        "We won, but an even stronger approach was available. [1]",
+        "The better choice was to ask what frustrates them. It won 14 of 14 times; your move won 33 of 41 times. [1]",
         "Same slip on **3 other calls**. [2][3][4]"
       ],
       "citations": [
@@ -1150,6 +153,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 2379,
           "quote": "Runs alongside a legacy chat tool — no rip-and-replace."
         },
@@ -1168,6 +175,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 6606,
           "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
         },
@@ -1186,6 +197,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 6606,
           "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
         },
@@ -1204,23 +219,127 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 3964,
           "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
         }
       ]
     },
-    "call_a_13": {
-      "nodeId": "n_incumbent",
-      "heading": "When comparing to existing tools",
-      "reason": "You won the call, but there was a **stronger question to ask**. [1] Asking what’s frustrating about their current tool wins **about 9 of 10 times**. [1] Same slip on **3 other calls**. [2][3][4]",
+    "call_b_08": {
+      "nodeId": "n_coexist",
+      "heading": "When timing issues were raised",
+      "reason": "The rep said, 'Not now — bad timing.' and the call started to fall off. [1] Asking what’s frustrating won **33 of 33 times**; your move won **0 of 8 times**. [1] Same slip on **1 other call**. [2]",
       "reasons": [
-        "You won the call, but there was a **stronger question to ask**. [1]",
-        "Asking what’s frustrating about their current tool wins **about 9 of 10 times**. [1]",
+        "The rep said, 'Not now — bad timing.' and the call started to fall off. [1]",
+        "Asking what’s frustrating won **33 of 33 times**; your move won **0 of 8 times**. [1]",
+        "Same slip on **1 other call**. [2]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_b_08",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Nina Nair",
+            "title": "VP of People"
+          },
+          "outcome": "lost",
+          "nodeId": "n_unconvinced",
+          "nodeTitle": "Coexist",
+          "takenTitle": "Pushback",
+          "betterTitle": "Curious",
+          "winTaken": 0.08,
+          "winBest": 0.9714,
+          "takenWins": 0,
+          "takenVisits": 8,
+          "bestWins": 33,
+          "bestVisits": 33,
+          "evGap": 24068,
+          "quote": "Not now — bad timing."
+        },
+        {
+          "id": 2,
+          "callId": "call_b_04",
+          "company": "Driftwave",
+          "buyer": {
+            "name": "Lena Nair",
+            "title": "VP of Operations"
+          },
+          "outcome": "lost",
+          "nodeId": "n_unconvinced",
+          "nodeTitle": "Coexist",
+          "takenTitle": "Pushback",
+          "betterTitle": "Curious",
+          "winTaken": 0.08,
+          "winBest": 0.9714,
+          "takenWins": 0,
+          "takenVisits": 8,
+          "bestWins": 33,
+          "bestVisits": 33,
+          "evGap": 9627,
+          "quote": "We just standardized on Discord."
+        }
+      ]
+    },
+    "call_a_05": {
+      "nodeId": "n_incumbent",
+      "heading": "Highlighting integration without addressing concerns",
+      "reason": "You won the call, but **a stronger approach was available**. [1] Ask what's frustrating about their current tool — this method won **14 of 14 times**; yours won **33 of 41 times**. [1] Same slip on **3 other calls**. [2][3][4]",
+      "reasons": [
+        "You won the call, but **a stronger approach was available**. [1]",
+        "Ask what's frustrating about their current tool — this method won **14 of 14 times**; yours won **33 of 41 times**. [1]",
         "Same slip on **3 other calls**. [2][3][4]"
       ],
       "citations": [
         {
           "id": 1,
+          "callId": "call_a_05",
+          "company": "Lumen Health",
+          "buyer": {
+            "name": "Lena Lopez",
+            "title": "VP of People"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3699,
+          "quote": "Runs alongside Google Chat — no rip-and-replace."
+        },
+        {
+          "id": 2,
+          "callId": "call_showcase",
+          "company": "Sundial Commerce",
+          "buyer": {
+            "name": "Rachel Kim",
+            "title": "VP of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
+        },
+        {
+          "id": 3,
           "callId": "call_a_13",
           "company": "Northwind Logistics",
           "buyer": {
@@ -1234,6 +353,199 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        },
+        {
+          "id": 4,
+          "callId": "call_a_21",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Lena Carter",
+            "title": "Director of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3964,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        }
+      ]
+    },
+    "call_a_25": {
+      "nodeId": "n_incumbent",
+      "heading": "Highlighting tool compatibility benefits",
+      "reason": "You won this call, but there was a stronger option available. [1] Instead of mentioning compatibility, ask what's frustrating about their current tool. The better move won 14 of 14 times; your move won 33 of 41 times. [1] It RECURS: Same slip on **3 other calls**. [2][3][4]",
+      "reasons": [
+        "You won this call, but there was a stronger option available. [1]",
+        "Instead of mentioning compatibility, ask what's frustrating about their current tool. The better move won 14 of 14 times; your move won 33 of 41 times. [1]",
+        "It RECURS: Same slip on **3 other calls**. [2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_a_25",
+          "company": "Lumen Health",
+          "buyer": {
+            "name": "Nina Carter",
+            "title": "CTO"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3699,
+          "quote": "Runs alongside Google Chat — no rip-and-replace."
+        },
+        {
+          "id": 2,
+          "callId": "call_showcase",
+          "company": "Sundial Commerce",
+          "buyer": {
+            "name": "Rachel Kim",
+            "title": "VP of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
+        },
+        {
+          "id": 3,
+          "callId": "call_a_13",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Sofia Lopez",
+            "title": "COO"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        },
+        {
+          "id": 4,
+          "callId": "call_a_21",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Lena Carter",
+            "title": "Director of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3964,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        }
+      ]
+    },
+    "call_f_04": {
+      "nodeId": "n_value",
+      "heading": "When price concerns were raised",
+      "reason": "The rep said, **'Still too expensive.'**, causing the call to falter [1]. A better choice is to **ask for proof**; it won 14 of 14 times, while your move won 0 of 7 times [1].",
+      "reasons": [
+        "The rep said, **'Still too expensive.'**, causing the call to falter [1].",
+        "A better choice is to **ask for proof**; it won 14 of 14 times, while your move won 0 of 7 times [1]."
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_f_04",
+          "company": "Driftwave",
+          "buyer": {
+            "name": "Lena Idris",
+            "title": "COO"
+          },
+          "outcome": "lost",
+          "nodeId": "n_pushprice",
+          "nodeTitle": "Anchor Value",
+          "takenTitle": "Too Pricey",
+          "betterTitle": "Proof Ask",
+          "winTaken": 0.08,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 7,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 9261,
+          "quote": "Still too expensive."
+        }
+      ]
+    },
+    "call_a_33": {
+      "nodeId": "n_incumbent",
+      "heading": "When discussing integrations and replacements",
+      "reason": "You won but missed a better approach, **33 of 41 times**.[1] The better move: ask about frustrations with their current tool, **14 of 14 times**.[1] Same slip on **3 other calls**.[2][3][4]",
+      "reasons": [
+        "You won but missed a better approach, **33 of 41 times**.[1]",
+        "The better move: ask about frustrations with their current tool, **14 of 14 times**.[1]",
+        "Same slip on **3 other calls**.[2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_a_33",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Maria Nair",
+            "title": "Head of Customer Success"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 6606,
           "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
         },
@@ -1252,6 +564,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 6606,
           "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
         },
@@ -1270,6 +586,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 3964,
           "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
         },
@@ -1288,6 +608,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 3699,
           "quote": "Runs alongside Google Chat — no rip-and-replace."
         }
@@ -1295,11 +619,11 @@
     },
     "call_a_21": {
       "nodeId": "n_incumbent",
-      "heading": "When discussing integrations of tools",
-      "reason": "You won the call, but **a stronger approach** was available. [1] Asking what's frustrating with their current tool wins **about 9 of 10 times**. [1] Same slip on **3 other calls**. [2][3][4]",
+      "heading": "Discussing tool integrations and outcomes",
+      "reason": "You won, but an even stronger action was available. [1] Asking about what's frustrating with their current tool won 14 of 14 times; your action won 33 of 41 times. [1] Same slip on **3 other calls**. [2][3][4]",
       "reasons": [
-        "You won the call, but **a stronger approach** was available. [1]",
-        "Asking what's frustrating with their current tool wins **about 9 of 10 times**. [1]",
+        "You won, but an even stronger action was available. [1]",
+        "Asking about what's frustrating with their current tool won 14 of 14 times; your action won 33 of 41 times. [1]",
         "Same slip on **3 other calls**. [2][3][4]"
       ],
       "citations": [
@@ -1318,6 +642,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 3964,
           "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
         },
@@ -1336,6 +664,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 6606,
           "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
         },
@@ -1354,6 +686,10 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 6606,
           "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
         },
@@ -1372,18 +708,100 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.7907,
           "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 3699,
           "quote": "Runs alongside Google Chat — no rip-and-replace."
         }
       ]
     },
+    "call_g_01": {
+      "nodeId": "n_price",
+      "heading": "When the call started to fall off",
+      "reason": "The rep suggested a discount to win it, which **won 0 of 12 times**. [1] A better approach is to highlight value, which **won 14 of 21 times**. [1] It RECURS: Same slip on **2 other calls**. [2][3]",
+      "reasons": [
+        "The rep suggested a discount to win it, which **won 0 of 12 times**. [1]",
+        "A better approach is to highlight value, which **won 14 of 21 times**. [1]",
+        "It RECURS: Same slip on **2 other calls**. [2][3]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_g_01",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Nina Idris",
+            "title": "VP of Engineering"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
+          "evGap": 15681,
+          "quote": "Open with a discount to win it."
+        },
+        {
+          "id": 2,
+          "callId": "call_g_05",
+          "company": "Lumen Health",
+          "buyer": {
+            "name": "Sofia Idris",
+            "title": "Director of Engineering"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
+          "evGap": 14636,
+          "quote": "Open with a discount to win it."
+        },
+        {
+          "id": 3,
+          "callId": "call_g_09",
+          "company": "Arboretum",
+          "buyer": {
+            "name": "Maria Cohen",
+            "title": "CTO"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
+          "evGap": 11500,
+          "quote": "Open with a discount to win it."
+        }
+      ]
+    },
     "call_g_09": {
       "nodeId": "n_price",
-      "heading": "When the discount strategy was used",
-      "reason": "The rep suggested **offering a discount** to win the deal, which caused a slip. [1] A smarter approach would be to **highlight the value** of the solution, winning about **7 in 10**. [1] It RECURS: Same slip on **2 other calls**. [2][3]",
+      "heading": "When the call started to fall off",
+      "reason": "The rep offered a discount, **lost opportunity** – it won 0 of 12 times [1]. A better move is to show value, **won 14 of 21 times** [1]. It RECURS: Same slip on **2 other calls**. [2][3]",
       "reasons": [
-        "The rep suggested **offering a discount** to win the deal, which caused a slip. [1]",
-        "A smarter approach would be to **highlight the value** of the solution, winning about **7 in 10**. [1]",
+        "The rep offered a discount, **lost opportunity** – it won 0 of 12 times [1].",
+        "A better move is to show value, **won 14 of 21 times** [1].",
         "It RECURS: Same slip on **2 other calls**. [2][3]"
       ],
       "citations": [
@@ -1402,6 +820,10 @@
           "betterTitle": "Anchor Value",
           "winTaken": 0.0714,
           "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
           "evGap": 11500,
           "quote": "Open with a discount to win it."
         },
@@ -1420,6 +842,10 @@
           "betterTitle": "Anchor Value",
           "winTaken": 0.0714,
           "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
           "evGap": 15681,
           "quote": "Open with a discount to win it."
         },
@@ -1438,28 +864,188 @@
           "betterTitle": "Anchor Value",
           "winTaken": 0.0714,
           "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
           "evGap": 14636,
           "quote": "Open with a discount to win it."
         }
       ]
     },
-    "call_d_06": {
-      "nodeId": "n_incumbent",
-      "heading": "When their current tool was criticized",
-      "reason": "The rep said Google Chat is bloated and slow, causing a slip [1]. Asking what's frustrating about their current tool wins about 9 of 10 [1]. Same slip on **3 other calls**. [2][3][4]",
+    "call_b_04": {
+      "nodeId": "n_coexist",
+      "heading": "When they mentioned using Discord",
+      "reason": "The rep's comment caused the call to lose momentum. **Won 0 of 8 times.** [1] Asking what they like about Discord would have been more effective. **Won 33 of 33 times.** [1] Same slip on **1 other call**. [2]",
       "reasons": [
-        "The rep said Google Chat is bloated and slow, causing a slip [1].",
-        "Asking what's frustrating about their current tool wins about 9 of 10 [1].",
+        "The rep's comment caused the call to lose momentum. **Won 0 of 8 times.** [1]",
+        "Asking what they like about Discord would have been more effective. **Won 33 of 33 times.** [1]",
+        "Same slip on **1 other call**. [2]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_b_04",
+          "company": "Driftwave",
+          "buyer": {
+            "name": "Lena Nair",
+            "title": "VP of Operations"
+          },
+          "outcome": "lost",
+          "nodeId": "n_unconvinced",
+          "nodeTitle": "Coexist",
+          "takenTitle": "Pushback",
+          "betterTitle": "Curious",
+          "winTaken": 0.08,
+          "winBest": 0.9714,
+          "takenWins": 0,
+          "takenVisits": 8,
+          "bestWins": 33,
+          "bestVisits": 33,
+          "evGap": 9627,
+          "quote": "We just standardized on Discord."
+        },
+        {
+          "id": 2,
+          "callId": "call_b_08",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Nina Nair",
+            "title": "VP of People"
+          },
+          "outcome": "lost",
+          "nodeId": "n_unconvinced",
+          "nodeTitle": "Coexist",
+          "takenTitle": "Pushback",
+          "betterTitle": "Curious",
+          "winTaken": 0.08,
+          "winBest": 0.9714,
+          "takenWins": 0,
+          "takenVisits": 8,
+          "bestWins": 33,
+          "bestVisits": 33,
+          "evGap": 24068,
+          "quote": "Not now — bad timing."
+        }
+      ]
+    },
+    "call_a_13": {
+      "nodeId": "n_incumbent",
+      "heading": "When discussing integration options",
+      "reason": "You won the call, but there was a stronger option to explore buyer needs. [1] Instead of explaining integration, ask what's frustrating about their current tool: better move won 14 of 14 times; your move won 33 of 41 times. [1] Same slip on **3 other calls**. [2][3][4]",
+      "reasons": [
+        "You won the call, but there was a stronger option to explore buyer needs. [1]",
+        "Instead of explaining integration, ask what's frustrating about their current tool: better move won 14 of 14 times; your move won 33 of 41 times. [1]",
         "Same slip on **3 other calls**. [2][3][4]"
       ],
       "citations": [
         {
           "id": 1,
-          "callId": "call_d_06",
-          "company": "Quill",
+          "callId": "call_a_13",
+          "company": "Northwind Logistics",
           "buyer": {
-            "name": "Sofia Becker",
-            "title": "CTO"
+            "name": "Sofia Lopez",
+            "title": "COO"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        },
+        {
+          "id": 2,
+          "callId": "call_showcase",
+          "company": "Sundial Commerce",
+          "buyer": {
+            "name": "Rachel Kim",
+            "title": "VP of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
+        },
+        {
+          "id": 3,
+          "callId": "call_a_21",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Lena Carter",
+            "title": "Director of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3964,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        },
+        {
+          "id": 4,
+          "callId": "call_a_05",
+          "company": "Lumen Health",
+          "buyer": {
+            "name": "Lena Lopez",
+            "title": "VP of People"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3699,
+          "quote": "Runs alongside Google Chat — no rip-and-replace."
+        }
+      ]
+    },
+    "call_hero": {
+      "nodeId": "n_incumbent",
+      "heading": "When they discussed current tools",
+      "reason": "The call started to fall off when they mentioned tool efficiency and ease.[1] The better move was to ask what's frustrating about their current tool; the better move won 14 of 14 times; your move won 0 of 12 times.[1] It RECURS: Same slip on **3 other calls**.[2][3][4]",
+      "reasons": [
+        "The call started to fall off when they mentioned tool efficiency and ease.[1]",
+        "The better move was to ask what's frustrating about their current tool; the better move won 14 of 14 times; your move won 0 of 12 times.[1]",
+        "It RECURS: Same slip on **3 other calls**.[2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_hero",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Sarah Chen",
+            "title": "VP of Operations"
           },
           "outcome": "lost",
           "nodeId": "n_knock",
@@ -1468,8 +1054,12 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.0714,
           "winBest": 0.9375,
-          "evGap": 31180,
-          "quote": "Honestly, Google Chat is bloated and slow."
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 38975,
+          "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
         },
         {
           "id": 2,
@@ -1486,6 +1076,310 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.0714,
           "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 93539,
+          "quote": "Honestly, Microsoft Teams is bloated and slow."
+        },
+        {
+          "id": 3,
+          "callId": "call_d_06",
+          "company": "Quill",
+          "buyer": {
+            "name": "Sofia Becker",
+            "title": "CTO"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 31180,
+          "quote": "Honestly, Google Chat is bloated and slow."
+        },
+        {
+          "id": 4,
+          "callId": "call_d_10",
+          "company": "Meridian Labs",
+          "buyer": {
+            "name": "Maria Park",
+            "title": "Head of IT"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 12472,
+          "quote": "Honestly, Discord is bloated and slow."
+        }
+      ]
+    },
+    "call_showcase": {
+      "nodeId": "n_incumbent",
+      "heading": "When highlighting tool integration",
+      "reason": "You won the call, but a stronger move was available. [1] The better move was to ask what's frustrating about their current tool; it won 14 of 14 times; your move won 33 of 41 times. [1] Same slip on **3 other calls**. [2][3][4]",
+      "reasons": [
+        "You won the call, but a stronger move was available. [1]",
+        "The better move was to ask what's frustrating about their current tool; it won 14 of 14 times; your move won 33 of 41 times. [1]",
+        "Same slip on **3 other calls**. [2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_showcase",
+          "company": "Sundial Commerce",
+          "buyer": {
+            "name": "Rachel Kim",
+            "title": "VP of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
+        },
+        {
+          "id": 2,
+          "callId": "call_a_13",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Sofia Lopez",
+            "title": "COO"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        },
+        {
+          "id": 3,
+          "callId": "call_a_21",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Lena Carter",
+            "title": "Director of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3964,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        },
+        {
+          "id": 4,
+          "callId": "call_a_05",
+          "company": "Lumen Health",
+          "buyer": {
+            "name": "Lena Lopez",
+            "title": "VP of People"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3699,
+          "quote": "Runs alongside Google Chat — no rip-and-replace."
+        }
+      ]
+    },
+    "call_a_17": {
+      "nodeId": "n_incumbent",
+      "heading": "When explaining product compatibility",
+      "reason": "You won, but **a stronger move was available**. [1] The better move is to **ask what's frustrating about their current tool**; it won 14 of 14 times, your move won 33 of 41 times. [1] It RECURS: exactly **3 other calls**. [2][3][4]",
+      "reasons": [
+        "You won, but **a stronger move was available**. [1]",
+        "The better move is to **ask what's frustrating about their current tool**; it won 14 of 14 times, your move won 33 of 41 times. [1]",
+        "It RECURS: exactly **3 other calls**. [2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_a_17",
+          "company": "Driftwave",
+          "buyer": {
+            "name": "Maria Carter",
+            "title": "VP of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 1585,
+          "quote": "Runs alongside Discord — no rip-and-replace."
+        },
+        {
+          "id": 2,
+          "callId": "call_showcase",
+          "company": "Sundial Commerce",
+          "buyer": {
+            "name": "Rachel Kim",
+            "title": "VP of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
+        },
+        {
+          "id": 3,
+          "callId": "call_a_13",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Sofia Lopez",
+            "title": "COO"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        },
+        {
+          "id": 4,
+          "callId": "call_a_21",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Lena Carter",
+            "title": "Director of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3964,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        }
+      ]
+    },
+    "call_d_10": {
+      "nodeId": "n_incumbent",
+      "heading": "When their current tool was criticized",
+      "reason": "The rep criticized Discord, and the call started to fall off. [1] A better move is to ask what's frustrating about their current tool; that won 14 of 14 times, while yours won 0 of 12 times. [1] Same slip on **3 other calls**. [2][3][4]",
+      "reasons": [
+        "The rep criticized Discord, and the call started to fall off. [1]",
+        "A better move is to ask what's frustrating about their current tool; that won 14 of 14 times, while yours won 0 of 12 times. [1]",
+        "Same slip on **3 other calls**. [2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_d_10",
+          "company": "Meridian Labs",
+          "buyer": {
+            "name": "Maria Park",
+            "title": "Head of IT"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 12472,
+          "quote": "Honestly, Discord is bloated and slow."
+        },
+        {
+          "id": 2,
+          "callId": "call_d_02",
+          "company": "Cobalt Finance",
+          "buyer": {
+            "name": "Nina Becker",
+            "title": "Director of Engineering"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 93539,
           "quote": "Honestly, Microsoft Teams is bloated and slow."
         },
@@ -1504,6 +1398,288 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.0714,
           "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 38975,
+          "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
+        },
+        {
+          "id": 4,
+          "callId": "call_d_06",
+          "company": "Quill",
+          "buyer": {
+            "name": "Sofia Becker",
+            "title": "CTO"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 31180,
+          "quote": "Honestly, Google Chat is bloated and slow."
+        }
+      ]
+    },
+    "call_g_05": {
+      "nodeId": "n_price",
+      "heading": "When the call started to fall off",
+      "reason": "The rep said 'Open with a discount to win it.' which led to a lost opportunity. [1] The better move is to 'Show the value first.' This won 14 of 21 times; your move won 0 of 12 times. [1] Same slip on **2 other calls**. [2][3]",
+      "reasons": [
+        "The rep said 'Open with a discount to win it.' which led to a lost opportunity. [1]",
+        "The better move is to 'Show the value first.' This won 14 of 21 times; your move won 0 of 12 times. [1]",
+        "Same slip on **2 other calls**. [2][3]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_g_05",
+          "company": "Lumen Health",
+          "buyer": {
+            "name": "Sofia Idris",
+            "title": "Director of Engineering"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
+          "evGap": 14636,
+          "quote": "Open with a discount to win it."
+        },
+        {
+          "id": 2,
+          "callId": "call_g_01",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Nina Idris",
+            "title": "VP of Engineering"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
+          "evGap": 15681,
+          "quote": "Open with a discount to win it."
+        },
+        {
+          "id": 3,
+          "callId": "call_g_09",
+          "company": "Arboretum",
+          "buyer": {
+            "name": "Maria Cohen",
+            "title": "CTO"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 21,
+          "evGap": 11500,
+          "quote": "Open with a discount to win it."
+        }
+      ]
+    },
+    "call_a_29": {
+      "nodeId": "n_incumbent",
+      "heading": "When legacy tools were discussed",
+      "reason": "You won the call, but a **stronger action was needed**. [1] Instead of mentioning legacy tools, **ask what's frustrating about their current tool**; it won 14 of 14 times, while your move won 33 of 41 times. [1] It RECURS: Same slip on **3 other calls**. [2][3][4]",
+      "reasons": [
+        "You won the call, but a **stronger action was needed**. [1]",
+        "Instead of mentioning legacy tools, **ask what's frustrating about their current tool**; it won 14 of 14 times, while your move won 33 of 41 times. [1]",
+        "It RECURS: Same slip on **3 other calls**. [2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_a_29",
+          "company": "Vantage Security",
+          "buyer": {
+            "name": "Sofia Carter",
+            "title": "Head of IT"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 2379,
+          "quote": "Runs alongside a legacy chat tool — no rip-and-replace."
+        },
+        {
+          "id": 2,
+          "callId": "call_showcase",
+          "company": "Sundial Commerce",
+          "buyer": {
+            "name": "Rachel Kim",
+            "title": "VP of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
+        },
+        {
+          "id": 3,
+          "callId": "call_a_13",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Sofia Lopez",
+            "title": "COO"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 6606,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        },
+        {
+          "id": 4,
+          "callId": "call_a_21",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Lena Carter",
+            "title": "Director of Engineering"
+          },
+          "outcome": "won",
+          "nodeId": "n_coexist",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Coexist",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.7907,
+          "winBest": 0.9375,
+          "takenWins": 33,
+          "takenVisits": 41,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 3964,
+          "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+        }
+      ]
+    },
+    "call_d_06": {
+      "nodeId": "n_incumbent",
+      "heading": "When their current tool was criticized",
+      "reason": "The call started to fall off when the rep said Google Chat was bloated and slow. **won 0 of 12 times** [1] Ask what's frustrating about their current tool. **won 14 of 14 times** [1] Same slip on **3 other calls**. [2][3][4]",
+      "reasons": [
+        "The call started to fall off when the rep said Google Chat was bloated and slow. **won 0 of 12 times** [1]",
+        "Ask what's frustrating about their current tool. **won 14 of 14 times** [1]",
+        "Same slip on **3 other calls**. [2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_d_06",
+          "company": "Quill",
+          "buyer": {
+            "name": "Sofia Becker",
+            "title": "CTO"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 31180,
+          "quote": "Honestly, Google Chat is bloated and slow."
+        },
+        {
+          "id": 2,
+          "callId": "call_d_02",
+          "company": "Cobalt Finance",
+          "buyer": {
+            "name": "Nina Becker",
+            "title": "Director of Engineering"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 93539,
+          "quote": "Honestly, Microsoft Teams is bloated and slow."
+        },
+        {
+          "id": 3,
+          "callId": "call_hero",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Sarah Chen",
+            "title": "VP of Operations"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 38975,
           "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
         },
@@ -1522,6 +1698,110 @@
           "betterTitle": "Find Pain",
           "winTaken": 0.0714,
           "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 12472,
+          "quote": "Honestly, Discord is bloated and slow."
+        }
+      ]
+    },
+    "call_d_02": {
+      "nodeId": "n_incumbent",
+      "heading": "When their current tool was criticized",
+      "reason": "The rep criticized Microsoft Teams, which caused the call to slip. [1] A better action is asking what's frustrating about their current tool; it won 14 of 14 times while your move won 0 of 12 times. [1] Same slip on **3 other calls**. [2][3][4]",
+      "reasons": [
+        "The rep criticized Microsoft Teams, which caused the call to slip. [1]",
+        "A better action is asking what's frustrating about their current tool; it won 14 of 14 times while your move won 0 of 12 times. [1]",
+        "Same slip on **3 other calls**. [2][3][4]"
+      ],
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_d_02",
+          "company": "Cobalt Finance",
+          "buyer": {
+            "name": "Nina Becker",
+            "title": "Director of Engineering"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 93539,
+          "quote": "Honestly, Microsoft Teams is bloated and slow."
+        },
+        {
+          "id": 2,
+          "callId": "call_hero",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Sarah Chen",
+            "title": "VP of Operations"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 38975,
+          "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
+        },
+        {
+          "id": 3,
+          "callId": "call_d_06",
+          "company": "Quill",
+          "buyer": {
+            "name": "Sofia Becker",
+            "title": "CTO"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
+          "evGap": 31180,
+          "quote": "Honestly, Google Chat is bloated and slow."
+        },
+        {
+          "id": 4,
+          "callId": "call_d_10",
+          "company": "Meridian Labs",
+          "buyer": {
+            "name": "Maria Park",
+            "title": "Head of IT"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "takenWins": 0,
+          "takenVisits": 12,
+          "bestWins": 14,
+          "bestVisits": 14,
           "evGap": 12472,
           "quote": "Honestly, Discord is bloated and slow."
         }

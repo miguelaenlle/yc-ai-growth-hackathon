@@ -163,8 +163,12 @@ export interface Citation {
   nodeTitle: string;
   takenTitle: string; // the move they played
   betterTitle: string; // the higher-win sibling move
-  winTaken: number; // 0..1
-  winBest: number; // 0..1
+  winTaken: number; // 0..1 (Beta-smoothed)
+  winBest: number; // 0..1 (Beta-smoothed)
+  takenWins: number; // observed real counts (wins of visits) for plain "X of Y times" copy
+  takenVisits: number;
+  bestWins: number;
+  bestVisits: number;
   evGap: number;
   quote: string; // exact transcript line at the taken node
 }
