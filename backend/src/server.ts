@@ -7,6 +7,7 @@
 
 import cors from "cors";
 import express, { type Request, type Response } from "express";
+import expressWs from "express-ws";
 import {
   getCall,
   getRecording,
@@ -24,8 +25,9 @@ import type {
   TreeNode,
   WalkthroughBundle,
 } from "./types.js";
+import { handleMockSession } from "./mock.js";
 
-const app = express();
+const { app } = expressWs(express());
 const PORT = 3001;
 
 app.use(cors());
@@ -213,16 +215,16 @@ app.post("/agent/branch", (req: Request, res: Response) => {
   res.json({ node: null, matchedNodeId: currentNodeId });
 });
 
-// 14. POST /mock/turn (MockTurnReq) → { lines, proposedChild? }
-app.post("/mock/turn", (_req: Request, res: Response) => {
-  // TODO(real): generate the next turn from the buyer persona + path so far.
-  const lines: { speaker: "buyer" | "seller"; text: string }[] = [
-    {
-      speaker: "buyer",
-      text: "Oh, so we'd keep Tableau and just pipe data in through your connectors? That works.",
-    },
-  ];
-  res.json({ lines, proposedChild: null as TreeNode | null });
+// 14. WS /mock/session/:recordingId (Websocket) → Audio Stream
+app.ws("/mock/session/:recordingId", (ws, req) => {
+  const { recordingId } = req.params;
+  const currentNodeId = req.query.currentNodeId as string;
+  const includePrecap = req.query.includePrecap === "true";
+  if (!recordingId || !currentNodeId) {
+    ws.close(1008, "recordingId and currentNodeId required");
+    return;
+  }
+  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap);
 });
 
 // 15. POST /tts (TtsReq) → { audioUrl }
