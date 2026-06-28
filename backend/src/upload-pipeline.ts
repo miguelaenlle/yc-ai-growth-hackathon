@@ -16,9 +16,18 @@
 import { createAudioAnalyzer } from "./audio/index.js";
 import { transcribeWithScribe } from "./transcription/elevenlabs-scribe.js";
 import { generateCallTree, refreshStatCache } from "./tree-generator.js";
-import { getRecording, getTree, persist, putRecording, putTree } from "./store.js";
+import { getRecording, getTree, persist, putRecording, putTree, store } from "./store.js";
 import { buildAiFeedback } from "./practice-reco.js";
+import { classifyBuyer } from "./persona-classifier.js";
 import type { LiveEvent, TraversalStep } from "./types.js";
+
+/** Find the buyer record for a call so we can backfill persona + title in place. */
+function buyerForCall(callId: string) {
+  const call = store.calls.find((c) => c.id === callId);
+  if (!call) return null;
+  const company = store.companies.find((co) => co.id === call.companyId);
+  return company?.buyers.find((b) => b.id === call.buyerId) ?? null;
+}
 
 // Shared audio analyzer instance — same factory as the main server uses.
 const audioAnalyzer = createAudioAnalyzer();
@@ -59,6 +68,26 @@ export async function runUploadPipeline(
     // Emit each transcript segment so SSE listeners see the transcript rail fill in
     for (const seg of segments) {
       emitFn({ type: "transcript", segment: seg });
+    }
+
+    // -----------------------------------------------------------------------
+    // 1b. Backfill the buyer's persona + title from the transcript (seeded buyers
+    //     carry these; uploaded ones don't). Best-effort — never blocks the tree.
+    // -----------------------------------------------------------------------
+    {
+      const rec = getRecording(recordingId);
+      const buyer = rec ? buyerForCall(rec.callId) : null;
+      if (buyer) {
+        try {
+          const { personaId, title } = await classifyBuyer(buyer.name, segments);
+          buyer.personaId = personaId;
+          if (!buyer.title && title) buyer.title = title;
+          persist();
+          console.log(`[upload-pipeline] Buyer ${buyer.name} → persona ${personaId}, title "${buyer.title}"`);
+        } catch (err) {
+          console.warn("[upload-pipeline] Persona classification failed; leaving buyer unclassified", err);
+        }
+      }
     }
 
     // -----------------------------------------------------------------------

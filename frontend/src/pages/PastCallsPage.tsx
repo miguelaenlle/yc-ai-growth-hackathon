@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCalls } from "../queries/useCalls";
 import { toDateKey } from "../lib/format";
+import { refreshRecentInsights } from "../lib/api";
 import { Logo } from "../components/Logo";
 import { Button } from "../components/Button";
 import { FilterBar } from "../components/FilterBar";
 import type { DateRange } from "../components/DateRangePicker";
 import { CallCard } from "../components/CallCard";
 import { PerfectPracticeCard } from "../components/PerfectPracticeCard";
+import { UploadCallModal } from "../components/UploadCallModal";
 
 const EMPTY_RANGE: DateRange = { start: null, end: null };
 
@@ -30,11 +33,35 @@ const FEATURED_REP_ID = "sp_jane";
 
 export function PastCallsPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data, isLoading, isError } = useCalls();
 
   const [company, setCompany] = useState("");
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
   const [repId, setRepId] = useState<string>(FEATURED_REP_ID);
+  const [showUpload, setShowUpload] = useState(false);
+  const [newCallId, setNewCallId] = useState<string | null>(null);
+
+  // A new call just finished generating: refetch the list so it appears (newest-first),
+  // flag it as "New", and — in the background, without blocking the UI — refresh the
+  // Perfect Practice + last-10 "Practice from here" recs.
+  const handleCreated = (callId: string) => {
+    setShowUpload(false);
+    setNewCallId(callId);
+    queryClient.invalidateQueries({ queryKey: ["calls"] });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => setNewCallId((id) => (id === callId ? null : id)), 8000);
+
+    refreshRecentInsights()
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["recommended-practice"] });
+        queryClient.invalidateQueries({ queryKey: ["feedback"] });
+        queryClient.invalidateQueries({ queryKey: ["calls"] });
+      })
+      .catch(() => {
+        /* background best-effort — never surfaces to the user */
+      });
+  };
 
   const calls = data ?? [];
 
@@ -111,7 +138,7 @@ export function PastCallsPage() {
               activeCount={activeCount}
               onClear={clearFilters}
             />
-            <Button onClick={() => navigate("/new")}>
+            <Button onClick={() => setShowUpload(true)}>
               <PlusIcon />
               Take new call
             </Button>
@@ -152,10 +179,14 @@ export function PastCallsPage() {
           )}
 
           {shown.map((call, i) => (
-            <CallCard key={call.id} call={call} index={i} />
+            <CallCard key={call.id} call={call} index={i} isNew={call.id === newCallId} />
           ))}
         </div>
       </div>
+
+      {showUpload && (
+        <UploadCallModal onClose={() => setShowUpload(false)} onCreated={handleCreated} />
+      )}
     </main>
   );
 }

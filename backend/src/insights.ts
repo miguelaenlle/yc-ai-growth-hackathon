@@ -150,16 +150,33 @@ async function callLLM(system: string, user: string): Promise<Record<string, unk
 // Generation
 // ---------------------------------------------------------------------------
 
-export async function generateInsights(salespersonId = FEATURED_REP): Promise<InsightsBundle> {
+export async function generateInsights(
+  salespersonId = FEATURED_REP,
+  opts: { perCallLimit?: number } = {},
+): Promise<InsightsBundle> {
   const sp = store.salespeople.find((s) => s.id === salespersonId);
   const forks = collectForks(salespersonId);
+
+  // Optionally scope the expensive per-call LLM pass to the rep's most-recent N calls
+  // (by startedAt). The Perfect Practice selection below still considers ALL forks.
+  let recentIds: Set<Id> | null = null;
+  if (opts.perCallLimit && opts.perCallLimit > 0) {
+    recentIds = new Set(
+      store.calls
+        .filter((c) => c.salespersonId === salespersonId)
+        .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+        .slice(0, opts.perCallLimit)
+        .map((c) => c.id),
+    );
+  }
+  const forksToNarrate = recentIds ? forks.filter((f) => recentIds!.has(f.callId)) : forks;
 
   // Per-call recommended-start (every regret fork gets one; quotes are real).
   // [1] is always THIS call's own moment; [2..] are other calls with the same mistake
   // (the recurring pattern), so the card cites both the current call and history.
   const perCall: Record<Id, NonNullable<AiFeedback["recommendedStart"]>> = {};
   await Promise.all(
-    forks.map(async (cf) => {
+    forksToNarrate.map(async (cf) => {
       const sameMove = forks.filter((x) => x.fork.takenTitle === cf.fork.takenTitle);
       // Other calls with the same missed-best move, deduped by company (the same
       // prospect can appear on several calls — don't cite it twice). Biggest gaps first.
@@ -182,6 +199,10 @@ export async function generateInsights(salespersonId = FEATURED_REP): Promise<In
     }),
   );
 
+  // When scoped to recent calls, keep older calls' last-good per-call copy by merging
+  // the freshly-narrated entries over the previously-persisted ones.
+  const mergedPerCall = recentIds ? { ...(loadInsights()?.perCall ?? {}), ...perCall } : perCall;
+
   // Perfect practice call — the single worst fork among calls that DIDN'T win (a won
   // call's small-gap fork shouldn't outrank a real loss), plus citations from other
   // calls sharing the same mistake (the recurring pattern → [1][2][3][4]).
@@ -202,7 +223,7 @@ export async function generateInsights(salespersonId = FEATURED_REP): Promise<In
       reasons: ["Once there are losing calls to learn from, this will recommend the moment to drill."],
       citations: [],
     };
-    return persist({ salespersonId, perfectPractice: empty, perCall, usedLLM: false });
+    return persist({ salespersonId, perfectPractice: empty, perCall: mergedPerCall, usedLLM: false });
   }
 
   // Only count/cite the non-won calls — the Perfect Practice copy says "all were lost".
@@ -229,7 +250,7 @@ export async function generateInsights(salespersonId = FEATURED_REP): Promise<In
     call: toCallSummary(store.calls.find((c) => c.id === top.callId)!),
   };
 
-  return persist({ salespersonId, perfectPractice, perCall, usedLLM: !!llm.usedLLM });
+  return persist({ salespersonId, perfectPractice, perCall: mergedPerCall, usedLLM: !!llm.usedLLM });
 }
 
 async function buildNarrative(

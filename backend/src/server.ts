@@ -197,6 +197,16 @@ app.post("/admin/refresh", async (_req: Request, res: Response) => {
   res.json({ generatedAt: bundle.generatedAt, usedLLM: bundle.usedLLM });
 });
 
+// Lightweight refresh after a new call lands: regenerate the Perfect Practice pick and
+// the per-call "Practice from here" recs for the rep's most-recent 10 calls only (older
+// entries are preserved). ~10 LLM calls instead of one-per-call — fast enough to fire in
+// the background from the UI after an upload completes. The UI calls this once the
+// upload pipeline's SSE stream reports "done".
+app.post("/admin/refresh-recent", async (_req: Request, res: Response) => {
+  const bundle = await generateInsights(undefined, { perCallLimit: 10 });
+  res.json({ generatedAt: bundle.generatedAt, usedLLM: bundle.usedLLM });
+});
+
 app.get("/admin/status", (_req: Request, res: Response) => {
   const insights = loadInsights();
   res.json({ generatedAt: insights?.generatedAt ?? null, usedLLM: insights?.usedLLM ?? false });

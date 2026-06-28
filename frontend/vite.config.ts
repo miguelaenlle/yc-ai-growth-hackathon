@@ -11,6 +11,7 @@ export default defineConfig({
       '/calls': 'http://localhost:3001',
       '/trees': 'http://localhost:3001',
       '/recordings': 'http://localhost:3001',
+      '/upload': 'http://localhost:3001',
       '/personas': 'http://localhost:3001',
       '/salespeople': 'http://localhost:3001',
       '/admin': 'http://localhost:3001',

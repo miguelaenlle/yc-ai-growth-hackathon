@@ -90,3 +90,32 @@ export async function refreshInsights(): Promise<AdminStatus> {
   const { data } = await api.post<AdminStatus>("/admin/refresh");
   return data;
 }
+
+/** POST /admin/refresh-recent → regenerate Perfect Practice + per-call recs for the last 10 calls. */
+export async function refreshRecentInsights(): Promise<AdminStatus> {
+  const { data } = await api.post<AdminStatus>("/admin/refresh-recent");
+  return data;
+}
+
+export interface UploadCallResult {
+  callId: string;
+  treeId: string;
+  recordingId: string;
+}
+
+/**
+ * POST /upload/call → kicks off the MP3 → call/tree pipeline. Returns ids immediately;
+ * progress streams over SSE at GET /stream/:recordingId.
+ */
+export async function uploadCall(
+  file: File,
+  companyName: string,
+  buyerName: string,
+): Promise<UploadCallResult> {
+  const form = new FormData();
+  form.append("audio", file);
+  form.append("company_name", companyName);
+  form.append("buyer_name", buyerName);
+  const { data } = await api.post<UploadCallResult>("/upload/call", form);
+  return data;
+}

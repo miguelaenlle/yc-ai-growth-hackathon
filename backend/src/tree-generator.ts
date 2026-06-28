@@ -15,12 +15,41 @@ import { getOutcome } from "./tree-ops.js";
 import type { AudioScore } from "./audio/types.js";
 import type {
   Id,
+  NodeStats,
   NodeStatEntry,
   SignalMetrics,
   TranscriptSegment,
   Tree,
   TreeNode,
 } from "./types.js";
+
+// Seeded trees all use "n_open" as the canonical root id; parts of the frontend
+// (the review-page focus, the summarize animation) assume it. Pin uploaded trees
+// to the same root so they render like every other call.
+const CANONICAL_ROOT_ID = "n_open";
+
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+
+/**
+ * Resolve real observed win-stats for a node by matching its title against the
+ * persisted population table (`store._nodeStats`). When a node title matches a
+ * historical move, the uploaded node inherits that move's real counts + smoothed
+ * win-rate — exactly like a seeded node. No match → synthesize light counts from
+ * the model's successProbability so the shape is still populated.
+ */
+function statsForNode(title: string, sp: number): { stats: NodeStats; successProbability: number } {
+  const entry = (store._nodeStats ?? []).find((s) => s.title.toLowerCase() === title.toLowerCase());
+  if (entry) {
+    return {
+      stats: { visits: entry.sampleSize, wins: entry.wins, winRate: entry.winRate },
+      successProbability: entry.winRate, // align with seeded nodes (sp == smoothed win-rate)
+    };
+  }
+  // No historical match — synthesize plausible counts consistent with sp.
+  const visits = 6;
+  const wins = Math.round(clamp01(sp) * visits);
+  return { stats: { visits, wins, winRate: clamp01(sp) }, successProbability: clamp01(sp) };
+}
 
 // ---------------------------------------------------------------------------
 // Stat table builder — scans ALL calls in the store
@@ -203,9 +232,9 @@ The tree must have:
 ${statTableStr}
 
 IMPORTANT: Use winRate as the primary signal for successProbability on every node you generate.
-- Match each node to the closest entry in the table by title (fuzzy match is fine).
-- For AI branch nodes, target node titles with the highest win rates (Curious, Pilot Offer, etc.).
-- If a node title has no historical match, estimate based on the semantic meaning.
+- When a moment matches a historical move, REUSE THAT EXACT TITLE VERBATIM (copy it character-for-character from the table) so the node inherits its real win statistics.
+- For AI branch nodes, target node titles with the highest win rates (Curious, Pilot Offer, etc.) — again, reuse the exact historical title.
+- Only invent a new title when no historical move fits; then estimate successProbability from semantic meaning.
 
 === UPLOADED CALL TRANSCRIPT ===
 ${transcriptText}
@@ -297,7 +326,8 @@ function assembleTree(
   let prevNodeId: Id | null = null;
   for (let i = 0; i < gptOutput.realPath.length; i++) {
     const gn = gptOutput.realPath[i];
-    const nodeId = newId("n");
+    // Pin the root to the canonical id the frontend expects; rest get fresh ids.
+    const nodeId = i === 0 ? CANONICAL_ROOT_ID : newId("n");
     realPathIds.push(nodeId);
 
     const nodeSegments = gn.transcriptIndices
@@ -308,6 +338,7 @@ function assembleTree(
     const firstSeg = nodeSegments[0];
     const tMs = firstSeg?.tStartMs ?? i * 5000;
 
+    const { stats, successProbability } = statsForNode(gn.title, gn.successProbability);
     const node: TreeNode = {
       id: nodeId,
       parentId: prevNodeId,
@@ -316,9 +347,10 @@ function assembleTree(
       description: gn.description,
       speaker: gn.speaker,
       tMs,
-      successProbability: Math.min(1, Math.max(0, gn.successProbability)),
-      expectedValue: Math.round(Math.min(1, Math.max(0, gn.successProbability)) * DEAL_VALUE),
+      successProbability,
+      expectedValue: Math.round(successProbability * DEAL_VALUE),
       metrics,
+      stats,
     };
 
     if (prevNodeId) {
@@ -338,7 +370,7 @@ function assembleTree(
     let branchParentId = parentRealNode.id;
     for (const gn of branch.nodes) {
       const nodeId = newId("n");
-      const sp = Math.min(1, Math.max(0, gn.successProbability));
+      const { stats, successProbability: sp } = statsForNode(gn.title, gn.successProbability);
 
       const node: TreeNode = {
         id: nodeId,
@@ -356,6 +388,7 @@ function assembleTree(
           hesitation: Math.round((1 - sp) * 100) / 100,
           enthusiasm: Math.round(sp * 100) / 100,
         },
+        stats,
       };
 
       const parent = nodes.find((n) => n.id === branchParentId);

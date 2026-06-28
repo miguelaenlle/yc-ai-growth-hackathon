@@ -43,7 +43,7 @@ function PersonRow({ icon, person }: { icon: React.ReactNode; person: Person }) 
   );
 }
 
-export function CallCard({ call, index }: { call: CallSummary; index: number }) {
+export function CallCard({ call, index, isNew }: { call: CallSummary; index: number; isNew?: boolean }) {
   const navigate = useNavigate();
   // Prefer the real per-call participants from the summary; fall back to the
   // company placeholder for any older summary shape missing them.
@@ -58,18 +58,24 @@ export function CallCard({ call, index }: { call: CallSummary; index: number }) 
       onClick={() => navigate(`/call/${call.id}`, { state: { summary: call } })}
       style={{ animationDelay: `${index * 60}ms` }}
       className={
-        "group w-full animate-fade-up rounded-lg border border-border bg-surface " +
+        "group w-full animate-fade-up rounded-lg border bg-surface " +
         "px-5 py-4 text-left outline-none transition-all duration-150 " +
         "hover:-translate-y-px hover:border-border-strong hover:bg-surface-2 " +
         "hover:shadow-[0_1px_2px_rgba(0,0,0,0.4)] " +
-        "focus-visible:ring-1 focus-visible:ring-accent"
+        "focus-visible:ring-1 focus-visible:ring-accent " +
+        (isNew ? "border-accent/50 ring-1 ring-accent/30" : "border-border")
       }
     >
       <div className="flex items-start justify-between gap-4">
         {/* left column — company + participants, stacked, left-aligned */}
         <div className="min-w-0 space-y-2">
-          <h3 className="truncate text-lg font-semibold text-text">
+          <h3 className="flex items-center gap-2 truncate text-lg font-semibold text-text">
             {call.company}
+            {isNew && (
+              <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-bg">
+                New
+              </span>
+            )}
           </h3>
           {(call.industry || call.seats || call.incumbent) && (
             <p className="truncate text-[13px] text-text-faint">
