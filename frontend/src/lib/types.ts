@@ -11,8 +11,18 @@ export interface CallSummary {
   company: string;
   startedAt: string; // ISO 8601
   outcome: Outcome;
-  bestEV: number; // best expected value across the tree
-  // TODO: buyer/salesperson { name, title } once the contract is extended.
+  bestEV: number;
+}
+
+/** GET /recordings/:id/walkthrough → WalkthroughBundle */
+export interface TimelineCue {
+  atMs: number;
+  nodeId: Id;
+}
+
+export interface WalkthroughBundle {
+  audioUrl: string;
+  timeline: TimelineCue[];
 }
 
 export type Speaker = "seller" | "buyer";

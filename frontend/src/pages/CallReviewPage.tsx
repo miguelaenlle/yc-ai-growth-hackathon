@@ -1,13 +1,40 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { CallTree } from "../components/tree/CallTree";
+import {
+  ReactFlow,
+  ReactFlowProvider,
+  Background,
+  BackgroundVariant,
+  Panel,
+  useReactFlow,
+  type Node,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import {
+  TREE,
+  initialNodes,
+  initialEdges,
+  BASE_W,
+  BASE_H,
+  type CallNodeData,
+} from "../components/tree/treeData";
+import { applyFocus } from "../components/tree/focus";
+import { CallNode } from "../components/tree/CallNode";
+import { NodePreview } from "../components/tree/NodePreview";
+import { TreeMiniMap } from "../components/tree/TreeMiniMap";
 import { OutcomeBadge } from "../components/OutcomeBadge";
 import { Logo } from "../components/Logo";
+import { SUMMARIZE_START_NODE_ID } from "../components/summarize/summarize_constants";
+import { useSummarizePlayback } from "../components/summarize/useSummarizePlayback";
+import { useSummarizeTreeAnimation } from "../components/summarize/useSummarizeTreeAnimation";
 import { useCallDetail } from "../queries/useCallDetail";
-import { buildTreeView } from "../lib/treeView";
+import { getWalkthrough, peekWalkthrough } from "../lib/walkthroughCache";
 import { participantsFor } from "../lib/placeholders";
 import { formatDateTime } from "../lib/format";
-import type { CallDetail, CallSummary, Outcome } from "../lib/types";
+import { isSimulatableUiNode, toBackendNodeId } from "../lib/nodeIdMap";
+import type { CallDetail, CallSummary, Outcome, WalkthroughBundle } from "../lib/types";
+
+const nodeTypes = { call: CallNode };
 
 /** Fallback outcome when we arrive without the list summary (deep link). */
 function deriveOutcome(detail: CallDetail): Outcome {
@@ -28,6 +55,8 @@ function dateOnly(iso: string): string {
     year: "numeric",
   });
 }
+
+type SummarizeStatus = "loading" | "ready" | "playing" | "error";
 
 function BackArrow() {
   return (
@@ -98,11 +127,11 @@ function Sidebar({ company, startedAt, outcome, buyerName, buyerTitle, sellerNam
   );
 }
 
-function SummarizeButton() {
+function Avatar() {
   return (
-    <button className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]">
-      Summarize Call
-    </button>
+    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border-strong bg-surface-2 font-mono text-sm font-medium text-text">
+      M
+    </div>
   );
 }
 
@@ -111,6 +140,171 @@ function StateScreen({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen items-center justify-center bg-bg px-6 text-center text-sm text-text-muted">
       {children}
     </div>
+  );
+}
+
+interface FlowProps {
+  walkthrough: WalkthroughBundle | null;
+  summarizeStatus: SummarizeStatus;
+  onSummarize: () => void;
+  onPlaybackEnd: () => void;
+  /** Start a simulation from a (UI) tree node id. */
+  onSimulateNode: (uiNodeId: string) => void;
+}
+
+function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode }: FlowProps) {
+  const isSummarizePlaying = summarizeStatus === "playing";
+
+  // Inject a per-node "simulate from here" action onto the simulatable nodes.
+  // CallNode renders it only on the focused node, so the action is scoped to
+  // whatever node is selected. The augmented copy is what the animation repacks
+  // each frame, so onSimulate survives playback.
+  const baseNodes = useMemo(
+    () =>
+      initialNodes.map((n) =>
+        isSimulatableUiNode(n.id)
+          ? { ...n, data: { ...n.data, onSimulate: () => onSimulateNode(n.id) } }
+          : n,
+      ),
+    [onSimulateNode],
+  );
+
+  const [selectedId, setSelectedId] = useState(SUMMARIZE_START_NODE_ID);
+  const [nodes, setNodes] = useState(
+    () => applyFocus(TREE, baseNodes, initialEdges, SUMMARIZE_START_NODE_ID).nodes,
+  );
+  const [edges, setEdges] = useState(
+    () => applyFocus(TREE, baseNodes, initialEdges, SUMMARIZE_START_NODE_ID).edges,
+  );
+  const { getViewport } = useReactFlow();
+
+  const { summarize_resetToStart } = useSummarizeTreeAnimation({
+    nodes,
+    selectedId,
+    setSelectedId,
+    setNodes,
+    setEdges,
+    isSummarizePlaying,
+    baseNodes,
+    baseEdges: initialEdges,
+  });
+
+  const handleSummarizeNodeFocus = useCallback((uiNodeId: string) => {
+    setSelectedId((prev) => (prev === uiNodeId ? prev : uiNodeId));
+  }, []);
+
+  const handleSummarizeEnded = useCallback(() => {
+    summarize_resetToStart();
+    onPlaybackEnd();
+  }, [summarize_resetToStart, onPlaybackEnd]);
+
+  useSummarizePlayback({
+    walkthrough,
+    isPlaying: isSummarizePlaying,
+    onNodeFocus: handleSummarizeNodeFocus,
+    onEnded: handleSummarizeEnded,
+  });
+
+  const [preview, setPreview] = useState<{
+    data: CallNodeData;
+    x: number;
+    yTop: number;
+    yBottom: number;
+  } | null>(null);
+
+  const onNodeEnter = (_: unknown, n: Node) => {
+    const data = n.data as CallNodeData;
+    if (!data.titleOnly) {
+      setPreview(null);
+      return;
+    }
+    const vp = getViewport();
+    const w = n.width ?? BASE_W;
+    const h = n.height ?? BASE_H;
+    setPreview({
+      data,
+      x: (n.position.x + w / 2) * vp.zoom + vp.x,
+      yTop: n.position.y * vp.zoom + vp.y,
+      yBottom: (n.position.y + h) * vp.zoom + vp.y,
+    });
+  };
+
+  const buttonLabel =
+    summarizeStatus === "loading"
+      ? "Preparing summary…"
+      : summarizeStatus === "playing"
+        ? "Playing…"
+        : summarizeStatus === "error"
+          ? "Summary unavailable"
+          : "Summarize Call";
+
+  const buttonDisabled =
+    summarizeStatus === "loading" ||
+    summarizeStatus === "playing" ||
+    summarizeStatus === "error" ||
+    !walkthrough;
+
+  return (
+    <>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.2}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        proOptions={{ hideAttribution: true }}
+        onNodeClick={(_, n: Node) => {
+          if (isSummarizePlaying) return;
+          setSelectedId(n.id);
+        }}
+        onNodeMouseEnter={onNodeEnter}
+        onNodeMouseLeave={() => setPreview(null)}
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={22}
+          size={1.5}
+          color="var(--color-border)"
+        />
+        <Panel position="bottom-right">
+          <TreeMiniMap nodes={nodes} edges={edges} />
+        </Panel>
+        <Panel position="top-right" className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={buttonDisabled}
+            onClick={onSummarize}
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {buttonLabel}
+          </button>
+          <Avatar />
+        </Panel>
+      </ReactFlow>
+      {preview && (
+        <div
+          className="pointer-events-none absolute z-50"
+          style={
+            preview.yTop > 180
+              ? {
+                  left: preview.x,
+                  top: preview.yTop - 12,
+                  transform: "translate(-50%, -100%)",
+                }
+              : {
+                  left: preview.x,
+                  top: preview.yBottom + 12,
+                  transform: "translate(-50%, 0)",
+                }
+          }
+        >
+          <NodePreview data={preview.data} />
+        </div>
+      )}
+    </>
   );
 }
 
@@ -125,30 +319,80 @@ export function CallReviewPage() {
   const company = summary?.company ?? "Call";
   const { buyer, salesperson } = participantsFor(company);
 
-  const view = useMemo(() => (detail ? buildTreeView(detail) : null), [detail]);
+  const [walkthrough, setWalkthrough] = useState<WalkthroughBundle | null>(null);
+  const [summarizeStatus, setSummarizeStatus] = useState<SummarizeStatus>("loading");
 
-  // Inject a per-node "simulate from here" action; CallNode renders it only on
-  // the focused node, so the action is scoped to whatever node is selected. We
+  // Prefetch the review walkthrough for the real recording once the call loads,
+  // so "Summarize Call" can play instantly.
+  useEffect(() => {
+    if (!detail) return;
+    let cancelled = false;
+
+    async function prefetch(d: CallDetail) {
+      try {
+        const realRecording = d.recordings.find((r) => r.isReal);
+        if (!realRecording) {
+          if (!cancelled) setSummarizeStatus("error");
+          return;
+        }
+
+        const cached = peekWalkthrough(realRecording.id, "review");
+        if (cached) {
+          if (!cancelled) {
+            setWalkthrough(cached);
+            setSummarizeStatus("ready");
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          setSummarizeStatus("loading");
+          setWalkthrough(null);
+        }
+
+        const bundle = await getWalkthrough(realRecording.id, "review");
+        if (!cancelled) {
+          setWalkthrough(bundle);
+          setSummarizeStatus("ready");
+        }
+      } catch (err) {
+        console.error("Failed to prefetch walkthrough:", err);
+        if (!cancelled) setSummarizeStatus("error");
+      }
+    }
+
+    void prefetch(detail);
+    return () => {
+      cancelled = true;
+    };
+  }, [detail]);
+
+  const handleSummarize = useCallback(() => {
+    if (!walkthrough || summarizeStatus !== "ready") return;
+    setSummarizeStatus("playing");
+  }, [walkthrough, summarizeStatus]);
+
+  const handlePlaybackEnd = useCallback(() => {
+    setSummarizeStatus("ready");
+  }, []);
+
+  // Simulate from a tree node: map the UI node id back to its backend node id
+  // (the simulate route resolves the start node against the real tree) and
   // forward the buyer identity so the simulate screen can show real initials.
-  const nodes = useMemo(
-    () =>
-      view?.nodes.map((n) => ({
-        ...n,
-        data: {
-          ...n.data,
-          onSimulate: () =>
-            navigate(`/call/${id}/simulate?from=${n.id}`, {
-              state: { buyerName: buyer.name, company },
-            }),
-        },
-      })) ?? [],
-    [view, id, navigate, buyer.name, company],
+  const handleSimulateNode = useCallback(
+    (uiNodeId: string) => {
+      const backendId = toBackendNodeId(uiNodeId);
+      navigate(`/call/${id}/simulate?from=${backendId}`, {
+        state: { buyerName: buyer.name, company },
+      });
+    },
+    [id, navigate, buyer.name, company],
   );
 
   if (isLoading) {
     return <StateScreen>Loading call…</StateScreen>;
   }
-  if (isError || !detail || !view) {
+  if (isError || !detail) {
     return (
       <StateScreen>
         Couldn&apos;t load this call. Is the backend running on{" "}
@@ -171,13 +415,15 @@ export function CallReviewPage() {
         sellerTitle={salesperson.title}
       />
       <div className="relative flex-1">
-        <CallTree
-          root={view.root}
-          nodes={nodes}
-          edges={view.edges}
-          rootId={view.rootId}
-          topRight={<SummarizeButton />}
-        />
+        <ReactFlowProvider>
+          <Flow
+            walkthrough={walkthrough}
+            summarizeStatus={summarizeStatus}
+            onSummarize={handleSummarize}
+            onPlaybackEnd={handlePlaybackEnd}
+            onSimulateNode={handleSimulateNode}
+          />
+        </ReactFlowProvider>
       </div>
     </div>
   );
