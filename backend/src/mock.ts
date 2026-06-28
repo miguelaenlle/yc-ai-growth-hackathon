@@ -225,6 +225,7 @@ export async function handleMockSession(
 
   let currentDepth = 0;
   let recentConversation: { role: string; text: string }[] = [];
+  let routingQueue = Promise.resolve();
 
   console.log(`Starting mock session for recording ${recordingId} at node ${currentNodeId} (precap: ${includePrecap}, maxDepth: ${maxDepth}, targetNodeIds: ${targetNodeIds})`);
 
@@ -337,19 +338,21 @@ export async function handleMockSession(
           breakpointReason = "node";
         }
 
-        if (breakpointHit) {
-          console.log(`Breakpoint reached. Reason: ${breakpointReason}`);
-          clientWs.send(JSON.stringify({
-            type: "mock_breakpoint_reached",
-            reason: breakpointReason,
-            nodeId: currentNodeId,
-            depth: currentDepth
-          }));
-          
-          // End the session to stop OpenAI from talking
-          openaiWs.close();
-          return;
-        }
+          if (breakpointHit) {
+            console.log(`Breakpoint reached. Reason: ${breakpointReason}`);
+            clientWs.send(JSON.stringify({
+              type: "mock_breakpoint_reached",
+              reason: breakpointReason,
+              nodeId: currentNodeId,
+              depth: currentDepth
+            }));
+            
+            // End the session to stop OpenAI from talking, but wait a moment to flush the send buffer
+            setTimeout(() => {
+              openaiWs.close();
+            }, 500);
+            return;
+          }
       }
     } catch (e) {
       console.error("Error branching:", e);
@@ -365,20 +368,44 @@ export async function handleMockSession(
       }
 
       if (event.type === "response.audio_transcript.done") {
-        appendTranscript(recordingId, "buyer", event.transcript);
-        if (event.transcript) {
-          recentConversation.push({ role: "buyer", text: event.transcript });
-          runRouter("buyer");
+        const transcript = event.transcript;
+        if (transcript) {
+          routingQueue = routingQueue.then(async () => {
+            appendTranscript(recordingId, "buyer", transcript);
+            recentConversation.push({ role: "buyer", text: transcript });
+            await runRouter("buyer");
+          }).catch(console.error);
         }
+      } else if (event.type === "response.done") {
+        // Fallback: sometimes we can get the transcript from the completed response item
+        try {
+          const item = event.response.output[0];
+          if (item && item.content && item.content[0] && item.content[0].transcript) {
+            const transcript = item.content[0].transcript;
+            routingQueue = routingQueue.then(async () => {
+              // Check if we already logged it to avoid duplicates
+              const lastLog = recentConversation[recentConversation.length - 1];
+              if (!lastLog || lastLog.text !== transcript) {
+                appendTranscript(recordingId, "buyer", transcript);
+                recentConversation.push({ role: "buyer", text: transcript });
+                await runRouter("buyer");
+                // Manually tell the frontend so it logs it
+                clientWs.send(JSON.stringify({ type: "response.audio_transcript.done", transcript }));
+              }
+            }).catch(console.error);
+          }
+        } catch (e) {}
       }
 
       // Keep track of transcript when available
       if (event.type === "conversation.item.input_audio_transcription.completed") {
-        appendTranscript(recordingId, "seller", event.transcript);
-        if (event.transcript) {
-          recentConversation.push({ role: "seller", text: event.transcript });
-          runRouter("seller");
-        }
+        routingQueue = routingQueue.then(async () => {
+          appendTranscript(recordingId, "seller", event.transcript);
+          if (event.transcript) {
+            recentConversation.push({ role: "seller", text: event.transcript });
+            await runRouter("seller");
+          }
+        }).catch(console.error);
       }
 
       // Forward event to the frontend
