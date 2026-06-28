@@ -191,11 +191,11 @@ Add a node **only when the utterance is significantly different from existing de
 { "node": { "id": "n_looker", "parentId": "n_push", "childIds": [], "title": "Looker ask", "description": "What about Looker instead?", "speaker": "buyer", "tMs": 49000, "successProbability": 0.40, "expectedValue": 19200, "metrics": { "confidence": 0, "hesitation": 0, "enthusiasm": 0 } } }
 ```
 
-**14. `POST /mock/turn` (`MockTurnReq`) → `{ lines: {speaker,text}[], proposedChild?: TreeNode }`**
-Generate the next turn in `role` from the buyer persona + path so far. `role:"both"` = the "show me a great rep" demo (ideal seller line + buyer reply). A line implying a new path includes `proposedChild` (routed through `/agent/branch`).
-```json
-{ "lines": [ { "speaker": "buyer", "text": "Oh, so we'd keep Tableau and just pipe data in through your connectors? That works." } ], "proposedChild": null }
-```
+**14. `WS /mock/session/:recordingId?currentNodeId=...&includePrecap=true`**
+WebSocket endpoint connecting the frontend to the backend for the mock practice session.
+The session has two phases:
+1. **Precap (Optional)**: If `includePrecap=true`, the backend streams an audio intro (context of what happened so far) down the WebSocket. It sends `{ "type": "precap_node", "nodeId": "..." }` events right before sending the corresponding `{ "type": "precap_audio", "b64_data": "..." }` chunks, allowing the FE to animate the tree in sync. When finished, it sends `{ "type": "precap_complete" }`.
+2. **Interactive Mock**: The backend connects to the OpenAI Realtime API. It proxies bidirectional audio and events (like `response.audio.delta` and `input_audio_buffer.append`). The transcript and tree progression are tracked in real-time.
 
 **15. `POST /tts` (`TtsReq`) → `{ audioUrl }`**
 Proxy `text`+`voiceId` to ElevenLabs (key stays server-side), save under `/data/audio/`, return the URL. Cache by `hash(text+voiceId)`. Separate from SSE because audio is a binary pull the `<audio>` element streams/seeks/caches from a URL — not a text push.
@@ -234,5 +234,5 @@ data: {"type":"notes","notes":{"commitments":[],"objections":["No Tableau integr
 | 11 | POST | `/transcribe` | multipart | `{segments}` |
 | 12 | POST | `/agent/notes` | `NotesReq` | `AiNotes` |
 | 13 | POST | `/agent/branch` | `BranchReq` | `{node}` / `{node:null,matchedNodeId}` |
-| 14 | POST | `/mock/turn` | `MockTurnReq` | `{lines,proposedChild?}` |
+| 14 | WS | `/mock/session/:recordingId` | `Audio Stream` | `Audio Stream` |
 | 15 | POST | `/tts` | `TtsReq` | `{audioUrl}` |
