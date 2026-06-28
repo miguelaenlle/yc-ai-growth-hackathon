@@ -7,8 +7,10 @@ export const GEN_TREE: RawNode = {
   "id": "n_open",
   "kind": "real",
   "title": "Warm Opening",
-  "description": "Thank Sarah, set light agenda",
+  "description": "Open warm, set a light agenda",
   "onPath": true,
+  "visits": 100,
+  "winRate": 0.61,
   "children": [
     {
       "id": "n_disc",
@@ -16,27 +18,35 @@ export const GEN_TREE: RawNode = {
       "title": "Discovery",
       "description": "How does your team communicate today?",
       "onPath": true,
+      "visits": 100,
+      "winRate": 0.61,
       "children": [
         {
           "id": "n_incumbent",
           "kind": "real",
           "title": "Incumbent Objection",
-          "description": "We use Microsoft Teams — it's bundled",
+          "description": "We already use Microsoft Teams",
           "onPath": true,
+          "visits": 67,
+          "winRate": 0.7,
           "children": [
             {
               "id": "n_coexist",
               "kind": "real",
               "title": "Coexist Reframe",
-              "description": "Slack runs alongside Teams, not a rip-and-replace",
+              "description": "Slack runs alongside Microsoft Teams, not a rip-and-replace",
               "onPath": true,
+              "visits": 41,
+              "winRate": 0.79,
               "children": [
                 {
                   "id": "n_curious",
                   "kind": "real",
                   "title": "Curious Buyer",
-                  "description": "Where does Slack win over Teams?",
+                  "description": "Where does Slack win over Microsoft Teams?",
                   "onPath": true,
+                  "visits": 33,
+                  "winRate": 0.97,
                   "children": [
                     {
                       "id": "n_pilot",
@@ -44,13 +54,17 @@ export const GEN_TREE: RawNode = {
                       "title": "Pilot Offer",
                       "description": "Low-risk 2-week pilot with one team",
                       "onPath": true,
+                      "visits": 33,
+                      "winRate": 0.97,
                       "children": [
                         {
                           "id": "n_yes",
                           "kind": "real",
                           "title": "Pilot Agreement",
                           "description": "Buyer agrees to run the pilot",
-                          "onPath": true
+                          "onPath": true,
+                          "visits": 33,
+                          "winRate": 0.97
                         }
                       ]
                     }
@@ -60,8 +74,10 @@ export const GEN_TREE: RawNode = {
                   "id": "n_unconvinced",
                   "kind": "ai",
                   "title": "Pushback",
-                  "description": "We just standardized on Teams — not now",
-                  "success": 0.08
+                  "description": "We just standardized on Microsoft Teams — not now",
+                  "success": 0.08,
+                  "visits": 8,
+                  "winRate": 0.1
                 }
               ]
             },
@@ -69,29 +85,37 @@ export const GEN_TREE: RawNode = {
               "id": "n_discover",
               "kind": "ai",
               "title": "Discovery First",
-              "description": "What’s painful about Teams day-to-day?",
-              "success": 0.9,
+              "description": "What's painful about Microsoft Teams day-to-day?",
+              "success": 0.94,
+              "visits": 14,
+              "winRate": 0.94,
               "children": [
                 {
                   "id": "n_pain",
                   "kind": "ai",
                   "title": "Real Pain",
                   "description": "Search is weak, threads get lost",
-                  "success": 0.9,
+                  "success": 0.94,
+                  "visits": 14,
+                  "winRate": 0.94,
                   "children": [
                     {
                       "id": "n_show",
                       "kind": "ai",
                       "title": "Show Solution",
                       "description": "Tie pain to Slack's search + threads",
-                      "success": 0.9,
+                      "success": 0.94,
+                      "visits": 14,
+                      "winRate": 0.94,
                       "children": [
                         {
                           "id": "n_demo",
                           "kind": "ai",
                           "title": "Demo Booked",
                           "description": "Buyer books a demo",
-                          "success": 0.9
+                          "success": 0.94,
+                          "visits": 14,
+                          "winRate": 0.94
                         }
                       ]
                     }
@@ -103,15 +127,19 @@ export const GEN_TREE: RawNode = {
               "id": "n_knock",
               "kind": "ai",
               "title": "Weak Move",
-              "description": "Teams is clunky and outdated",
-              "success": 0.09,
+              "description": "Microsoft Teams is clunky and outdated",
+              "success": 0.07,
+              "visits": 12,
+              "winRate": 0.07,
               "children": [
                 {
                   "id": "n_defensive",
                   "kind": "ai",
                   "title": "Defensive Buyer",
                   "description": "Just send me some info",
-                  "success": 0.08
+                  "success": 0.07,
+                  "visits": 12,
+                  "winRate": 0.07
                 }
               ]
             }
@@ -122,28 +150,36 @@ export const GEN_TREE: RawNode = {
           "kind": "ai",
           "title": "Price Inquiry",
           "description": "What does this run for 250 people?",
-          "success": 0.45,
+          "success": 0.43,
+          "visits": 33,
+          "winRate": 0.43,
           "children": [
             {
               "id": "n_value",
               "kind": "ai",
               "title": "Value Anchor",
               "description": "Time saved per seat, not sticker price",
-              "success": 0.67,
+              "success": 0.65,
+              "visits": 21,
+              "winRate": 0.65,
               "children": [
                 {
                   "id": "n_proof",
                   "kind": "ai",
                   "title": "Proof Request",
                   "description": "Need proof it pays off at our size",
-                  "success": 0.91,
+                  "success": 0.94,
+                  "visits": 14,
+                  "winRate": 0.94,
                   "children": [
                     {
                       "id": "n_caseclose",
                       "kind": "ai",
                       "title": "Case Study Success",
                       "description": "Relevant case study lands, buyer moves forward",
-                      "success": 0.91
+                      "success": 0.94,
+                      "visits": 14,
+                      "winRate": 0.94
                     }
                   ]
                 },
@@ -152,7 +188,9 @@ export const GEN_TREE: RawNode = {
                   "kind": "ai",
                   "title": "Price Resistance",
                   "description": "Buyer balks at the price",
-                  "success": 0.08
+                  "success": 0.08,
+                  "visits": 7,
+                  "winRate": 0.11
                 }
               ]
             },
@@ -161,14 +199,18 @@ export const GEN_TREE: RawNode = {
               "kind": "ai",
               "title": "Discount Offer",
               "description": "Lead with a discount to win",
-              "success": 0.11,
+              "success": 0.07,
+              "visits": 12,
+              "winRate": 0.07,
               "children": [
                 {
                   "id": "n_anchor",
                   "kind": "ai",
                   "title": "Buyer Anchors",
                   "description": "Buyer anchors lower and stalls",
-                  "success": 0.18
+                  "success": 0.18,
+                  "visits": 12,
+                  "winRate": 0.07
                 }
               ]
             }

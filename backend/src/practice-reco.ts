@@ -1,62 +1,36 @@
-// practice-reco.ts — the practice-recommendation brain for both systems.
+// practice-reco.ts — the practice-recommendation brain, grounded in TREE + OUTCOME
+// data (what each move actually wins across the call population), not a synthetic
+// stats file.
 //
-// System 1 (buildRecommendedPractice): a per-rep "perfect practice call" derived
-// deterministically from the rep's BASELINE stats — the persona they perform
-// worst against + a start node exercising their weakest skill, on a representative
-// call of theirs. Reasons cite REAL baseline numbers, nothing invented.
+// System 1 (buildRecommendedPractice): the per-rep "perfect practice call". Scans
+// the rep's lost/open calls, finds the single fork where they played a low-win move
+// while a sibling move wins far more often, and recommends replaying that exact
+// moment against the buyer persona they actually faced. The biggest realized-EV
+// "regret gap" wins. Reasons cite the real per-move win-rates.
 //
-// System 2 (rankPracticeTargets): blends THIS call's signal weakness (getWeakNodes)
-// with the rep's HISTORICAL stats (per-node fail rate, weak-skill mapping) to rank
-// practice targets and pick one top "start practicing here" node.
+// System 2 (buildAiFeedback): for one recording, the same sibling-gap picks the
+// "start practicing here" node; practice targets come from the call's in-call
+// signal weakness on the path it actually walked.
 //
-// Everything here is deterministic (no LLM) so it stays fast and works without an
-// OPENAI_API_KEY — the reasons are grounded directly in the stat values.
+// Everything here is deterministic (no LLM, no stats file) so the reasons are
+// grounded directly in the tree's win-rates and EVs.
 
-import { store, getTree } from "./store.js";
+import { store, getTree, recordingsForCall, companyName, toCallSummary } from "./store.js";
 import { getPersona } from "./personas.js";
-import { getNodeById, getWeakNodes } from "./tree-ops.js";
-import {
-  getStats,
-  overallWinRate,
-  skillFailRate,
-  weakestSkill,
-  type SalespersonStats,
-} from "./salesperson-stats.js";
+import { getNodeChildren, getPathFromTraversal, getWeakNodes } from "./tree-ops.js";
 import type {
+  AiFeedback,
   Id,
   PracticeTarget,
   RecommendedPractice,
   SalespersonListItem,
+  Traversal,
   Tree,
 } from "./types.js";
 
-/**
- * Each taxonomy skill → the shared-tree node that best exercises it. The demo
- * trees all share these node ids (see CLAUDE.md), so this map is stable.
- */
-export const SKILL_NODE_MAP: Record<string, Id> = {
-  discovery: "n_disc",
-  "objection-handling": "n_incumbent",
-  pricing: "n_price",
-  closing: "n_pilot",
-  rapport: "n_open",
-};
-
-/** Inverse of SKILL_NODE_MAP: node id → the skill it exercises (when mapped). */
-const NODE_SKILL_MAP: Record<Id, string> = Object.fromEntries(
-  Object.entries(SKILL_NODE_MAP).map(([skill, nodeId]) => [nodeId, skill]),
-);
-
-/**
- * Minimum persona attempts before a persona counts as the rep's "worst" — guards
- * against a 0/1 sample dominating a real 1/6 weakness. Falls back to any attempted
- * persona when none clear the bar.
- */
-const MIN_PERSONA_ATTEMPTS = 3;
-
 const pct = (x: number): number => Math.round(x * 100);
-const label = (skill: string): string => skill.replace(/-/g, " ");
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+const money = (n: number): string => `$${Math.round(n).toLocaleString()}`;
 
 /** Metric-appropriate phrasing — high hesitation is bad; low conf/enthusiasm is bad. */
 function metricMoment(metric: PracticeTarget["metric"]): string {
@@ -65,259 +39,231 @@ function metricMoment(metric: PracticeTarget["metric"]): string {
   return "enthusiasm dipped";
 }
 
-/** fails / attempts for a node's historical stats (0 when never attempted). */
-function nodeFailRate(stats: SalespersonStats, nodeId: Id): number {
-  const n = stats.nodes[nodeId];
-  if (!n || n.attempts === 0) return 0;
-  return n.fails / n.attempts;
+/** The persona assigned to a call's buyer (auto-assigned in the seed; never picked). */
+function buyerPersonaId(buyerId: Id): Id | undefined {
+  for (const c of store.companies) {
+    const b = c.buyers.find((x) => x.id === buyerId);
+    if (b) return b.personaId;
+  }
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Regret fork — the decision point where a better move was clearly available
+// ---------------------------------------------------------------------------
+
+export interface RegretFork {
+  forkNodeId: Id;
+  forkTitle: string;
+  takenTitle: string;
+  takenP: number;
+  bestTitle: string;
+  bestNodeId: Id;
+  bestP: number;
+  gapEV: number; // bestChild.EV − takenChild.EV (realized-value swing)
 }
 
 /**
- * The persona this rep performs WORST against — lowest win rate among personas
- * with a meaningful sample. Ties break toward more attempts (more evidence), then
- * more losses. Returns null when the rep has no attempted personas.
+ * Walk the path the call actually took and find the fork with the biggest
+ * realized-EV gap between the move the rep played and the best available sibling.
+ * Returns null when every move taken was already the best (or no real forks exist).
  */
-export function weakestPersona(
-  stats: SalespersonStats,
-): { personaId: Id; attempts: number; wins: number; winRate: number } | null {
-  const entries = Object.entries(stats.personas).filter(([, p]) => p.attempts > 0);
-  if (entries.length === 0) return null;
+export function bestRegretFork(tree: Tree, traversal: Traversal): RegretFork | null {
+  const path = getPathFromTraversal(tree, traversal);
+  let best: RegretFork | null = null;
 
-  const meaningful = entries.filter(([, p]) => p.attempts >= MIN_PERSONA_ATTEMPTS);
-  const pool = meaningful.length > 0 ? meaningful : entries;
+  for (let i = 0; i < path.length - 1; i++) {
+    const fork = path[i];
+    const taken = path[i + 1];
+    const children = getNodeChildren(tree, fork.id);
+    if (children.length < 2) continue; // no alternative move existed
 
-  let worst: { personaId: Id; attempts: number; wins: number; winRate: number } | null = null;
-  for (const [personaId, p] of pool) {
-    const winRate = p.wins / p.attempts;
-    const cand = { personaId, attempts: p.attempts, wins: p.wins, winRate };
-    if (
-      !worst ||
-      cand.winRate < worst.winRate ||
-      (cand.winRate === worst.winRate && cand.attempts > worst.attempts) ||
-      (cand.winRate === worst.winRate &&
-        cand.attempts === worst.attempts &&
-        p.attempts - p.wins > worst.attempts - worst.wins)
-    ) {
-      worst = cand;
+    const bestChild = children.reduce((a, b) => (b.successProbability > a.successProbability ? b : a));
+    if (bestChild.id === taken.id) continue; // already played the best move
+
+    const gapEV = bestChild.expectedValue - taken.expectedValue;
+    if (gapEV <= 0) continue;
+
+    if (!best || gapEV > best.gapEV) {
+      best = {
+        forkNodeId: fork.id,
+        forkTitle: fork.title,
+        takenTitle: taken.title,
+        takenP: taken.successProbability,
+        bestTitle: bestChild.title,
+        bestNodeId: bestChild.id,
+        bestP: bestChild.successProbability,
+        gapEV,
+      };
     }
   }
-  return worst;
+  return best;
 }
 
-/** GET /salespeople — the rep list with a short career summary for the picker. */
+function forkReason(f: RegretFork): string {
+  return `You played the ${f.takenTitle} (${pct(f.takenP)}% win) at the ${f.forkTitle} — the ${f.bestTitle} wins ${pct(
+    f.bestP,
+  )}%, about a ${money(f.gapEV)} swing in expected value.`;
+}
+
+// ---------------------------------------------------------------------------
+// GET /salespeople — rep list, win-rate computed from their actual calls
+// ---------------------------------------------------------------------------
+
 export function listSalespeople(): SalespersonListItem[] {
   return store.salespeople.map((sp) => {
-    const stats = getStats(sp.id);
+    const mine = store.calls.filter((c) => c.salespersonId === sp.id).map(toCallSummary);
+    const decided = mine.filter((c) => c.outcome !== "open");
+    const wins = mine.filter((c) => c.outcome === "won").length;
     return {
       id: sp.id,
       name: sp.name,
-      totalCalls: stats.totalCalls,
-      winRate: overallWinRate(stats),
+      totalCalls: mine.length,
+      winRate: decided.length ? wins / decided.length : 0,
     };
   });
 }
 
-/**
- * The representative call for a rep: their most recent call. sp_jane is pinned to
- * call_showcase (the curated showcase line). Returns null when the rep has no calls.
- */
-function representativeCall(salespersonId: Id): { callId: Id; treeId: Id } | null {
-  if (salespersonId === "sp_jane") {
-    const showcase = store.calls.find((c) => c.id === "call_showcase");
-    if (showcase) return { callId: showcase.id, treeId: showcase.treeId };
-  }
-  const mine = store.calls
-    .filter((c) => c.salespersonId === salespersonId)
-    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
-  const pick = mine[0];
-  return pick ? { callId: pick.id, treeId: pick.treeId } : null;
+// ---------------------------------------------------------------------------
+// System 1 — the per-rep "perfect practice call", from real call outcomes
+// ---------------------------------------------------------------------------
+
+interface RepFork {
+  callId: Id;
+  treeId: Id;
+  company: string;
+  personaId: Id;
+  fork: RegretFork;
 }
 
-/**
- * Build the "perfect practice call" recommendation for one rep (System 1).
- * Deterministic; every reason references a real baseline stat. Returns null only
- * when the rep id is unknown.
- */
-export function buildRecommendedPractice(
-  salespersonId: Id,
-): RecommendedPractice | null {
+/** The rep's biggest missed move across their lost/open calls (or null). */
+function biggestRegret(salespersonId: Id): RepFork | null {
+  let best: RepFork | null = null;
+  for (const call of store.calls) {
+    if (call.salespersonId !== salespersonId) continue;
+    const tree = getTree(call.treeId);
+    if (!tree) continue;
+    const real = recordingsForCall(call.id).find((r) => r.isReal);
+    if (!real) continue;
+    // Focus on calls that didn't clearly win — that's where practice pays off.
+    const summary = toCallSummary(call);
+    if (summary.outcome === "won") continue;
+
+    const fork = bestRegretFork(tree, real.traversal);
+    if (!fork) continue;
+    if (!best || fork.gapEV > best.fork.gapEV) {
+      best = {
+        callId: call.id,
+        treeId: call.treeId,
+        company: companyName(call.companyId),
+        personaId: buyerPersonaId(call.buyerId) ?? "buy_steve",
+        fork,
+      };
+    }
+  }
+  return best;
+}
+
+export function buildRecommendedPractice(salespersonId: Id): RecommendedPractice | null {
   const sp = store.salespeople.find((s) => s.id === salespersonId);
   if (!sp) return null;
 
-  const stats = getStats(salespersonId);
-  const rep = representativeCall(salespersonId);
-  const tree = rep ? getTree(rep.treeId) : undefined;
+  const regret = biggestRegret(salespersonId);
 
-  // Persona — worst win rate (with the min-sample guard). Fall back to Skeptical
-  // Steve so the demo always has a challenging buyer to drill against.
-  const worstPersona = weakestPersona(stats);
-  const personaId = worstPersona?.personaId ?? "buy_steve";
-  const personaName = getPersona(personaId)?.name ?? personaId;
-
-  // Weakest skill → start node. Fall back to objection-handling / n_incumbent.
-  const weakSkill = weakestSkill(stats);
-  const skill = weakSkill?.skill ?? "objection-handling";
-  const startNodeId = SKILL_NODE_MAP[skill] ?? "n_incumbent";
-  const startNodeTitle =
-    (tree && getNodeById(tree, startNodeId)?.title) ?? "Incumbent Objection";
-
-  // Reasons — grounded in real numbers.
-  const reasons: string[] = [];
-  if (worstPersona && worstPersona.attempts > 0) {
-    const losses = worstPersona.attempts - worstPersona.wins;
-    reasons.push(
-      `You lose ${losses} of ${worstPersona.attempts} calls to ${personaName} (${pct(
-        worstPersona.winRate,
-      )}% win rate).`,
-    );
-  } else {
-    reasons.push(`${personaName} is the toughest buyer to practice against.`);
+  // Fallback: rep has no losing fork (all wins / no calls). Recommend their most
+  // recent call's opening so the demo always has something to practice.
+  if (!regret) {
+    const recent = store.calls
+      .filter((c) => c.salespersonId === salespersonId)
+      .sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
+    const tree = recent ? getTree(recent.treeId) : undefined;
+    const start = tree?.nodes.find((n) => n.id === "n_incumbent") ?? tree?.nodes[0];
+    const personaId = recent ? buyerPersonaId(recent.buyerId) ?? "buy_steve" : "buy_steve";
+    return {
+      salespersonId,
+      salespersonName: sp.name,
+      callId: recent?.id ?? "",
+      treeId: recent?.treeId ?? "",
+      startNodeId: start?.id ?? "n_open",
+      startNodeTitle: start?.title ?? "Opening",
+      personaId,
+      personaName: getPersona(personaId)?.name ?? personaId,
+      headline: "Sharpen your strongest line",
+      reasons: ["No costly missed move in your recent calls — drill to keep the edge."],
+    };
   }
 
-  if (weakSkill) {
-    reasons.push(
-      `${cap(label(weakSkill.skill))} is your weakest skill at ${pct(
-        weakSkill.failRate,
-      )}% miss.`,
-    );
-  }
-
-  const histNodeFail = nodeFailRate(stats, startNodeId);
-  if (histNodeFail > 0) {
-    reasons.push(
-      `You mishandle the ${startNodeTitle} ${pct(histNodeFail)}% of the time historically.`,
-    );
-  } else {
-    reasons.push(`${startNodeTitle} is where that skill gets tested.`);
-  }
+  const f = regret.fork;
+  const personaName = getPersona(regret.personaId)?.name ?? regret.personaId;
 
   return {
     salespersonId,
     salespersonName: sp.name,
-    callId: rep?.callId ?? "",
-    treeId: rep?.treeId ?? "",
-    startNodeId,
-    startNodeTitle,
-    personaId,
+    callId: regret.callId,
+    treeId: regret.treeId,
+    startNodeId: f.forkNodeId,
+    startNodeTitle: f.forkTitle,
+    personaId: regret.personaId,
     personaName,
-    headline: `Drill ${startNodeTitle} against ${personaName}`,
-    reasons,
+    headline: `Replay the ${f.forkTitle} on the ${regret.company} deal`,
+    reasons: [
+      forkReason(f),
+      `It's the single biggest missed move across your recent calls.`,
+      `You'll face ${personaName} — the buyer you had on that call.`,
+    ],
   };
 }
 
 // ---------------------------------------------------------------------------
-// System 2 — blend in-call signal with historical stats to rank practice targets
+// System 2 — per-recording feedback (grounded in this call's tree + path)
 // ---------------------------------------------------------------------------
 
-/** Composite signal score (from getWeakNodes) normalized to 0..1 (higher = weaker). */
-function normSignal(score: number): number {
-  // composite = hesitation - confidence - enthusiasm ∈ [-2, 1]
-  return Math.min(1, Math.max(0, (score + 2) / 3));
-}
-
-interface BlendedTarget extends PracticeTarget {
-  /** Internal: components used to build the stats-aware reason. */
-  _signal: number;
-  _histFail: number;
-  _metric: PracticeTarget["metric"];
-  _title: string;
-}
-
-/**
- * Rank practice targets for a recording by blending in-call signal weakness with
- * the rep's historical stats, and pick the single top "start practicing here" node.
- *
- * `stats` is optional — when absent (rep/call unresolved) the blend degrades to
- * pure in-call signal so the endpoint still produces sensible targets.
- */
-export function rankPracticeTargets(
+/** Build full AiFeedback for one recording from its tree + the path it walked. */
+export function buildAiFeedback(
   tree: Tree,
-  stats: SalespersonStats | null,
+  traversal: Traversal,
   opts?: { limit?: number },
-): { targets: PracticeTarget[]; recommendedStart?: { nodeId: Id; reason: string } } {
-  const weakSkill = stats ? weakestSkill(stats) : null;
+): AiFeedback {
+  const path = getPathFromTraversal(tree, traversal);
+  const pathIds = new Set(path.map((n) => n.id));
+  const fork = bestRegretFork(tree, traversal);
 
-  const blended: BlendedTarget[] = getWeakNodes(tree).map((wn) => {
-    const signal = normSignal(wn.score);
-    const histFail = stats ? nodeFailRate(stats, wn.node.id) : 0;
-    const mappedSkill = NODE_SKILL_MAP[wn.node.id];
-    const skillSignal =
-      stats && mappedSkill ? skillFailRate(stats, mappedSkill) : 0;
-
-    // Weight: in-call signal leads, history meaningfully nudges, skill mapping breaks ties.
-    const blendScore = 0.5 * signal + 0.35 * histFail + 0.15 * skillSignal;
-
-    return {
-      nodeId: wn.node.id,
-      reason: buildTargetReason(wn.node.title, wn.worstMetric, histFail, mappedSkill, skillSignal),
-      drill: `Practice handling "${wn.node.description}" with stronger ${wn.worstMetric}.`,
-      metric: wn.worstMetric,
-      score: Math.round(blendScore * 1000) / 1000,
-      _signal: signal,
-      _histFail: histFail,
-      _metric: wn.worstMetric,
-      _title: wn.node.title,
-    };
-  });
-
-  blended.sort((a, b) => b.score - a.score);
-
-  const top = blended[0];
-  const recommendedStart = top
-    ? {
-        nodeId: top.nodeId,
-        reason: buildStartReason(top, weakSkill),
-      }
-    : undefined;
-
+  // Practice targets: the weakest moments (by in-call signal) ON the path walked.
   const limit = opts?.limit ?? 3;
-  const targets: PracticeTarget[] = blended.slice(0, limit).map((t) => ({
-    nodeId: t.nodeId,
-    reason: t.reason,
-    drill: t.drill,
-    metric: t.metric,
-    score: t.score,
+  const weak = getWeakNodes(tree).filter((w) => pathIds.has(w.node.id)).slice(0, limit);
+  const practiceTargets: PracticeTarget[] = weak.map((w) => ({
+    nodeId: w.node.id,
+    reason: `${cap(metricMoment(w.worstMetric))} at the ${w.node.title} (${pct(w.node.successProbability)}% win at this move).`,
+    drill: `Practice handling "${w.node.description}" with stronger ${w.worstMetric}.`,
+    metric: w.worstMetric,
+    score: Math.round((1 - w.node.successProbability) * 1000) / 1000,
   }));
 
-  return { targets, recommendedStart };
-}
+  // Strengths: the seller moves on the path that actually convert well.
+  const strengths = path
+    .filter((n) => n.speaker === "seller" && n.successProbability >= 0.7)
+    .slice(0, 2)
+    .map((n) => `${n.title} — a ${pct(n.successProbability)}% move`);
+  if (strengths.length === 0) strengths.push("Reached the decision point and kept the buyer engaged");
 
-/** Per-target reason that cites the in-call metric AND history where available. */
-function buildTargetReason(
-  title: string,
-  metric: PracticeTarget["metric"],
-  histFail: number,
-  mappedSkill: string | undefined,
-  skillSignal: number,
-): string {
-  const base = `${cap(metricMoment(metric))} at the ${title} in this call`;
-  if (histFail > 0) {
-    return `${base} — and you miss that node ${pct(histFail)}% of the time historically.`;
+  const weaknesses: string[] = [];
+  if (fork) weaknesses.push(forkReason(fork));
+  for (const t of practiceTargets) {
+    if (weaknesses.length >= 3) break;
+    if (!fork || t.nodeId !== fork.forkNodeId) weaknesses.push(t.reason);
   }
-  if (mappedSkill && skillSignal >= 0.4) {
-    return `${base} — it's tied to your ${label(mappedSkill)} weakness (${pct(
-      skillSignal,
-    )}% miss).`;
-  }
-  return `${base}.`;
-}
 
-/** Top-pick reason — explicitly blends in-call signal with the rep's history. */
-function buildStartReason(
-  top: BlendedTarget,
-  weakSkill: { skill: string; failRate: number } | null,
-): string {
-  const lead = `Your ${metricMoment(top._metric)} at the ${top._title} in this call`;
-  if (top._histFail > 0) {
-    return `${lead}, and you miss that node ${pct(
-      top._histFail,
-    )}% of the time historically — start here.`;
-  }
-  const mappedSkill = NODE_SKILL_MAP[top.nodeId];
-  if (weakSkill && mappedSkill === weakSkill.skill) {
-    return `${lead}, and ${label(weakSkill.skill)} is your weakest skill at ${pct(
-      weakSkill.failRate,
-    )}% miss — start here.`;
-  }
-  return `${lead} — start here.`;
+  const summary = fork
+    ? `The pivotal moment was the ${fork.forkTitle}: you played the ${fork.takenTitle} (${pct(
+        fork.takenP,
+      )}% win) where the ${fork.bestTitle} converts ${pct(fork.bestP)}% — about a ${money(fork.gapEV)} swing.`
+    : `Clean execution — no single fork cost you much on this call.`;
+
+  const recommendedStart = fork
+    ? { nodeId: fork.forkNodeId, reason: `${forkReason(fork)} Start here.` }
+    : weak[0]
+      ? { nodeId: weak[0].node.id, reason: `${cap(metricMoment(weak[0].worstMetric))} at the ${weak[0].node.title} — start here.` }
+      : undefined;
+
+  return { summary, strengths, weaknesses, practiceTargets, recommendedStart };
 }

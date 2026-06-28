@@ -1,7 +1,8 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSalespeople } from "../queries/useSalespeople";
 import { useRecommendedPractice } from "../queries/useRecommendedPractice";
+
+// This account belongs to one rep — we don't surface the whole team's weaknesses.
+const FEATURED_REP_ID = "sp_jane";
 
 function SparkIcon() {
   return (
@@ -20,58 +21,30 @@ function PlayIcon() {
 }
 
 /**
- * System 1 — the "perfect practice call" for a selectable rep. Picks the persona
- * they perform worst against + a start node exercising their weakest skill, all
- * from real baseline stats, and one click launches the configured practice.
+ * System 1 — the "perfect practice call" for the featured rep. Finds the single
+ * fork where they played a low-win move while a sibling move wins far more often
+ * (the biggest realized-EV regret across their lost/open calls), and one click
+ * launches a practice from that exact moment against the buyer they faced.
  */
 export function PerfectPracticeCard() {
   const navigate = useNavigate();
-  const { data: reps } = useSalespeople();
-  const [repId, setRepId] = useState<string | undefined>(undefined);
-
-  // Default to the first rep (sp_jane) once the list loads.
-  const activeRepId = repId ?? reps?.[0]?.id;
-  const { data: reco, isLoading, isError } = useRecommendedPractice(activeRepId);
-
-  if (!reps || reps.length === 0) return null;
+  const { data: reco, isLoading, isError } = useRecommendedPractice(FEATURED_REP_ID);
 
   const startPractice = () => {
     if (!reco) return;
     navigate(
       `/call/${reco.callId}/simulate?from=${reco.startNodeId}&persona=${reco.personaId}`,
-      { state: { buyerName: reco.personaName, company: "Slack" } },
+      { state: { buyerName: reco.personaName } },
     );
   };
 
   return (
     <section className="mb-8 animate-fade-up rounded-xl border border-accent/30 bg-gradient-to-br from-accent-quiet/60 to-surface p-5 shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-accent">
-          <SparkIcon />
-          <span className="text-[11px] font-semibold uppercase tracking-wide">
-            Perfect practice call
-          </span>
-        </div>
-        {/* Rep picker — all 5 reps */}
-        <div className="flex flex-wrap items-center justify-end gap-1.5">
-          {reps.map((r) => {
-            const active = r.id === activeRepId;
-            return (
-              <button
-                key={r.id}
-                onClick={() => setRepId(r.id)}
-                className={
-                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
-                  (active
-                    ? "border-accent bg-accent text-bg"
-                    : "border-border text-text-muted hover:border-border-strong hover:text-text")
-                }
-              >
-                {r.name}
-              </button>
-            );
-          })}
-        </div>
+      <div className="mb-4 flex items-center gap-2 text-accent">
+        <SparkIcon />
+        <span className="text-[11px] font-semibold uppercase tracking-wide">
+          Perfect practice call
+        </span>
       </div>
 
       {isLoading && (

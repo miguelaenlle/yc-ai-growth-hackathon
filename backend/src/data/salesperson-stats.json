@@ -1,25 +1,82 @@
 {
   "sp_jane": {
     "salespersonId": "sp_jane",
-    "totalCalls": 20,
+    "totalCalls": 23,
     "wins": 11,
     "skills": {
-      "discovery": { "attempts": 18, "fails": 4 },
-      "objection-handling": { "attempts": 16, "fails": 9 },
-      "pricing": { "attempts": 14, "fails": 8 },
-      "closing": { "attempts": 12, "fails": 5 },
-      "rapport": { "attempts": 15, "fails": 3 }
+      "discovery": {
+        "attempts": 20,
+        "fails": 6
+      },
+      "objection-handling": {
+        "attempts": 19,
+        "fails": 12
+      },
+      "pricing": {
+        "attempts": 16,
+        "fails": 10
+      },
+      "closing": {
+        "attempts": 14,
+        "fails": 7
+      },
+      "rapport": {
+        "attempts": 17,
+        "fails": 4
+      }
     },
     "personas": {
-      "buy_polly": { "attempts": 8, "wins": 7, "fails": 1 },
-      "buy_steve": { "attempts": 6, "wins": 1, "fails": 5 },
-      "buy_bob": { "attempts": 3, "wins": 2, "fails": 1 },
-      "buy_tina": { "attempts": 2, "wins": 1, "fails": 1 },
-      "buy_rachel": { "attempts": 1, "wins": 0, "fails": 1 }
+      "buy_polly": {
+        "attempts": 8,
+        "wins": 7,
+        "fails": 1
+      },
+      "buy_steve": {
+        "attempts": 7,
+        "wins": 1,
+        "fails": 5
+      },
+      "buy_bob": {
+        "attempts": 4,
+        "wins": 2,
+        "fails": 2
+      },
+      "buy_tina": {
+        "attempts": 3,
+        "wins": 1,
+        "fails": 1
+      },
+      "buy_rachel": {
+        "attempts": 1,
+        "wins": 0,
+        "fails": 1
+      }
     },
     "nodes": {
-      "n_unconvinced": { "attempts": 14, "fails": 8 },
-      "n_incumbent": { "attempts": 9, "fails": 5 }
+      "n_unconvinced": {
+        "attempts": 14,
+        "fails": 8
+      },
+      "n_incumbent": {
+        "attempts": 9,
+        "fails": 5
+      },
+      "n_price": {
+        "attempts": 2,
+        "fails": 2
+      },
+      "n_discount": {
+        "attempts": 1,
+        "fails": 1
+      },
+      "n_proof": {
+        "attempts": 1,
+        "fails": 1
+      },
+      "n_caseclose": {
+        "attempts": 1,
+        "fails": 1
+      }
     }
   },
   "sp_marcus": {
@@ -27,22 +84,63 @@
     "totalCalls": 24,
     "wins": 16,
     "skills": {
-      "discovery": { "attempts": 20, "fails": 9 },
-      "objection-handling": { "attempts": 18, "fails": 5 },
-      "pricing": { "attempts": 16, "fails": 4 },
-      "closing": { "attempts": 17, "fails": 4 },
-      "rapport": { "attempts": 19, "fails": 6 }
+      "discovery": {
+        "attempts": 20,
+        "fails": 9
+      },
+      "objection-handling": {
+        "attempts": 18,
+        "fails": 5
+      },
+      "pricing": {
+        "attempts": 16,
+        "fails": 4
+      },
+      "closing": {
+        "attempts": 17,
+        "fails": 4
+      },
+      "rapport": {
+        "attempts": 19,
+        "fails": 6
+      }
     },
     "personas": {
-      "buy_polly": { "attempts": 7, "wins": 6, "fails": 1 },
-      "buy_steve": { "attempts": 5, "wins": 3, "fails": 2 },
-      "buy_bob": { "attempts": 4, "wins": 3, "fails": 1 },
-      "buy_tina": { "attempts": 5, "wins": 1, "fails": 4 },
-      "buy_rachel": { "attempts": 3, "wins": 3, "fails": 0 }
+      "buy_polly": {
+        "attempts": 7,
+        "wins": 6,
+        "fails": 1
+      },
+      "buy_steve": {
+        "attempts": 5,
+        "wins": 3,
+        "fails": 2
+      },
+      "buy_bob": {
+        "attempts": 4,
+        "wins": 3,
+        "fails": 1
+      },
+      "buy_tina": {
+        "attempts": 5,
+        "wins": 1,
+        "fails": 4
+      },
+      "buy_rachel": {
+        "attempts": 3,
+        "wins": 3,
+        "fails": 0
+      }
     },
     "nodes": {
-      "n_pain": { "attempts": 12, "fails": 7 },
-      "n_unconvinced": { "attempts": 10, "fails": 4 }
+      "n_pain": {
+        "attempts": 12,
+        "fails": 7
+      },
+      "n_unconvinced": {
+        "attempts": 10,
+        "fails": 4
+      }
     }
   },
   "sp_dana": {
@@ -50,22 +148,63 @@
     "totalCalls": 16,
     "wins": 7,
     "skills": {
-      "discovery": { "attempts": 13, "fails": 5 },
-      "objection-handling": { "attempts": 12, "fails": 6 },
-      "pricing": { "attempts": 11, "fails": 7 },
-      "closing": { "attempts": 10, "fails": 6 },
-      "rapport": { "attempts": 14, "fails": 7 }
+      "discovery": {
+        "attempts": 13,
+        "fails": 5
+      },
+      "objection-handling": {
+        "attempts": 12,
+        "fails": 6
+      },
+      "pricing": {
+        "attempts": 11,
+        "fails": 7
+      },
+      "closing": {
+        "attempts": 10,
+        "fails": 6
+      },
+      "rapport": {
+        "attempts": 14,
+        "fails": 7
+      }
     },
     "personas": {
-      "buy_polly": { "attempts": 5, "wins": 4, "fails": 1 },
-      "buy_steve": { "attempts": 4, "wins": 1, "fails": 3 },
-      "buy_bob": { "attempts": 3, "wins": 1, "fails": 2 },
-      "buy_tina": { "attempts": 2, "wins": 1, "fails": 1 },
-      "buy_rachel": { "attempts": 2, "wins": 0, "fails": 2 }
+      "buy_polly": {
+        "attempts": 5,
+        "wins": 4,
+        "fails": 1
+      },
+      "buy_steve": {
+        "attempts": 4,
+        "wins": 1,
+        "fails": 3
+      },
+      "buy_bob": {
+        "attempts": 3,
+        "wins": 1,
+        "fails": 2
+      },
+      "buy_tina": {
+        "attempts": 2,
+        "wins": 1,
+        "fails": 1
+      },
+      "buy_rachel": {
+        "attempts": 2,
+        "wins": 0,
+        "fails": 2
+      }
     },
     "nodes": {
-      "n_incumbent": { "attempts": 11, "fails": 7 },
-      "n_unconvinced": { "attempts": 8, "fails": 5 }
+      "n_incumbent": {
+        "attempts": 11,
+        "fails": 7
+      },
+      "n_unconvinced": {
+        "attempts": 8,
+        "fails": 5
+      }
     }
   },
   "sp_olivia": {
@@ -73,22 +212,63 @@
     "totalCalls": 28,
     "wins": 19,
     "skills": {
-      "discovery": { "attempts": 24, "fails": 5 },
-      "objection-handling": { "attempts": 22, "fails": 6 },
-      "pricing": { "attempts": 20, "fails": 7 },
-      "closing": { "attempts": 21, "fails": 10 },
-      "rapport": { "attempts": 23, "fails": 4 }
+      "discovery": {
+        "attempts": 24,
+        "fails": 5
+      },
+      "objection-handling": {
+        "attempts": 22,
+        "fails": 6
+      },
+      "pricing": {
+        "attempts": 20,
+        "fails": 7
+      },
+      "closing": {
+        "attempts": 21,
+        "fails": 10
+      },
+      "rapport": {
+        "attempts": 23,
+        "fails": 4
+      }
     },
     "personas": {
-      "buy_polly": { "attempts": 9, "wins": 8, "fails": 1 },
-      "buy_steve": { "attempts": 6, "wins": 4, "fails": 2 },
-      "buy_bob": { "attempts": 6, "wins": 2, "fails": 4 },
-      "buy_tina": { "attempts": 4, "wins": 3, "fails": 1 },
-      "buy_rachel": { "attempts": 3, "wins": 2, "fails": 1 }
+      "buy_polly": {
+        "attempts": 9,
+        "wins": 8,
+        "fails": 1
+      },
+      "buy_steve": {
+        "attempts": 6,
+        "wins": 4,
+        "fails": 2
+      },
+      "buy_bob": {
+        "attempts": 6,
+        "wins": 2,
+        "fails": 4
+      },
+      "buy_tina": {
+        "attempts": 4,
+        "wins": 3,
+        "fails": 1
+      },
+      "buy_rachel": {
+        "attempts": 3,
+        "wins": 2,
+        "fails": 1
+      }
     },
     "nodes": {
-      "n_pain": { "attempts": 15, "fails": 6 },
-      "n_incumbent": { "attempts": 12, "fails": 8 }
+      "n_pain": {
+        "attempts": 15,
+        "fails": 6
+      },
+      "n_incumbent": {
+        "attempts": 12,
+        "fails": 8
+      }
     }
   },
   "sp_ben": {
@@ -96,21 +276,58 @@
     "totalCalls": 9,
     "wins": 3,
     "skills": {
-      "discovery": { "attempts": 8, "fails": 4 },
-      "objection-handling": { "attempts": 7, "fails": 5 },
-      "pricing": { "attempts": 6, "fails": 3 },
-      "closing": { "attempts": 5, "fails": 3 },
-      "rapport": { "attempts": 8, "fails": 2 }
+      "discovery": {
+        "attempts": 8,
+        "fails": 4
+      },
+      "objection-handling": {
+        "attempts": 7,
+        "fails": 5
+      },
+      "pricing": {
+        "attempts": 6,
+        "fails": 3
+      },
+      "closing": {
+        "attempts": 5,
+        "fails": 3
+      },
+      "rapport": {
+        "attempts": 8,
+        "fails": 2
+      }
     },
     "personas": {
-      "buy_polly": { "attempts": 3, "wins": 2, "fails": 1 },
-      "buy_steve": { "attempts": 3, "wins": 0, "fails": 3 },
-      "buy_bob": { "attempts": 2, "wins": 1, "fails": 1 },
-      "buy_tina": { "attempts": 1, "wins": 0, "fails": 1 }
+      "buy_polly": {
+        "attempts": 3,
+        "wins": 2,
+        "fails": 1
+      },
+      "buy_steve": {
+        "attempts": 3,
+        "wins": 0,
+        "fails": 3
+      },
+      "buy_bob": {
+        "attempts": 2,
+        "wins": 1,
+        "fails": 1
+      },
+      "buy_tina": {
+        "attempts": 1,
+        "wins": 0,
+        "fails": 1
+      }
     },
     "nodes": {
-      "n_unconvinced": { "attempts": 6, "fails": 4 },
-      "n_incumbent": { "attempts": 5, "fails": 3 }
+      "n_unconvinced": {
+        "attempts": 6,
+        "fails": 4
+      },
+      "n_incumbent": {
+        "attempts": 5,
+        "fails": 3
+      }
     }
   }
 }

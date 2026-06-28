@@ -9,11 +9,19 @@ export interface Company {
   id: Id;
   name: string;
   buyers: Buyer[];
+  /** Prospect context — varies per company; optional so older data still loads. */
+  industry?: string;
+  seats?: number;
+  /** The tool the prospect currently uses that Slack would displace. */
+  incumbent?: string;
 }
 export interface Buyer {
   id: Id;
   name: string;
   title: string;
+  /** Buyer archetype the AI plays in practice. Synthetic now; LLM-derived from the
+   *  transcript later. References a persona id from GET /personas. */
+  personaId?: Id;
 }
 export interface Salesperson {
   id: Id;
@@ -135,17 +143,22 @@ export interface AiFeedback {
 export interface CallSummary {
   id: Id;
   company: string;
+  industry?: string; // prospect context, resolved from the call's company
+  seats?: number;
+  incumbent?: string;
   startedAt: string;
   outcome: "won" | "lost" | "open"; // kept for internal use; UI shows the evaluation
   bestEV: number; // max node EV in the tree
   finalEV: number; // EV at the node the real call ended on (realized value)
-  buyer: { name: string; title: string }; // resolved from the call's buyerId
-  salesperson: { name: string }; // resolved from the call's salespersonId
+  buyer: { name: string; title: string; personaId?: Id }; // resolved from the call's buyerId
+  salesperson: { id: Id; name: string }; // resolved from the call's salespersonId
 }
 export interface CallDetail {
   call: Call;
   tree: Tree;
   recordings: Recording[];
+  /** Resolved buyer for this call, incl. the auto-assigned practice persona. */
+  buyer?: { name: string; title: string; personaId?: Id };
 }
 export interface TimelineCue {
   atMs: number;

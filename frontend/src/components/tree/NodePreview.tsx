@@ -36,17 +36,26 @@ export function NodePreview({ data }: { data: CallNodeData }) {
     >
       <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">
         {isAi ? (
-          <>
-            <span className="text-accent">
-              <Sparkle />
-            </span>
-            <span className="text-accent">AI</span>
-            {typeof data.success === "number" && (
-              <span style={{ color: rampColor(data.success) }}>
-                · {Math.round(data.success * 100)}% success
+          typeof data.visits === "number" && data.visits > 0 ? (
+            <>
+              <span style={{ color: rampColor(data.winRate ?? data.success ?? 0) }}>
+                {Math.round((data.winRate ?? data.success ?? 0) * 100)}% win
               </span>
-            )}
-          </>
+              <span className="text-text-faint">· {data.visits} calls</span>
+            </>
+          ) : (
+            <>
+              <span className="text-accent">
+                <Sparkle />
+              </span>
+              <span className="text-accent">AI</span>
+              {typeof data.success === "number" && (
+                <span style={{ color: rampColor(data.success) }}>
+                  · {Math.round(data.success * 100)}% success
+                </span>
+              )}
+            </>
+          )
         ) : (
           <>
             <span className="h-2 w-2 shrink-0 rounded-full bg-text-muted" />

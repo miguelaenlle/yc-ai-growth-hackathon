@@ -11,13 +11,11 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
-  TREE,
-  initialNodes,
-  initialEdges,
   BASE_W,
   BASE_H,
   type CallNodeData,
 } from "../components/tree/treeData";
+import { buildTreeView, type TreeView } from "../lib/treeView";
 import { applyFocus } from "../components/tree/focus";
 import { CallNode } from "../components/tree/CallNode";
 import { NodePreview } from "../components/tree/NodePreview";
@@ -92,7 +90,7 @@ function Sidebar({ id, summary, company, startedAt, finalEV, bestEV, buyerName, 
       </button>
 
       <div className="space-y-3">
-        <Logo />
+        <Logo org="Slack" />
         <h1 className="text-xl font-semibold tracking-tight text-text">
           {company} <span className="font-mono text-base text-text-muted">{dateOnly(startedAt)}</span>
         </h1>
@@ -139,6 +137,8 @@ function StateScreen({ children }: { children: React.ReactNode }) {
 }
 
 interface FlowProps {
+  /** This call's own tree, built from its CallDetail. */
+  view: TreeView;
   walkthrough: WalkthroughBundle | null;
   summarizeStatus: SummarizeStatus;
   onSummarize: () => void;
@@ -151,8 +151,11 @@ interface FlowProps {
   recommendation?: { nodeId: string; nodeTitle: string; reason: string };
 }
 
-function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode, onWatchNode, recommendation }: FlowProps) {
+function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode, onWatchNode, recommendation }: FlowProps) {
   const isSummarizePlaying = summarizeStatus === "playing";
+
+  // Focus starts at the canonical root (present in every per-call tree).
+  const startNodeId = SUMMARIZE_START_NODE_ID;
 
   // Inject per-node "simulate" + "watch AI" actions onto every node. Node ids are
   // unified with the backend tree, so every node is simulatable/watchable. CallNode
@@ -161,7 +164,7 @@ function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimu
   // survive playback.
   const baseNodes = useMemo(
     () =>
-      initialNodes.map((n) => ({
+      view.nodes.map((n) => ({
         ...n,
         data: {
           ...n.data,
@@ -169,15 +172,15 @@ function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimu
           onWatch: () => onWatchNode(n.id),
         },
       })),
-    [onSimulateNode, onWatchNode],
+    [view, onSimulateNode, onWatchNode],
   );
 
-  const [selectedId, setSelectedId] = useState(SUMMARIZE_START_NODE_ID);
+  const [selectedId, setSelectedId] = useState(startNodeId);
   const [nodes, setNodes] = useState(
-    () => applyFocus(TREE, baseNodes, initialEdges, SUMMARIZE_START_NODE_ID).nodes,
+    () => applyFocus(view.root, baseNodes, view.edges, startNodeId).nodes,
   );
   const [edges, setEdges] = useState(
-    () => applyFocus(TREE, baseNodes, initialEdges, SUMMARIZE_START_NODE_ID).edges,
+    () => applyFocus(view.root, baseNodes, view.edges, startNodeId).edges,
   );
   const { getViewport } = useReactFlow();
 
@@ -189,7 +192,7 @@ function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimu
     setEdges,
     isSummarizePlaying,
     baseNodes,
-    baseEdges: initialEdges,
+    baseEdges: view.edges,
   });
 
   const handleSummarizeNodeFocus = useCallback((uiNodeId: string) => {
@@ -345,6 +348,9 @@ export function CallReviewPage() {
   const realRecordingId = detail?.recordings.find((r) => r.isReal)?.id;
   const { data: feedback } = useFeedback(realRecordingId);
 
+  // This call's OWN tree (a per-prospect view), not the global static tree.
+  const view = useMemo(() => (detail ? buildTreeView(detail) : null), [detail]);
+
   const company = summary?.company ?? "Call";
   // Prefer the real per-call participants from the list summary; fall back to the
   // company placeholder on deep links that arrive without a summary.
@@ -475,15 +481,19 @@ export function CallReviewPage() {
       />
       <div className="relative flex-1">
         <ReactFlowProvider>
-          <Flow
-            walkthrough={walkthrough}
-            summarizeStatus={summarizeStatus}
-            onSummarize={handleSummarize}
-            onPlaybackEnd={handlePlaybackEnd}
-            onSimulateNode={handleSimulateNode}
-            onWatchNode={handleWatchNode}
-            recommendation={recommendation}
-          />
+          {view && (
+            <Flow
+              key={id}
+              view={view}
+              walkthrough={walkthrough}
+              summarizeStatus={summarizeStatus}
+              onSummarize={handleSummarize}
+              onPlaybackEnd={handlePlaybackEnd}
+              onSimulateNode={handleSimulateNode}
+              onWatchNode={handleWatchNode}
+              recommendation={recommendation}
+            />
+          )}
         </ReactFlowProvider>
       </div>
     </div>
