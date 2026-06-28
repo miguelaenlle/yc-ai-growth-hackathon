@@ -5,7 +5,6 @@ import {
   getDecisionSummary,
   getNodeById,
   getNodeChildren,
-  matchOrCreateBranch,
 } from "./tree-ops.js";
 import { getRecording, getTree, store } from "./store.js";
 import type { Id, Recording, Tree, TranscriptSegment, TreeNode } from "./types.js";
@@ -198,6 +197,78 @@ Each object must have:
   clientWs.send(JSON.stringify({ type: "precap_complete" }));
 }
 
+/**
+ * Mock routing: decide which EXISTING child of `currentNodeId` the latest
+ * utterance lands on. Unlike the real-call flow, this NEVER creates a node — in
+ * practice mode we constrain the conversation to the authored tree.
+ *
+ * Primary path: ask gpt-4o-mini to classify the utterance into one of the child
+ * options (or "none" → stay). Fallback (no key / error): highest Jaccard token
+ * overlap among the children. Returns the chosen child id, or null to stay put
+ * (no confident match, or `currentNodeId` is a leaf so the conversation ends).
+ */
+async function chooseExistingChild(
+  tree: Tree,
+  currentNodeId: Id,
+  utterance: string,
+): Promise<Id | null> {
+  const children = getNodeChildren(tree, currentNodeId);
+  if (children.length === 0) return null; // leaf — the call plays out / ends
+  if (children.length === 1) return children[0].id; // only one way forward
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  const text = utterance.trim();
+
+  if (apiKey && text) {
+    const options = children
+      .map((c, i) => `${i + 1}. [${c.title}] ${c.description}`)
+      .join("\n");
+    const prompt =
+      `A sales conversation is at a decision point. The speaker just said:\n` +
+      `"${text}"\n\n` +
+      `Which ONE of these possible next moves best matches what they said?\n` +
+      `${options}\n\n` +
+      `Reply with JSON {"choice": <number>} — the option number ` +
+      `(1-${children.length}), or 0 if none of them fit.`;
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "system", content: prompt }],
+          response_format: { type: "json_object" },
+          temperature: 0,
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          choices: { message: { content: string } }[];
+        };
+        const choice = Number(
+          JSON.parse(data.choices[0].message.content)?.choice,
+        );
+        if (Number.isInteger(choice) && choice >= 1 && choice <= children.length) {
+          return children[choice - 1].id;
+        }
+        if (choice === 0) return null; // model says nothing fits → stay
+      } else {
+        console.error("[mock route] LLM failed:", await res.text());
+      }
+    } catch (e) {
+      console.error("[mock route] LLM error:", e);
+    }
+  }
+
+  // Fallback: closest child by token overlap. No threshold — we never create
+  // here, so advancing to the nearest authored branch is the safe default.
+  const match = bestMatch(tree, currentNodeId, text);
+  return match ? match.nodeId : null;
+}
+
 export async function handleMockSession(
   clientWs: WebSocket,
   recordingId: Id,
@@ -287,17 +358,14 @@ export async function handleMockSession(
           .map((m) => m.text)
           .join(" ") ||
         recentConversation.map((m) => m.text).join(" ");
-      const result = matchOrCreateBranch(tree, currentNodeId, utterance);
+      // Practice mode is constrained to the authored tree: route to an existing
+      // child only, never create a new node.
+      const nextNodeId = await chooseExistingChild(tree, currentNodeId, utterance);
 
       let switchedNode = false;
-      if (result.created) {
-        console.log(`New node created from ${speaker} input:`, result.node.id);
-        currentNodeId = result.node.id;
-        switchedNode = true;
-        clientWs.send(JSON.stringify({ type: "mock_node_created", nodeId: currentNodeId, title: result.node.title, parentId: current.id }));
-      } else if (result.matchedNodeId !== currentNodeId) {
-        console.log(`Matched existing node (${speaker}):`, result.matchedNodeId);
-        currentNodeId = result.matchedNodeId;
+      if (nextNodeId && nextNodeId !== currentNodeId) {
+        console.log(`Routed (${speaker}) to existing node:`, nextNodeId);
+        currentNodeId = nextNodeId;
         switchedNode = true;
         clientWs.send(JSON.stringify({ type: "mock_node_matched", nodeId: currentNodeId }));
       } else {
