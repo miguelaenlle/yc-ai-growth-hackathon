@@ -6,7 +6,7 @@ import type { RawNode, Actor } from "../components/tree/treeData";
 export const GEN_TREE: RawNode = {
   "id": "n_open",
   "kind": "real",
-  "title": "Warm Opening",
+  "title": "Opening",
   "description": "Set the agenda",
   "onPath": true,
   "visits": 100,
@@ -24,7 +24,7 @@ export const GEN_TREE: RawNode = {
         {
           "id": "n_incumbent",
           "kind": "real",
-          "title": "Incumbent Objection",
+          "title": "Incumbent",
           "description": "We already use Microsoft Teams",
           "onPath": true,
           "visits": 67,
@@ -33,7 +33,7 @@ export const GEN_TREE: RawNode = {
             {
               "id": "n_coexist",
               "kind": "real",
-              "title": "Coexist Reframe",
+              "title": "Coexist",
               "description": "Runs alongside Microsoft Teams",
               "onPath": true,
               "visits": 41,
@@ -42,7 +42,7 @@ export const GEN_TREE: RawNode = {
                 {
                   "id": "n_curious",
                   "kind": "real",
-                  "title": "Curious Buyer",
+                  "title": "Curious",
                   "description": "Where does Slack win?",
                   "onPath": true,
                   "visits": 33,
@@ -60,7 +60,7 @@ export const GEN_TREE: RawNode = {
                         {
                           "id": "n_yes",
                           "kind": "real",
-                          "title": "Pilot Agreement",
+                          "title": "Pilot Won",
                           "description": "Let's run the pilot",
                           "onPath": true,
                           "visits": 33,
@@ -84,7 +84,7 @@ export const GEN_TREE: RawNode = {
             {
               "id": "n_discover",
               "kind": "ai",
-              "title": "Discovery First",
+              "title": "Find Pain",
               "description": "What's painful about Microsoft Teams?",
               "success": 0.94,
               "visits": 14,
@@ -93,7 +93,7 @@ export const GEN_TREE: RawNode = {
                 {
                   "id": "n_pain",
                   "kind": "ai",
-                  "title": "Real Pain",
+                  "title": "Pain Found",
                   "description": "Search is weak, threads get lost",
                   "success": 0.94,
                   "visits": 14,
@@ -102,7 +102,7 @@ export const GEN_TREE: RawNode = {
                     {
                       "id": "n_show",
                       "kind": "ai",
-                      "title": "Show Solution",
+                      "title": "Show Fit",
                       "description": "Pitch search + threads",
                       "success": 0.94,
                       "visits": 14,
@@ -126,7 +126,7 @@ export const GEN_TREE: RawNode = {
             {
               "id": "n_knock",
               "kind": "ai",
-              "title": "Weak Move",
+              "title": "Knock Incumbent",
               "description": "Knock Microsoft Teams as clunky",
               "success": 0.07,
               "visits": 12,
@@ -135,7 +135,7 @@ export const GEN_TREE: RawNode = {
                 {
                   "id": "n_defensive",
                   "kind": "ai",
-                  "title": "Defensive Buyer",
+                  "title": "Defensive",
                   "description": "Just send me some info",
                   "success": 0.07,
                   "visits": 12,
@@ -148,7 +148,7 @@ export const GEN_TREE: RawNode = {
         {
           "id": "n_price",
           "kind": "ai",
-          "title": "Price Inquiry",
+          "title": "Price Ask",
           "description": "What's this run for 250?",
           "success": 0.43,
           "visits": 33,
@@ -157,7 +157,7 @@ export const GEN_TREE: RawNode = {
             {
               "id": "n_value",
               "kind": "ai",
-              "title": "Value Anchor",
+              "title": "Anchor Value",
               "description": "Anchor on value per seat",
               "success": 0.65,
               "visits": 21,
@@ -166,7 +166,7 @@ export const GEN_TREE: RawNode = {
                 {
                   "id": "n_proof",
                   "kind": "ai",
-                  "title": "Proof Request",
+                  "title": "Proof Ask",
                   "description": "Prove it pays off at our size",
                   "success": 0.94,
                   "visits": 14,
@@ -175,7 +175,7 @@ export const GEN_TREE: RawNode = {
                     {
                       "id": "n_caseclose",
                       "kind": "ai",
-                      "title": "Case Study Success",
+                      "title": "Case Closes",
                       "description": "That case study sells me",
                       "success": 0.94,
                       "visits": 14,
@@ -186,7 +186,7 @@ export const GEN_TREE: RawNode = {
                 {
                   "id": "n_pushprice",
                   "kind": "ai",
-                  "title": "Price Resistance",
+                  "title": "Too Pricey",
                   "description": "Still too expensive",
                   "success": 0.08,
                   "visits": 7,
@@ -197,7 +197,7 @@ export const GEN_TREE: RawNode = {
             {
               "id": "n_discount",
               "kind": "ai",
-              "title": "Discount Offer",
+              "title": "Discount",
               "description": "Lead with a discount",
               "success": 0.07,
               "visits": 12,
@@ -206,7 +206,7 @@ export const GEN_TREE: RawNode = {
                 {
                   "id": "n_anchor",
                   "kind": "ai",
-                  "title": "Buyer Anchors",
+                  "title": "Anchored Low",
                   "description": "Can you go lower?",
                   "success": 0.18,
                   "visits": 12,
