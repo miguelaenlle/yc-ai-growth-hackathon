@@ -6,10 +6,13 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type {
+  Buyer,
   Call,
   CallSummary,
+  Company,
   Id,
   Recording,
+  Salesperson,
   SeedStore,
   Tree,
 } from "./types.js";
@@ -38,8 +41,22 @@ export const getRecording = (id: Id): Recording | undefined =>
 export const recordingsForCall = (callId: Id): Recording[] =>
   Object.values(store.recordings).filter((r) => r.callId === callId);
 
+export const getCompany = (companyId: Id): Company | undefined =>
+  store.companies.find((c) => c.id === companyId);
+
 export const companyName = (companyId: Id): string =>
-  store.companies.find((c) => c.id === companyId)?.name ?? "Unknown";
+  getCompany(companyId)?.name ?? "Unknown";
+
+export const getBuyer = (buyerId: Id): Buyer | undefined => {
+  for (const company of store.companies) {
+    const buyer = company.buyers.find((b) => b.id === buyerId);
+    if (buyer) return buyer;
+  }
+  return undefined;
+};
+
+export const getSalesperson = (id: Id): Salesperson | undefined =>
+  store.salespeople.find((s) => s.id === id);
 
 // Derive outcome from the real recording's final node, bestEV from max node EV.
 export function toCallSummary(call: Call): CallSummary {

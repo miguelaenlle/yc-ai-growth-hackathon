@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "note": "Dummy data for CallTree. Frontend can import this directly and stub the API against it until the backend exists. Lists are arrays; trees and recordings are keyed by id for O(1) lookup. Deal value for Convex is $48,000; expectedValue = round(successProbability * 48000).",
+    "note": "Dummy data for CallTree. Frontend can import this directly and stub the API against it until the backend exists. Lists are arrays; trees and recordings are keyed by id for O(1) lookup. Deal value is $48,000; expectedValue = round(successProbability * 48000).",
     "dealValue": 48000
   },
 
@@ -11,11 +11,48 @@
       "buyers": [
         { "id": "buy_john", "name": "John Doe", "title": "VP of Operations" }
       ]
+    },
+    {
+      "id": "co_northridge",
+      "name": "NorthRidge Logistics",
+      "buyers": [
+        { "id": "buy_maria", "name": "Maria Lopez", "title": "Head of Supply Chain" }
+      ]
+    },
+    {
+      "id": "co_helios",
+      "name": "Helios Energy",
+      "buyers": [
+        { "id": "buy_sam", "name": "Sam Carter", "title": "Director of IT" }
+      ]
+    },
+    {
+      "id": "co_brightwave",
+      "name": "BrightWave Media",
+      "buyers": [
+        { "id": "buy_priya", "name": "Priya Nair", "title": "Chief Marketing Officer" }
+      ]
+    },
+    {
+      "id": "co_atlas",
+      "name": "Atlas Manufacturing",
+      "buyers": [
+        { "id": "buy_tom", "name": "Tom Becker", "title": "Chief Operating Officer" }
+      ]
+    },
+    {
+      "id": "co_vertex",
+      "name": "Vertex Financial",
+      "buyers": [
+        { "id": "buy_lena", "name": "Lena Park", "title": "VP of Engineering" }
+      ]
     }
   ],
 
   "salespeople": [
-    { "id": "sp_jane", "name": "Jane Doe" }
+    { "id": "sp_jane", "name": "Jane Doe", "title": "Sales Representative" },
+    { "id": "sp_marcus", "name": "Marcus Reid", "title": "Senior Account Executive" },
+    { "id": "sp_dana", "name": "Dana Wu", "title": "Account Executive" }
   ],
 
   "calls": [
@@ -27,6 +64,60 @@
       "startedAt": "2026-06-25T17:00:00-07:00",
       "treeId": "tree_convex",
       "recordingIds": ["rec_real", "rec_mock1"]
+    },
+    {
+      "id": "call_convex2",
+      "companyId": "co_convex",
+      "salespersonId": "sp_marcus",
+      "buyerId": "buy_john",
+      "startedAt": "2026-06-20T10:30:00-07:00",
+      "treeId": "tree_convex2",
+      "recordingIds": ["rec_c2_real"]
+    },
+    {
+      "id": "call_northridge",
+      "companyId": "co_northridge",
+      "salespersonId": "sp_jane",
+      "buyerId": "buy_maria",
+      "startedAt": "2026-06-24T14:00:00-07:00",
+      "treeId": "tree_northridge",
+      "recordingIds": ["rec_nr_real"]
+    },
+    {
+      "id": "call_helios",
+      "companyId": "co_helios",
+      "salespersonId": "sp_dana",
+      "buyerId": "buy_sam",
+      "startedAt": "2026-06-23T09:15:00-07:00",
+      "treeId": "tree_helios",
+      "recordingIds": ["rec_he_real"]
+    },
+    {
+      "id": "call_brightwave",
+      "companyId": "co_brightwave",
+      "salespersonId": "sp_marcus",
+      "buyerId": "buy_priya",
+      "startedAt": "2026-06-22T16:45:00-07:00",
+      "treeId": "tree_brightwave",
+      "recordingIds": ["rec_bw_real"]
+    },
+    {
+      "id": "call_atlas",
+      "companyId": "co_atlas",
+      "salespersonId": "sp_jane",
+      "buyerId": "buy_tom",
+      "startedAt": "2026-06-26T11:00:00-07:00",
+      "treeId": "tree_atlas",
+      "recordingIds": ["rec_at_real"]
+    },
+    {
+      "id": "call_vertex",
+      "companyId": "co_vertex",
+      "salespersonId": "sp_dana",
+      "buyerId": "buy_lena",
+      "startedAt": "2026-06-26T15:30:00-07:00",
+      "treeId": "tree_vertex",
+      "recordingIds": []
     }
   ],
 
@@ -98,6 +189,187 @@
           "speaker": "buyer", "tMs": 0,
           "successProbability": 0.45, "expectedValue": 21600,
           "metrics": { "confidence": 0.50, "hesitation": 0.45, "enthusiasm": 0.35 }
+        }
+      ]
+    },
+
+    "tree_convex2": {
+      "id": "tree_convex2",
+      "callId": "call_convex2",
+      "rootNodeId": "n_c2_open",
+      "nodes": [
+        {
+          "id": "n_c2_open", "parentId": null, "childIds": ["n_c2_value"],
+          "title": "Opening", "description": "Good to reconnect, John",
+          "speaker": "seller", "tMs": 0,
+          "successProbability": 0.50, "expectedValue": 24000,
+          "metrics": { "confidence": 0.75, "hesitation": 0.15, "enthusiasm": 0.60 }
+        },
+        {
+          "id": "n_c2_value", "parentId": "n_c2_open", "childIds": ["n_c2_close"],
+          "title": "Value landed", "description": "ROI on the pilot was clear",
+          "speaker": "buyer", "tMs": 8000,
+          "successProbability": 0.85, "expectedValue": 40800,
+          "metrics": { "confidence": 0.78, "hesitation": 0.16, "enthusiasm": 0.74 }
+        },
+        {
+          "id": "n_c2_close", "parentId": "n_c2_value", "childIds": [],
+          "title": "Closed won", "description": "Send the contract over",
+          "speaker": "buyer", "tMs": 15000,
+          "successProbability": 0.93, "expectedValue": 44640,
+          "metrics": { "confidence": 0.84, "hesitation": 0.10, "enthusiasm": 0.82 }
+        }
+      ]
+    },
+
+    "tree_northridge": {
+      "id": "tree_northridge",
+      "callId": "call_northridge",
+      "rootNodeId": "n_nr_open",
+      "nodes": [
+        {
+          "id": "n_nr_open", "parentId": null, "childIds": ["n_nr_disc"],
+          "title": "Opening", "description": "Thanks for making time, Maria",
+          "speaker": "seller", "tMs": 0,
+          "successProbability": 0.50, "expectedValue": 24000,
+          "metrics": { "confidence": 0.70, "hesitation": 0.18, "enthusiasm": 0.58 }
+        },
+        {
+          "id": "n_nr_disc", "parentId": "n_nr_open", "childIds": ["n_nr_value"],
+          "title": "Discovery", "description": "Where do shipments stall today?",
+          "speaker": "seller", "tMs": 9000,
+          "successProbability": 0.55, "expectedValue": 26400,
+          "metrics": { "confidence": 0.66, "hesitation": 0.24, "enthusiasm": 0.56 }
+        },
+        {
+          "id": "n_nr_value", "parentId": "n_nr_disc", "childIds": ["n_nr_close"],
+          "title": "Value landed", "description": "Real-time tracking solves the gaps",
+          "speaker": "buyer", "tMs": 19000,
+          "successProbability": 0.88, "expectedValue": 42240,
+          "metrics": { "confidence": 0.79, "hesitation": 0.14, "enthusiasm": 0.76 }
+        },
+        {
+          "id": "n_nr_close", "parentId": "n_nr_value", "childIds": [],
+          "title": "Closed won", "description": "Let's get procurement looped in",
+          "speaker": "buyer", "tMs": 27000,
+          "successProbability": 0.92, "expectedValue": 44160,
+          "metrics": { "confidence": 0.83, "hesitation": 0.12, "enthusiasm": 0.80 }
+        }
+      ]
+    },
+
+    "tree_helios": {
+      "id": "tree_helios",
+      "callId": "call_helios",
+      "rootNodeId": "n_he_open",
+      "nodes": [
+        {
+          "id": "n_he_open", "parentId": null, "childIds": ["n_he_price", "n_he_disc"],
+          "title": "Opening", "description": "Appreciate the time, Sam",
+          "speaker": "seller", "tMs": 0,
+          "successProbability": 0.50, "expectedValue": 24000,
+          "metrics": { "confidence": 0.64, "hesitation": 0.26, "enthusiasm": 0.50 }
+        },
+        {
+          "id": "n_he_price", "parentId": "n_he_open", "childIds": ["n_he_stall"],
+          "title": "Price objection", "description": "This is well over our budget",
+          "speaker": "buyer", "tMs": 14000,
+          "successProbability": 0.35, "expectedValue": 16800,
+          "metrics": { "confidence": 0.40, "hesitation": 0.62, "enthusiasm": 0.28 }
+        },
+        {
+          "id": "n_he_stall", "parentId": "n_he_price", "childIds": [],
+          "title": "Stalled", "description": "We'll revisit next quarter",
+          "speaker": "buyer", "tMs": 26000,
+          "successProbability": 0.12, "expectedValue": 5760,
+          "metrics": { "confidence": 0.30, "hesitation": 0.58, "enthusiasm": 0.18 }
+        },
+        {
+          "id": "n_he_disc", "parentId": "n_he_open", "childIds": [],
+          "title": "Cost-of-downtime framing", "description": "Tie price to outage losses",
+          "speaker": "seller", "tMs": 12000,
+          "successProbability": 0.70, "expectedValue": 33600,
+          "metrics": { "confidence": 0.68, "hesitation": 0.22, "enthusiasm": 0.60 }
+        }
+      ]
+    },
+
+    "tree_brightwave": {
+      "id": "tree_brightwave",
+      "callId": "call_brightwave",
+      "rootNodeId": "n_bw_open",
+      "nodes": [
+        {
+          "id": "n_bw_open", "parentId": null, "childIds": ["n_bw_demo"],
+          "title": "Opening", "description": "Great to meet you, Priya",
+          "speaker": "seller", "tMs": 0,
+          "successProbability": 0.50, "expectedValue": 24000,
+          "metrics": { "confidence": 0.73, "hesitation": 0.17, "enthusiasm": 0.62 }
+        },
+        {
+          "id": "n_bw_demo", "parentId": "n_bw_open", "childIds": ["n_bw_close"],
+          "title": "Demo wow", "description": "Campaign analytics in one view",
+          "speaker": "buyer", "tMs": 16000,
+          "successProbability": 0.82, "expectedValue": 39360,
+          "metrics": { "confidence": 0.80, "hesitation": 0.15, "enthusiasm": 0.78 }
+        },
+        {
+          "id": "n_bw_close", "parentId": "n_bw_demo", "childIds": [],
+          "title": "Closed won", "description": "We're in — start the rollout",
+          "speaker": "buyer", "tMs": 24000,
+          "successProbability": 0.90, "expectedValue": 43200,
+          "metrics": { "confidence": 0.85, "hesitation": 0.11, "enthusiasm": 0.83 }
+        }
+      ]
+    },
+
+    "tree_atlas": {
+      "id": "tree_atlas",
+      "callId": "call_atlas",
+      "rootNodeId": "n_at_open",
+      "nodes": [
+        {
+          "id": "n_at_open", "parentId": null, "childIds": ["n_at_disc"],
+          "title": "Opening", "description": "Thanks for joining, Tom",
+          "speaker": "seller", "tMs": 0,
+          "successProbability": 0.50, "expectedValue": 24000,
+          "metrics": { "confidence": 0.71, "hesitation": 0.19, "enthusiasm": 0.57 }
+        },
+        {
+          "id": "n_at_disc", "parentId": "n_at_open", "childIds": ["n_at_value"],
+          "title": "Discovery", "description": "Where does the line lose hours?",
+          "speaker": "seller", "tMs": 10000,
+          "successProbability": 0.58, "expectedValue": 27840,
+          "metrics": { "confidence": 0.67, "hesitation": 0.23, "enthusiasm": 0.55 }
+        },
+        {
+          "id": "n_at_value", "parentId": "n_at_disc", "childIds": [],
+          "title": "Value forming", "description": "Predictive maintenance angle",
+          "speaker": "seller", "tMs": 18000,
+          "successProbability": 0.66, "expectedValue": 31680,
+          "metrics": { "confidence": 0.69, "hesitation": 0.21, "enthusiasm": 0.61 }
+        }
+      ]
+    },
+
+    "tree_vertex": {
+      "id": "tree_vertex",
+      "callId": "call_vertex",
+      "rootNodeId": "n_vx_open",
+      "nodes": [
+        {
+          "id": "n_vx_open", "parentId": null, "childIds": ["n_vx_disc"],
+          "title": "Opening", "description": "Good to connect, Lena",
+          "speaker": "seller", "tMs": 0,
+          "successProbability": 0.50, "expectedValue": 24000,
+          "metrics": { "confidence": 0.72, "hesitation": 0.18, "enthusiasm": 0.58 }
+        },
+        {
+          "id": "n_vx_disc", "parentId": "n_vx_open", "childIds": [],
+          "title": "Discovery", "description": "What's blocking the eng roadmap?",
+          "speaker": "seller", "tMs": 9000,
+          "successProbability": 0.62, "expectedValue": 29760,
+          "metrics": { "confidence": 0.68, "hesitation": 0.22, "enthusiasm": 0.59 }
         }
       ]
     }
@@ -182,6 +454,139 @@
         "weaknesses": [],
         "practiceTargets": []
       }
+    },
+
+    "rec_c2_real": {
+      "id": "rec_c2_real",
+      "callId": "call_convex2",
+      "treeId": "tree_convex2",
+      "isReal": true,
+      "isActive": false,
+      "startNodeId": "n_c2_open",
+      "stopNodeId": null,
+      "audioPath": "/data/audio/rec_c2_real.webm",
+      "lengthMs": 19000,
+      "transcript": [
+        { "index": 0, "speaker": "seller", "text": "Good to reconnect, John. How did the pilot land internally?", "tStartMs": 0, "tEndMs": 8000 },
+        { "index": 1, "speaker": "buyer", "text": "The ROI was obvious. Send the contract over and let's get going.", "tStartMs": 8000, "tEndMs": 19000 }
+      ],
+      "traversal": {
+        "initialNodeId": "n_c2_open",
+        "finalNodeId": "n_c2_close",
+        "steps": [
+          { "transcriptIndex": 1, "fromNodeId": "n_c2_open", "toNodeId": "n_c2_value", "tMs": 8000 },
+          { "transcriptIndex": 1, "fromNodeId": "n_c2_value", "toNodeId": "n_c2_close", "tMs": 15000 }
+        ]
+      },
+      "aiNotes": null,
+      "aiFeedback": null
+    },
+
+    "rec_nr_real": {
+      "id": "rec_nr_real",
+      "callId": "call_northridge",
+      "treeId": "tree_northridge",
+      "isReal": true,
+      "isActive": false,
+      "startNodeId": "n_nr_open",
+      "stopNodeId": null,
+      "audioPath": "/data/audio/rec_nr_real.webm",
+      "lengthMs": 27000,
+      "transcript": [
+        { "index": 0, "speaker": "seller", "text": "Thanks for making time, Maria. Where do shipments stall today?", "tStartMs": 0, "tEndMs": 9000 },
+        { "index": 1, "speaker": "buyer", "text": "We lose visibility at the regional hubs. If real-time tracking fixes that, that's huge.", "tStartMs": 9000, "tEndMs": 19000 },
+        { "index": 2, "speaker": "buyer", "text": "This looks right. Let's get procurement looped in.", "tStartMs": 19000, "tEndMs": 27000 }
+      ],
+      "traversal": {
+        "initialNodeId": "n_nr_open",
+        "finalNodeId": "n_nr_close",
+        "steps": [
+          { "transcriptIndex": 1, "fromNodeId": "n_nr_open", "toNodeId": "n_nr_disc", "tMs": 9000 },
+          { "transcriptIndex": 1, "fromNodeId": "n_nr_disc", "toNodeId": "n_nr_value", "tMs": 19000 },
+          { "transcriptIndex": 2, "fromNodeId": "n_nr_value", "toNodeId": "n_nr_close", "tMs": 27000 }
+        ]
+      },
+      "aiNotes": null,
+      "aiFeedback": null
+    },
+
+    "rec_he_real": {
+      "id": "rec_he_real",
+      "callId": "call_helios",
+      "treeId": "tree_helios",
+      "isReal": true,
+      "isActive": false,
+      "startNodeId": "n_he_open",
+      "stopNodeId": null,
+      "audioPath": "/data/audio/rec_he_real.webm",
+      "lengthMs": 26000,
+      "transcript": [
+        { "index": 0, "speaker": "seller", "text": "Appreciate the time, Sam. I'd love to walk through the platform.", "tStartMs": 0, "tEndMs": 8000 },
+        { "index": 1, "speaker": "buyer", "text": "Honestly this is well over our budget for the year.", "tStartMs": 8000, "tEndMs": 14000 },
+        { "index": 2, "speaker": "buyer", "text": "Let's revisit next quarter when budgets reset.", "tStartMs": 14000, "tEndMs": 26000 }
+      ],
+      "traversal": {
+        "initialNodeId": "n_he_open",
+        "finalNodeId": "n_he_stall",
+        "steps": [
+          { "transcriptIndex": 1, "fromNodeId": "n_he_open", "toNodeId": "n_he_price", "tMs": 14000 },
+          { "transcriptIndex": 2, "fromNodeId": "n_he_price", "toNodeId": "n_he_stall", "tMs": 26000 }
+        ]
+      },
+      "aiNotes": null,
+      "aiFeedback": null
+    },
+
+    "rec_bw_real": {
+      "id": "rec_bw_real",
+      "callId": "call_brightwave",
+      "treeId": "tree_brightwave",
+      "isReal": true,
+      "isActive": false,
+      "startNodeId": "n_bw_open",
+      "stopNodeId": null,
+      "audioPath": "/data/audio/rec_bw_real.webm",
+      "lengthMs": 24000,
+      "transcript": [
+        { "index": 0, "speaker": "seller", "text": "Great to meet you, Priya. Let me show you campaign analytics in one view.", "tStartMs": 0, "tEndMs": 9000 },
+        { "index": 1, "speaker": "buyer", "text": "Oh wow, that's exactly what my team has been stitching together by hand.", "tStartMs": 9000, "tEndMs": 16000 },
+        { "index": 2, "speaker": "buyer", "text": "We're in. Let's start the rollout.", "tStartMs": 16000, "tEndMs": 24000 }
+      ],
+      "traversal": {
+        "initialNodeId": "n_bw_open",
+        "finalNodeId": "n_bw_close",
+        "steps": [
+          { "transcriptIndex": 1, "fromNodeId": "n_bw_open", "toNodeId": "n_bw_demo", "tMs": 16000 },
+          { "transcriptIndex": 2, "fromNodeId": "n_bw_demo", "toNodeId": "n_bw_close", "tMs": 24000 }
+        ]
+      },
+      "aiNotes": null,
+      "aiFeedback": null
+    },
+
+    "rec_at_real": {
+      "id": "rec_at_real",
+      "callId": "call_atlas",
+      "treeId": "tree_atlas",
+      "isReal": true,
+      "isActive": true,
+      "startNodeId": "n_at_open",
+      "stopNodeId": null,
+      "audioPath": "/data/audio/rec_at_real.webm",
+      "lengthMs": 12000,
+      "transcript": [
+        { "index": 0, "speaker": "seller", "text": "Thanks for joining, Tom. Where does the line lose the most hours?", "tStartMs": 0, "tEndMs": 10000 },
+        { "index": 1, "speaker": "buyer", "text": "Unplanned downtime, mostly. We never see it coming.", "tStartMs": 10000, "tEndMs": 12000 }
+      ],
+      "traversal": {
+        "initialNodeId": "n_at_open",
+        "finalNodeId": "n_at_disc",
+        "steps": [
+          { "transcriptIndex": 1, "fromNodeId": "n_at_open", "toNodeId": "n_at_disc", "tMs": 10000 }
+        ]
+      },
+      "aiNotes": null,
+      "aiFeedback": null
     }
   }
 }

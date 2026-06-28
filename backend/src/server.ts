@@ -8,8 +8,11 @@
 import cors from "cors";
 import express, { type Request, type Response } from "express";
 import {
+  getBuyer,
   getCall,
+  getCompany,
   getRecording,
+  getSalesperson,
   getTree,
   recordingsForCall,
   store,
@@ -67,10 +70,19 @@ app.get("/calls/:id", (req: Request, res: Response) => {
   if (!call) return notFound(res, `call ${req.params.id} not found`);
   const tree = getTree(call.treeId);
   if (!tree) return notFound(res, `tree ${call.treeId} not found`);
+  const company = getCompany(call.companyId);
+  if (!company) return notFound(res, `company ${call.companyId} not found`);
+  const buyer = getBuyer(call.buyerId);
+  if (!buyer) return notFound(res, `buyer ${call.buyerId} not found`);
+  const salesperson = getSalesperson(call.salespersonId);
+  if (!salesperson) return notFound(res, `salesperson ${call.salespersonId} not found`);
   const detail: CallDetail = {
     call,
     tree,
     recordings: recordingsForCall(call.id),
+    company,
+    buyer,
+    salesperson,
   };
   res.json(detail);
 });
