@@ -53,18 +53,27 @@ function CallNodeImpl({ data }: NodeProps) {
           opacity: typeof d.opacity === "number" ? d.opacity : 1,
         }}
         className={
-          "group flex cursor-pointer flex-col rounded-lg transition-[opacity,border-color,box-shadow] duration-300 " +
+          "group relative flex cursor-pointer flex-col rounded-lg transition-[opacity,border-color,box-shadow] duration-300 " +
           (titleOnly ? "items-center justify-center px-3 py-2 text-center " : "px-4 py-3 ") +
+          // emphasis: selected pulses strongest; trunk nodes glow + ring
           (d.focused
-            ? "ring-2 ring-accent "
+            ? "ct-selected ring-2 ring-accent "
             : d.onCurrentPath
-              ? "ring-1 ring-accent/50 "
+              ? "ring-2 ring-accent/60 shadow-[0_0_18px_-4px_rgba(61,214,208,0.45)] "
               : "") +
+          // identity: AI = teal border (+ glimmer unless focused); Real = neutral
           (isAi
-            ? "ct-glimmer border border-accent/60 bg-surface shadow-[0_0_16px_-6px_rgba(61,214,208,0.45)] hover:border-accent/90"
-            : "animate-fade-up border-l-[3px] border-y border-r border-y-border-strong border-r-border-strong border-l-text-muted bg-surface-2 shadow-[0_1px_2px_rgba(0,0,0,0.4)] hover:border-l-text")
+            ? "ct-ai-bg border border-accent/60 hover:border-accent/90 " +
+              (d.focused ? "" : "ct-glimmer shadow-[0_0_16px_-6px_rgba(61,214,208,0.45)] ")
+            : "border-l-[3px] border-y border-r border-y-border-strong border-r-border-strong border-l-text-muted bg-surface-2 hover:border-l-text " +
+              (d.focused ? "" : "animate-fade-up shadow-[0_1px_2px_rgba(0,0,0,0.4)] "))
         }
       >
+      {d.focused === true && (
+        <div className="absolute -right-2 -top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+          Current
+        </div>
+      )}
       {/* tag row */}
       {!titleOnly && (
       <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">

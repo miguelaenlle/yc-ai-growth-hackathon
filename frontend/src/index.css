@@ -68,6 +68,28 @@
   transition: opacity 0.35s ease;
 }
 
+/* AI-generated cards get a synthetic, teal-tinted fill + a faint accent dot
+   matrix so they read as "generated" at a glance vs the neutral Real cards. */
+.ct-ai-bg {
+  background-color: #121d20;
+  background-image: radial-gradient(rgba(61, 214, 208, 0.13) 1px, transparent 1.5px);
+  background-size: 11px 11px;
+}
+
+/* The selected node breathes a strong accent glow so it's clearly the focus. */
+@keyframes selected-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 22px -4px rgba(61, 214, 208, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 36px -2px rgba(61, 214, 208, 0.9);
+  }
+}
+.ct-selected {
+  animation: selected-pulse 2.4s ease-in-out infinite;
+}
+
 /* AI tree nodes: soft accent glow breath + a periodic shimmer sweep. */
 .ct-glimmer {
   animation:
@@ -82,12 +104,12 @@
   inset: 0;
   background: linear-gradient(
     100deg,
-    transparent 42%,
-    rgba(61, 214, 208, 0.045) 50%,
-    transparent 58%
+    transparent 43%,
+    rgba(61, 214, 208, 0.03) 50%,
+    transparent 57%
   );
   transform: translateX(-120%);
-  animation: shimmer 2.6s linear infinite;
+  animation: shimmer 1.8s linear infinite;
   pointer-events: none;
 }
 

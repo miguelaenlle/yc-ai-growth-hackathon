@@ -25,58 +25,58 @@ export interface RawNode {
 
 // ---- The tree (parent → children). ~40 nodes. -----------------------------
 export const TREE: RawNode = {
-  id: "opening", kind: "real", title: "Opening", onPath: true,
-  description: "Thanks for hopping on, John",
+  id: "opening", kind: "real", title: "Thanks for hopping on", onPath: true,
+  description: "Warm open with John",
   children: [
     {
-      id: "discovery", kind: "real", title: "Discovery", onPath: true,
-      description: "How's ticket volume lately?",
+      id: "discovery", kind: "real", title: "How's ticket volume?", onPath: true,
+      description: "Surfacing the pain",
       children: [
         // --- Real spine continues through Pushback ---
         {
-          id: "pushback", kind: "real", title: "Pushback", onPath: true,
-          description: "You don't have Tableau integration",
+          id: "pushback", kind: "real", title: "No Tableau integration", onPath: true,
+          description: "Their analytics team lives in it",
           children: [
             {
-              id: "roadmap", kind: "real", title: "On the roadmap", onPath: true,
-              description: "It's an upcoming feature",
+              id: "roadmap", kind: "real", title: "Tableau's on the roadmap", onPath: true,
+              description: "Deflects to a future feature",
               children: [
                 {
-                  id: "deal_lost", kind: "real", title: "Deal lost", onPath: true,
-                  description: "Send the roadmap",
+                  id: "deal_lost", kind: "real", title: "“Just send the deck”", onPath: true,
+                  description: "Buyer disengages",
                   children: [
-                    { id: "lost_followup", kind: "ai", title: "Win-back", success: 0.18,
-                      description: "Re-engage next quarter" },
+                    { id: "lost_followup", kind: "ai", title: "Re-engage next quarter", success: 0.18,
+                      description: "Long-shot win-back" },
                   ],
                 },
               ],
             },
             {
-              id: "alternative", kind: "ai", title: "Alternative", success: 0.8,
-              description: "Use our SQL connectors instead",
+              id: "alternative", kind: "ai", title: "Use our SQL connectors", success: 0.8,
+              description: "Pipe data in, keep Tableau",
               children: [
                 {
-                  id: "continue", kind: "ai", title: "Continue", success: 0.86,
-                  description: "That works",
+                  id: "continue", kind: "ai", title: "“That works”", success: 0.86,
+                  description: "Objection cleared",
                   children: [
-                    { id: "book_demo", kind: "ai", title: "Book demo", success: 0.93,
-                      description: "Let's get it on the calendar",
+                    { id: "book_demo", kind: "ai", title: "Book the demo", success: 0.93,
+                      description: "Get it on the calendar",
                       children: [
-                        { id: "demo_prep", kind: "ai", title: "Demo prep", success: 0.9,
-                          description: "Tailor to ticket dashboards" },
-                        { id: "loop_champion", kind: "ai", title: "Loop in champion", success: 0.88,
-                          description: "Bring the VP along" },
+                        { id: "demo_prep", kind: "ai", title: "Tailor to ticket dashboards", success: 0.9,
+                          description: "Prep their use case" },
+                        { id: "loop_champion", kind: "ai", title: "Bring the VP along", success: 0.88,
+                          description: "Loop in the champion" },
                       ],
                     },
-                    { id: "pricing", kind: "ai", title: "Pricing ask", success: 0.74,
-                      description: "What does this run us?",
+                    { id: "pricing", kind: "ai", title: "“What does this run us?”", success: 0.74,
+                      description: "Buyer asks about price",
                       children: [
-                        { id: "discount", kind: "ai", title: "Offer discount", success: 0.7,
-                          description: "Annual prepay incentive" },
-                        { id: "roi_case", kind: "ai", title: "ROI case", success: 0.82,
-                          description: "Tie price to saved hours",
+                        { id: "discount", kind: "ai", title: "Annual prepay discount", success: 0.7,
+                          description: "Trade term for price" },
+                        { id: "roi_case", kind: "ai", title: "Tie price to saved hours", success: 0.82,
+                          description: "Build the ROI case",
                           children: [
-                            { id: "cfo", kind: "ai", title: "CFO buy-in", success: 0.8,
+                            { id: "cfo", kind: "ai", title: "Get CFO buy-in", success: 0.8,
                               description: "Budget approved" },
                           ],
                         },
@@ -85,27 +85,27 @@ export const TREE: RawNode = {
                   ],
                 },
                 {
-                  id: "skeptical", kind: "ai", title: "Still skeptical", success: 0.55,
-                  description: "Sounds like extra work",
+                  id: "skeptical", kind: "ai", title: "“Sounds like extra work”", success: 0.55,
+                  description: "Still skeptical",
                   children: [
-                    { id: "live_walkthrough", kind: "ai", title: "Live walkthrough", success: 0.68,
-                      description: "Show it in 5 minutes" },
+                    { id: "live_walkthrough", kind: "ai", title: "Show it in 5 minutes", success: 0.68,
+                      description: "Live walkthrough" },
                   ],
                 },
               ],
             },
             {
-              id: "customization", kind: "ai", title: "Customization", success: 0.5,
-              description: "We'll build it next week",
+              id: "customization", kind: "ai", title: "“We'll build it next week”", success: 0.5,
+              description: "Promise a custom integration",
               children: [
                 {
-                  id: "needs_proof", kind: "ai", title: "Needs proof", success: 0.45,
-                  description: "I'll believe it when I see it",
+                  id: "needs_proof", kind: "ai", title: "“Believe it when I see it”", success: 0.45,
+                  description: "Buyer needs proof",
                   children: [
-                    { id: "case_study", kind: "ai", title: "Share case study", success: 0.6,
+                    { id: "case_study", kind: "ai", title: "Share a case study", success: 0.6,
                       description: "Similar team, shipped fast" },
-                    { id: "scope_risk", kind: "ai", title: "Scope risk", success: 0.32,
-                      description: "Timeline slips, trust erodes" },
+                    { id: "scope_risk", kind: "ai", title: "Timeline slips, trust erodes", success: 0.32,
+                      description: "Risk of overpromising" },
                   ],
                 },
               ],
@@ -114,42 +114,42 @@ export const TREE: RawNode = {
         },
         // --- AI branch off Discovery: quantify the pain ---
         {
-          id: "quantify", kind: "ai", title: "Quantify pain", success: 0.72,
-          description: "How many tickets per week?",
+          id: "quantify", kind: "ai", title: "How many tickets per week?", success: 0.72,
+          description: "Quantify the pain",
           children: [
             {
-              id: "pain_big", kind: "ai", title: "Pain is big", success: 0.84,
-              description: "We're drowning in them",
+              id: "pain_big", kind: "ai", title: "“We're drowning in them”", success: 0.84,
+              description: "Pain is big",
               children: [
-                { id: "urgency", kind: "ai", title: "Build urgency", success: 0.87,
-                  description: "Every week costs you",
+                { id: "urgency", kind: "ai", title: "Every week costs you", success: 0.87,
+                  description: "Build urgency",
                   children: [
-                    { id: "exec_intro", kind: "ai", title: "Exec intro", success: 0.9,
-                      description: "Get the COO in the room",
+                    { id: "exec_intro", kind: "ai", title: "Get the COO in the room", success: 0.9,
+                      description: "Exec intro",
                       children: [
-                        { id: "proposal", kind: "ai", title: "Proposal sent", success: 0.92,
-                          description: "Mutual action plan" },
-                        { id: "negotiate", kind: "ai", title: "Negotiate terms", success: 0.85,
-                          description: "Land the annual deal" },
+                        { id: "proposal", kind: "ai", title: "Send a mutual action plan", success: 0.92,
+                          description: "Proposal out" },
+                        { id: "negotiate", kind: "ai", title: "Land the annual deal", success: 0.85,
+                          description: "Negotiate terms" },
                       ],
                     },
                   ],
                 },
-                { id: "quick_win", kind: "ai", title: "Quick win", success: 0.8,
-                  description: "Pilot on one queue",
+                { id: "quick_win", kind: "ai", title: "Pilot on one queue", success: 0.8,
+                  description: "Quick win",
                   children: [
-                    { id: "expand", kind: "ai", title: "Expand pilot", success: 0.82,
-                      description: "Roll out to all queues" },
+                    { id: "expand", kind: "ai", title: "Roll out to all queues", success: 0.82,
+                      description: "Expand the pilot" },
                   ],
                 },
               ],
             },
             {
-              id: "pain_small", kind: "ai", title: "Pain is minor", success: 0.4,
-              description: "It's manageable for now",
+              id: "pain_small", kind: "ai", title: "“It's manageable for now”", success: 0.4,
+              description: "Pain is minor",
               children: [
-                { id: "nurture", kind: "ai", title: "Nurture", success: 0.38,
-                  description: "Check back next quarter" },
+                { id: "nurture", kind: "ai", title: "Check back next quarter", success: 0.38,
+                  description: "Nurture" },
               ],
             },
           ],
@@ -158,37 +158,37 @@ export const TREE: RawNode = {
     },
     // --- AI branch off Opening: stronger reframe ---
     {
-      id: "reframe", kind: "ai", title: "Reframe value", success: 0.6,
-      description: "Lead with outcomes, not features",
+      id: "reframe", kind: "ai", title: "Lead with outcomes", success: 0.6,
+      description: "Reframe off features",
       children: [
         {
-          id: "agenda", kind: "ai", title: "Set agenda", success: 0.66,
-          description: "Align on what success looks like",
+          id: "agenda", kind: "ai", title: "Align on what success looks like", success: 0.66,
+          description: "Set the agenda",
           children: [
-            { id: "discovery_deep", kind: "ai", title: "Deep discovery", success: 0.78,
-              description: "Map the whole workflow",
+            { id: "discovery_deep", kind: "ai", title: "Map the whole workflow", success: 0.78,
+              description: "Deep discovery",
               children: [
-                { id: "multithread", kind: "ai", title: "Multithread", success: 0.83,
-                  description: "Find a second champion",
+                { id: "multithread", kind: "ai", title: "Find a second champion", success: 0.83,
+                  description: "Multithread the deal",
                   children: [
-                    { id: "group_demo", kind: "ai", title: "Group demo", success: 0.86,
-                      description: "Whole team in the room" },
+                    { id: "group_demo", kind: "ai", title: "Get the whole team in", success: 0.86,
+                      description: "Group demo" },
                   ],
                 },
-                { id: "tech_eval", kind: "ai", title: "Tech eval", success: 0.7,
-                  description: "Security & integration review",
+                { id: "tech_eval", kind: "ai", title: "Security & integration review", success: 0.7,
+                  description: "Tech evaluation",
                   children: [
-                    { id: "security", kind: "ai", title: "Security signoff", success: 0.74,
-                      description: "Passes their review" },
+                    { id: "security", kind: "ai", title: "Pass their security review", success: 0.74,
+                      description: "Signoff secured" },
                   ],
                 },
               ],
             },
-            { id: "rapport", kind: "ai", title: "Build rapport", success: 0.58,
-              description: "Earn the room first",
+            { id: "rapport", kind: "ai", title: "Earn the room first", success: 0.58,
+              description: "Build rapport",
               children: [
-                { id: "next_steps", kind: "ai", title: "Next steps", success: 0.6,
-                  description: "Agree on a follow-up" },
+                { id: "next_steps", kind: "ai", title: "Agree on a follow-up", success: 0.6,
+                  description: "Lock next steps" },
               ],
             },
           ],

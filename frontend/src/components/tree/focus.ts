@@ -210,7 +210,9 @@ export function applyFocus(
     ...ancestors,
     ...(byId.get(selectedId)?.children ?? []).map((c) => c.id),
   ]);
-  const scaleOf = (id: string) => (ancestors.has(id) ? 1 : scaleFor(hops.get(id)));
+  // Selected node is the biggest (clearly the end of the path); ancestors full.
+  const scaleOf = (id: string) =>
+    id === selectedId ? 1.15 : ancestors.has(id) ? 1 : scaleFor(hops.get(id));
   const opacityOf = (id: string) =>
     emphasized.has(id) ? 1 : Math.max(0.22, Math.min(0.6, scaleOf(id)));
   const placed = layoutPath(scaleOf, path, byId);
@@ -250,8 +252,20 @@ export function applyFocus(
         },
       };
     }
+    // Non-path edges: visible neutral dashes, static (no flow) so they read as
+    // quiet context rather than competing with the bold accent path.
     const op = Math.min(opacityOf(e.source), opacityOf(e.target));
-    return { ...e, style: { ...e.style, opacity: Math.max(0.45, op) } };
+    return {
+      ...e,
+      animated: false,
+      style: {
+        ...e.style,
+        stroke: "var(--color-text-faint)",
+        strokeWidth: 1.5,
+        strokeDasharray: "4 5",
+        opacity: Math.max(0.55, op),
+      },
+    };
   });
 
   return { nodes: outNodes, edges: outEdges };
