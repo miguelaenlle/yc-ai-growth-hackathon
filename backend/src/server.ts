@@ -16,6 +16,8 @@ import { fileURLToPath } from "node:url";
 import { handleLiveSession } from "./live.js";
 import { generateAssistCard } from "./assist.js";
 import { getProductInfo } from "./product.js";
+import { runUploadPipeline } from "./upload-pipeline.js";
+import { refreshStatCache } from "./tree-generator.js";
 import {
   DEAL_VALUE,
   getBuyer,
@@ -740,6 +742,142 @@ app.post(
 );
 
 // ---------------------------------------------------------------------------
+// POST /upload/call — upload a recorded MP3 call and build its decision tree.
+//
+// Accepts multipart/form-data with three fields:
+//   audio        — MP3 file (the call recording; seller speaks first)
+//   buyer_name   — display name of the buyer (e.g. "John Smith")
+//   company_name — name of the buyer's company (e.g. "Acme Corp")
+//
+// Returns immediately with { callId, treeId, recordingId } and fires the full
+// transcription + routing + metrics pipeline asynchronously. Progress is emitted
+// as SSE { type: "processing", status: ... } events on GET /stream/:recordingId.
+// ---------------------------------------------------------------------------
+
+const callUploadStorage = multer.diskStorage({
+  destination: async (_req, _file, cb) => {
+    // Temp dir — the handler will move the file after IDs are generated.
+    const tmpDir = join(__dirname, "..", "public", "data", "audio", "_tmp");
+    await fs.mkdir(tmpDir, { recursive: true });
+    cb(null, tmpDir);
+  },
+  filename: (_req, file, cb) => {
+    // Unique temp name to avoid collisions during concurrent uploads.
+    const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const ext = file.originalname.endsWith(".mp3") ? ".mp3" : ".audio";
+    cb(null, `upload-${unique}${ext}`);
+  },
+});
+
+const callUpload = multer({ storage: callUploadStorage });
+
+app.post(
+  "/upload/call",
+  callUpload.single("audio"),
+  async (req: Request, res: Response) => {
+    const buyerName = typeof req.body?.buyer_name === "string" ? req.body.buyer_name.trim() : "";
+    const companyName = typeof req.body?.company_name === "string" ? req.body.company_name.trim() : "";
+
+    if (!buyerName || !companyName) {
+      if (req.file) await fs.unlink(req.file.path).catch(() => undefined);
+      return fail(res, 400, "bad_input", "buyer_name and company_name are required");
+    }
+
+    if (!req.file) {
+      return fail(res, 400, "bad_input", "audio file is required (field: audio)");
+    }
+
+    // Generate all IDs up front so we can move the file into its final location.
+    const companyId   = newId("co");
+    const buyerId     = newId("buy");
+    const callId      = newId("call");
+    const treeId      = newId("tree");
+    const recordingId = newId("rec");
+    const rootNodeId  = newId("n");
+
+    // Move the temp file to its permanent location: /data/audio/:recordingId/call.mp3
+    const audioDir = join(__dirname, "..", "public", "data", "audio", recordingId);
+    await fs.mkdir(audioDir, { recursive: true });
+    const finalAudioPath = join(audioDir, "call.mp3");
+    await fs.rename(req.file.path, finalAudioPath);
+
+    const audioUrlPath = `/data/audio/${recordingId}/call.mp3`;
+
+    // Build the company with the buyer nested inside (matches SeedStore.companies shape).
+    const newCompany = {
+      id: companyId,
+      name: companyName,
+      buyers: [{ id: buyerId, name: buyerName, title: "" }],
+    };
+    store.companies.push(newCompany);
+
+    const rootNode: TreeNode = {
+      id: rootNodeId,
+      parentId: null,
+      childIds: [],
+      title: "Opening",
+      description: "Start of call",
+      speaker: "seller",
+      tMs: 0,
+      successProbability: 0.5,
+      expectedValue: Math.round(0.5 * DEAL_VALUE),
+      metrics: { confidence: 0.5, hesitation: 0.3, enthusiasm: 0.5 },
+    };
+
+    const tree: Tree = { id: treeId, callId, rootNodeId, nodes: [rootNode] };
+
+    const call: Call = {
+      id: callId,
+      companyId,
+      salespersonId: "sp_jane",  // default salesperson
+      buyerId,
+      startedAt: new Date().toISOString(),
+      treeId,
+      recordingIds: [recordingId],
+    };
+
+    const rec: Recording = {
+      id: recordingId,
+      callId,
+      treeId,
+      isReal: true,
+      isActive: true,
+      startNodeId: null,
+      stopNodeId: null,
+      audioPath: audioUrlPath,
+      lengthMs: 0,
+      transcript: [],
+      traversal: { initialNodeId: rootNodeId, finalNodeId: rootNodeId, steps: [] },
+      aiNotes: null,
+      aiFeedback: null,
+    };
+
+    putTree(tree);
+    putCall(call);
+    putRecording(rec);
+    persist();
+
+    // Return IDs to the client immediately — pipeline runs async.
+    res.json({ callId, treeId, recordingId });
+
+    // Fire-and-forget: run the full transcription + routing pipeline.
+    // emitFn is scoped to this recordingId's SSE channel.
+    runUploadPipeline(
+      recordingId,
+      finalAudioPath,
+      (event) => emitEvent(recordingId, event),
+    ).catch((err) => {
+      console.error(`[upload] Unhandled pipeline error for ${recordingId}:`, err);
+    });
+  },
+);
+
+// ---------------------------------------------------------------------------
+
+// GET /_debug/node-stats — exposes the live stat cache for the debug upload page
+app.get("/_debug/node-stats", (_req: Request, res: Response) => {
+  res.json(store._nodeStats ?? []);
+});
 
 app.get("/", (_req: Request, res: Response) => {
   res.json({
@@ -748,6 +886,18 @@ app.get("/", (_req: Request, res: Response) => {
     phase: "Phase 3 — SSE live stream + signal engine + WebSocket Realtime relay",
   });
 });
+
+// ---------------------------------------------------------------------------
+// Startup: seed the node stat cache if it hasn't been built yet.
+// This runs synchronously before accepting connections so the first upload
+// always has a warm stat table drawn from the existing 100 calls.
+// ---------------------------------------------------------------------------
+if (!store._nodeStats || store._nodeStats.length === 0) {
+  console.log("[startup] _nodeStats missing — building stat cache from existing calls…");
+  refreshStatCache();
+} else {
+  console.log(`[startup] Stat cache loaded — ${store._nodeStats.length} node titles`);
+}
 
 app.listen(PORT, () => {
   console.log(`CallTree backend listening on http://localhost:${PORT}`);
