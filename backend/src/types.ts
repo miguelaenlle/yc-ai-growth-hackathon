@@ -229,7 +229,8 @@ export type LiveEvent =
   | { type: "move"; step: TraversalStep; node: TreeNode }
   | { type: "branch"; node: TreeNode }
   | { type: "metrics"; nodeId: Id; metrics: SignalMetrics }
-  | { type: "notes"; card: AssistCard };
+  | { type: "notes"; card: AssistCard }
+  | { type: "processing"; status: "transcribing" | "analyzing" | "routing" | "done"; message?: string };
 
 // ---------- Request bodies ----------
 export interface StartRecordingReq {
@@ -270,6 +271,21 @@ export interface MockAnalysisReq {
   personaId: Id;
 }
 
+/**
+ * Aggregated win/loss statistics for a conversation node title, computed from
+ * all resolved (non-open) calls in the store. Written to seed.json under
+ * `_nodeStats` and refreshed after every uploaded call is processed.
+ */
+export interface NodeStatEntry {
+  title: string;
+  wins: number;
+  losses: number;
+  /** Beta-smoothed win rate: (wins + 1) / (wins + losses + 2). */
+  winRate: number;
+  /** Total resolved calls that passed through this node title (wins + losses). */
+  sampleSize: number;
+}
+
 // Shape of the seed JSON store.
 export interface SeedStore {
   _meta: { note: string; dealValue: number };
@@ -278,4 +294,6 @@ export interface SeedStore {
   calls: Call[];
   trees: Record<Id, Tree>;
   recordings: Record<Id, Recording>;
+  /** Persisted node win-rate stat table. Rebuilt after every upload. */
+  _nodeStats?: NodeStatEntry[];
 }
