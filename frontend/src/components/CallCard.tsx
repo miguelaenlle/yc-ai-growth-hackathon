@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import type { CallSummary } from "../lib/types";
 import { formatDateTime } from "../lib/format";
 import { participantsFor, type Person } from "../lib/placeholders";
-import { OutcomeBadge } from "./OutcomeBadge";
+import { CallEvaluation } from "./CallEvaluation";
 
 function ClockIcon() {
   return (
@@ -45,7 +45,13 @@ function PersonRow({ icon, person }: { icon: React.ReactNode; person: Person }) 
 
 export function CallCard({ call, index }: { call: CallSummary; index: number }) {
   const navigate = useNavigate();
-  const { buyer, salesperson } = participantsFor(call.company);
+  // Prefer the real per-call participants from the summary; fall back to the
+  // company placeholder for any older summary shape missing them.
+  const fallback = participantsFor(call.company);
+  const buyer: Person = call.buyer ?? fallback.buyer;
+  const salesperson: Person = call.salesperson
+    ? { name: call.salesperson.name, title: fallback.salesperson.title }
+    : fallback.salesperson;
 
   return (
     <button
@@ -75,7 +81,7 @@ export function CallCard({ call, index }: { call: CallSummary; index: number }) 
             <ClockIcon />
             {formatDateTime(call.startedAt)}
           </span>
-          <OutcomeBadge outcome={call.outcome} />
+          <CallEvaluation finalEV={call.finalEV} bestEV={call.bestEV} />
         </div>
       </div>
     </button>

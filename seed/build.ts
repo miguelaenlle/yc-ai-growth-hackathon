@@ -14,13 +14,16 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  buyerFirstNames,
+  buyerLastNames,
+  buyerTitles,
   calls,
   company,
   dealValue,
   hero,
-  salesperson,
+  heroBuyer,
+  salespeople,
   tree as seedTree,
-  type Archetype,
   type Outcome,
   type SeedTreeNode,
   type Speaker,
@@ -29,6 +32,7 @@ import {
 import type {
   AiFeedback,
   AssistCard,
+  Buyer,
   Call,
   Recording,
   SeedStore,
@@ -247,13 +251,13 @@ async function buildNodeCopy(flat: FlatNode[]): Promise<Record<string, NodeCopy>
     .map((n) => `- ${n.id} | ${n.speaker.toUpperCase()} | ${n.intent}`)
     .join("\n");
 
-  const prompt = `You are writing copy for a sales-call decision tree. The deal is selling Slack (team messaging — channels, threads, search, integrations) into a 250-seat company that currently uses Microsoft Teams. The buyer is Sarah Chen, VP of Operations; the seller is a Slack account executive.
+  const prompt = `You are writing SHORT copy for nodes in a sales-call decision tree, shown on small cards. The deal is selling Slack (team messaging — channels, threads, search, integrations) into a 250-seat company on Microsoft Teams. Buyer is a VP-level prospect; seller is a Slack account executive.
 
 For each node below, write:
-- "title": a 2-4 word label for the moment (e.g. "Teams incumbent", "Coexist reframe", "Pilot offer").
-- "description": ONE short, natural sentence in the voice of the listed speaker — what they actually say or do at this beat. Buyer lines are first-person from Sarah; seller lines describe the rep's move or quote it.
+- "title": a 2-4 word label (e.g. "Teams incumbent", "Coexist reframe", "Pilot offer").
+- "description": a TERSE fragment, MAX 9 WORDS — NOT a full sentence, no trailing period. A snappy gist of the beat. Buyer beats can be a short quoted phrase (e.g. "We're standardized on Teams"); seller beats a brief move (e.g. "Reframe: run alongside Teams").
 
-Nodes:
+Keep it tight enough to fit two short lines on a card. Nodes:
 ${nodeList}
 
 Return JSON: { "nodes": [ { "key": "<exact node id>", "title": "...", "description": "..." }, ... ] } with exactly one entry per node above, keys matching exactly.`;
@@ -464,8 +468,24 @@ interface BuiltPopulation {
   samples: { callId: string; archetype: string; outcome: Outcome; recording: Recording }[];
 }
 
+/**
+ * Up to 60 unique prospect buyers. With 12 firsts and 5 lasts (coprime), the pair
+ * (i % 12, i % 5) is unique for i in 0..59, so first[i%12] + last[i%5] yields 60
+ * distinct names AND varies the surname on every card (no "Lopez" clustering).
+ */
+function buildBuyerPool(count: number): Buyer[] {
+  const out: Buyer[] = [];
+  for (let i = 0; i < count; i++) {
+    const first = buyerFirstNames[i % buyerFirstNames.length];
+    const last = buyerLastNames[i % buyerLastNames.length];
+    out.push({ id: `buy_${pad2(i + 1)}`, name: `${first} ${last}`, title: buyerTitles[i % buyerTitles.length] });
+  }
+  return out;
+}
+
 function buildPopulation(
   nodeById: Map<string, TreeNode>,
+  buyerPool: Buyer[],
   heroExtras: { transcript: TranscriptSegment[]; lengthMs: number; aiNotes: AssistCard; aiFeedback: AiFeedback },
 ): BuiltPopulation {
   const callRecords: Call[] = [];
@@ -473,6 +493,7 @@ function buildPopulation(
   const samples: BuiltPopulation["samples"] = [];
   let heroReal: Recording | null = null;
   let globalIndex = 0;
+  let poolIdx = 0;
 
   for (const arc of calls) {
     const path = arc.path.map((id) => {
@@ -486,6 +507,11 @@ function buildPopulation(
       const callId = isHero ? HERO_CALL_ID : `call_${arc.key.toLowerCase()}_${pad2(i + 1)}`;
       const realRecId = isHero ? HERO_REAL_REC : `rec_${arc.key.toLowerCase()}_${pad2(i + 1)}`;
       const startedAt = isoAt(globalIndex, isHero);
+
+      // Hero keeps the pinned buyer (Sarah) + Jane; everyone else gets a unique
+      // buyer from the pool and a rep round-robined across all 5.
+      const buyer = isHero ? heroBuyer : buyerPool[poolIdx++];
+      const sellerId = isHero ? salespeople[0].id : salespeople[globalIndex % salespeople.length].id;
 
       const transcript = isHero ? heroExtras.transcript : codeBuiltTranscript(path);
       const lengthMs = isHero ? heroExtras.lengthMs : path.length * STEP_MS;
@@ -542,8 +568,8 @@ function buildPopulation(
       callRecords.push({
         id: callId,
         companyId: company.id,
-        salespersonId: salesperson.id,
-        buyerId: company.buyer.id,
+        salespersonId: sellerId,
+        buyerId: buyer.id,
         startedAt,
         treeId: TREE_ID,
         recordingIds,
@@ -732,7 +758,11 @@ async function main() {
   const lengthMs = Math.max(heroLines.length, heroPath.length) * STEP_MS;
   const heroTx = heroTranscript(heroLines, lengthMs);
 
-  const population = buildPopulation(nodeById, {
+  // 59 generated prospect buyers + the pinned hero buyer (Sarah).
+  const buyerPool = buildBuyerPool(calls.reduce((a, c) => a + c.count, 0) - 1);
+  const allBuyers: Buyer[] = [heroBuyer, ...buyerPool];
+
+  const population = buildPopulation(nodeById, buyerPool, {
     transcript: heroTx,
     lengthMs,
     aiNotes: heroAssist,
@@ -750,9 +780,9 @@ async function main() {
       dealValue,
     },
     companies: [
-      { id: company.id, name: company.name, buyers: [company.buyer] },
+      { id: company.id, name: company.name, buyers: allBuyers },
     ],
-    salespeople: [salesperson],
+    salespeople,
     calls: population.calls,
     trees: { [TREE_ID]: treeObj },
     recordings: population.recordings,

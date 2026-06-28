@@ -12,13 +12,33 @@
 
 export const dealValue = 45000;
 
-export const company = {
-  id: "co_slack",
-  name: "Slack",
-  buyer: { id: "buy_sarah", name: "Sarah Chen", title: "VP of Operations" },
-};
+export const company = { id: "co_slack", name: "Slack" };
 
-export const salesperson = { id: "sp_jane", name: "Jane Doe" };
+// The hero call's buyer is pinned (the cached hero transcript names her), so it
+// must stay consistent across regenerations.
+export const heroBuyer = { id: "buy_sarah", name: "Sarah Chen", title: "VP of Operations" };
+
+// 5 reps; calls rotate through them so the past-calls list reads like a team's
+// history. The hero call keeps Jane Doe.
+export const salespeople = [
+  { id: "sp_jane", name: "Jane Doe" },
+  { id: "sp_marcus", name: "Marcus Reid" },
+  { id: "sp_dana", name: "Dana Wu" },
+  { id: "sp_olivia", name: "Olivia Grant" },
+  { id: "sp_ben", name: "Ben Harris" },
+];
+
+// Name pools for the generated prospect buyers. 12 firsts × 5 lasts = 60 unique
+// (first[i % 12] + last[floor(i / 12)]); the builder makes 59 (the hero is Sarah).
+export const buyerFirstNames = [
+  "Maria", "Sam", "Priya", "Tom", "Lena", "David",
+  "Aisha", "Carlos", "Nina", "Raj", "Emma", "Kevin",
+];
+export const buyerLastNames = ["Lopez", "Carter", "Nair", "Becker", "Park"];
+export const buyerTitles = [
+  "VP of Operations", "Head of IT", "Director of Engineering",
+  "COO", "VP of People", "Head of Customer Success",
+];
 
 /** Whose words/decision a node represents. */
 export type Speaker = "seller" | "buyer";

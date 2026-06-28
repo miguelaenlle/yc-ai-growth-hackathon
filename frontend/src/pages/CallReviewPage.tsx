@@ -22,7 +22,7 @@ import { applyFocus } from "../components/tree/focus";
 import { CallNode } from "../components/tree/CallNode";
 import { NodePreview } from "../components/tree/NodePreview";
 import { TreeMiniMap } from "../components/tree/TreeMiniMap";
-import { OutcomeBadge } from "../components/OutcomeBadge";
+import { CallEvaluation } from "../components/CallEvaluation";
 import { CallTabs } from "../components/CallTabs";
 import { Logo } from "../components/Logo";
 import { SUMMARIZE_START_NODE_ID } from "../components/summarize/summarize_constants";
@@ -32,18 +32,17 @@ import { useCallDetail } from "../queries/useCallDetail";
 import { getWalkthrough, peekWalkthrough } from "../lib/walkthroughCache";
 import { participantsFor } from "../lib/placeholders";
 import { formatDateTime } from "../lib/format";
-import type { CallDetail, CallSummary, Outcome, WalkthroughBundle } from "../lib/types";
+import type { CallDetail, CallSummary, WalkthroughBundle } from "../lib/types";
 
 const nodeTypes = { call: CallNode };
 
-/** Fallback outcome when we arrive without the list summary (deep link). */
-function deriveOutcome(detail: CallDetail): Outcome {
+/** Realized + best EV for the evaluation pill, derived when we arrive without
+ *  the list summary (deep link). */
+function evalFromDetail(detail: CallDetail): { finalEV: number; bestEV: number } {
+  const bestEV = Math.max(0, ...detail.tree.nodes.map((n) => n.expectedValue));
   const real = detail.recordings.find((r) => r.isReal);
-  if (!real) return "open";
-  if (real.isActive) return "open";
-  const final = detail.tree.nodes.find((n) => n.id === real.traversal.finalNodeId);
-  if (!final) return "open";
-  return final.successProbability >= 0.5 ? "won" : "lost";
+  const final = detail.tree.nodes.find((n) => n.id === real?.traversal.finalNodeId);
+  return { finalEV: final?.expectedValue ?? 0, bestEV };
 }
 
 function dateOnly(iso: string): string {
@@ -71,14 +70,15 @@ interface SidebarProps {
   summary?: CallSummary;
   company: string;
   startedAt: string;
-  outcome: Outcome;
+  finalEV: number;
+  bestEV: number;
   buyerName: string;
   buyerTitle: string;
   sellerName: string;
   sellerTitle: string;
 }
 
-function Sidebar({ id, summary, company, startedAt, outcome, buyerName, buyerTitle, sellerName, sellerTitle }: SidebarProps) {
+function Sidebar({ id, summary, company, startedAt, finalEV, bestEV, buyerName, buyerTitle, sellerName, sellerTitle }: SidebarProps) {
   const navigate = useNavigate();
   return (
     <aside className="flex w-[300px] shrink-0 flex-col gap-6 border-r border-border bg-bg px-6 py-6">
@@ -115,7 +115,7 @@ function Sidebar({ id, summary, company, startedAt, outcome, buyerName, buyerTit
       </div>
 
       <div>
-        <OutcomeBadge outcome={outcome} />
+        <CallEvaluation finalEV={finalEV} bestEV={bestEV} />
       </div>
     </aside>
   );
@@ -317,7 +317,13 @@ export function CallReviewPage() {
   const { data: detail, isLoading, isError } = useCallDetail(id);
 
   const company = summary?.company ?? "Call";
-  const { buyer, salesperson } = participantsFor(company);
+  // Prefer the real per-call participants from the list summary; fall back to the
+  // company placeholder on deep links that arrive without a summary.
+  const fallbackPeople = participantsFor(company);
+  const buyer = summary?.buyer ?? fallbackPeople.buyer;
+  const salesperson = summary?.salesperson
+    ? { name: summary.salesperson.name, title: fallbackPeople.salesperson.title }
+    : fallbackPeople.salesperson;
 
   const [walkthrough, setWalkthrough] = useState<WalkthroughBundle | null>(null);
   const [summarizeStatus, setSummarizeStatus] = useState<SummarizeStatus>("loading");
@@ -410,7 +416,9 @@ export function CallReviewPage() {
     );
   }
 
-  const outcome = summary?.outcome ?? deriveOutcome(detail);
+  const derived = evalFromDetail(detail);
+  const finalEV = summary?.finalEV ?? derived.finalEV;
+  const bestEV = summary?.bestEV ?? derived.bestEV;
 
   return (
     <div className="flex h-screen bg-bg text-text">
@@ -419,7 +427,8 @@ export function CallReviewPage() {
         summary={summary}
         company={company}
         startedAt={detail.call.startedAt}
-        outcome={outcome}
+        finalEV={finalEV}
+        bestEV={bestEV}
         buyerName={buyer.name}
         buyerTitle={buyer.title}
         sellerName={salesperson.name}

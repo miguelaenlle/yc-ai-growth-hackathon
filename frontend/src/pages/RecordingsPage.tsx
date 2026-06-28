@@ -78,7 +78,7 @@ export function RecordingsPage() {
 
   // Single-company demo: company name rides in via the tab's nav state; fall back
   // to the one seeded call when deep-linked.
-  const company = summary?.company ?? "Convex";
+  const company = summary?.company ?? "Slack";
   const buyerName = participantsFor(company).buyer.name;
 
   // Practice runs (mocks) — the real recorded call lives on the CallTree tab.

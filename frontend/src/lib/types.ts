@@ -10,8 +10,11 @@ export interface CallSummary {
   id: Id;
   company: string;
   startedAt: string; // ISO 8601
-  outcome: Outcome;
-  bestEV: number;
+  outcome: Outcome; // kept for internal use; UI shows the evaluation
+  bestEV: number; // max node EV in the tree
+  finalEV: number; // EV at the node the real call ended on (realized value)
+  buyer: { name: string; title: string }; // resolved from the call's buyerId
+  salesperson: { name: string }; // resolved from the call's salespersonId
 }
 
 /** GET /recordings/:id/walkthrough → WalkthroughBundle */

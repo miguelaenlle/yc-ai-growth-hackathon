@@ -134,8 +134,11 @@ export interface CallSummary {
   id: Id;
   company: string;
   startedAt: string;
-  outcome: "won" | "lost" | "open";
-  bestEV: number;
+  outcome: "won" | "lost" | "open"; // kept for internal use; UI shows the evaluation
+  bestEV: number; // max node EV in the tree
+  finalEV: number; // EV at the node the real call ended on (realized value)
+  buyer: { name: string; title: string }; // resolved from the call's buyerId
+  salesperson: { name: string }; // resolved from the call's salespersonId
 }
 export interface CallDetail {
   call: Call;

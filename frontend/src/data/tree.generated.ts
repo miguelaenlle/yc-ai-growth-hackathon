@@ -6,50 +6,50 @@ import type { RawNode, Actor } from "../components/tree/treeData";
 export const GEN_TREE: RawNode = {
   "id": "n_open",
   "kind": "real",
-  "title": "Warm opening",
-  "description": "Thanks for taking the time to chat today, Sarah — I’m excited to discuss how Slack can help your team.",
+  "title": "Warm Opening",
+  "description": "Thank Sarah, set light agenda",
   "onPath": true,
   "children": [
     {
       "id": "n_disc",
       "kind": "real",
       "title": "Discovery",
-      "description": "Can you share how your team communicates and collaborates using Microsoft Teams right now?",
+      "description": "How does your team communicate today?",
       "onPath": true,
       "children": [
         {
           "id": "n_incumbent",
           "kind": "real",
-          "title": "Incumbent objection",
-          "description": "We already use Microsoft Teams — it's bundled with our license.",
+          "title": "Incumbent Objection",
+          "description": "We use Microsoft Teams — it's bundled",
           "onPath": true,
           "children": [
             {
               "id": "n_coexist",
               "kind": "ai",
-              "title": "Reframe",
-              "description": "Actually, Slack can run alongside Teams; it’s designed to complement your existing tools, not replace them.",
+              "title": "Coexist Reframe",
+              "description": "Slack runs alongside Teams, not a rip-and-replace",
               "success": 0.76,
               "children": [
                 {
                   "id": "n_curious",
                   "kind": "ai",
-                  "title": "Curious buyer",
-                  "description": "Okay, but where does Slack actually win over Teams?",
+                  "title": "Curious Buyer",
+                  "description": "Where does Slack win over Teams?",
                   "success": 0.95,
                   "children": [
                     {
                       "id": "n_pilot",
                       "kind": "ai",
-                      "title": "Pilot offer",
-                      "description": "How about we set up a low-risk 2-week pilot with one of your teams to see how it goes?",
+                      "title": "Pilot Offer",
+                      "description": "Low-risk 2-week pilot with one team",
                       "success": 0.95,
                       "children": [
                         {
                           "id": "n_yes",
                           "kind": "ai",
-                          "title": "Pilot agreement",
-                          "description": "Sure, let’s run the pilot and see how it works out.",
+                          "title": "Pilot Agreement",
+                          "description": "Buyer agrees to run the pilot",
                           "success": 0.95
                         }
                       ]
@@ -60,7 +60,7 @@ export const GEN_TREE: RawNode = {
                   "id": "n_unconvinced",
                   "kind": "ai",
                   "title": "Pushback",
-                  "description": "We just standardized on Teams — not now.",
+                  "description": "We just standardized on Teams — not now",
                   "success": 0.08
                 }
               ]
@@ -68,29 +68,29 @@ export const GEN_TREE: RawNode = {
             {
               "id": "n_discover",
               "kind": "ai",
-              "title": "Discovery-first",
-              "description": "What aspects of Teams do you find most challenging in your day-to-day operations?",
+              "title": "Discovery First",
+              "description": "What’s painful about Teams day-to-day?",
               "success": 0.9,
               "children": [
                 {
                   "id": "n_pain",
                   "kind": "ai",
-                  "title": "Admitting pain",
-                  "description": "Honestly, the search functionality is weak and threads often get lost.",
+                  "title": "Real Pain",
+                  "description": "Search is weak, threads get lost",
                   "success": 0.9,
                   "children": [
                     {
                       "id": "n_show",
                       "kind": "ai",
-                      "title": "Show solution",
-                      "description": "Slack’s powerful search and organized threads can really address those pain points — would you like to see a demo?",
+                      "title": "Show Solution",
+                      "description": "Tie pain to Slack's search + threads",
                       "success": 0.9,
                       "children": [
                         {
                           "id": "n_demo",
                           "kind": "ai",
-                          "title": "Demo booked",
-                          "description": "Yes, let’s schedule a demo to explore this further.",
+                          "title": "Demo Booked",
+                          "description": "Buyer books a demo",
                           "success": 0.9
                         }
                       ]
@@ -102,15 +102,15 @@ export const GEN_TREE: RawNode = {
             {
               "id": "n_knock",
               "kind": "real",
-              "title": "Disparaging Teams",
-              "description": "I think Teams is a bit clunky and outdated — it really struggles with user experience.",
+              "title": "Weak Move",
+              "description": "Teams is clunky and outdated",
               "onPath": true,
               "children": [
                 {
                   "id": "n_defensive",
                   "kind": "real",
-                  "title": "Defensive response",
-                  "description": "Just send me some info, please.",
+                  "title": "Defensive Buyer",
+                  "description": "Just send me some info",
                   "onPath": true
                 }
               ]
@@ -120,29 +120,29 @@ export const GEN_TREE: RawNode = {
         {
           "id": "n_price",
           "kind": "ai",
-          "title": "Cost inquiry",
+          "title": "Price Inquiry",
           "description": "What does this run for 250 people?",
           "success": 0.45,
           "children": [
             {
               "id": "n_value",
               "kind": "ai",
-              "title": "Value anchoring",
-              "description": "Let’s focus on the value — think about the time saved per seat rather than just the sticker price.",
+              "title": "Value Anchor",
+              "description": "Time saved per seat, not sticker price",
               "success": 0.67,
               "children": [
                 {
                   "id": "n_proof",
                   "kind": "ai",
-                  "title": "Proof request",
-                  "description": "Can you show me proof that it pays off at our size?",
+                  "title": "Proof Request",
+                  "description": "Need proof it pays off at our size",
                   "success": 0.91,
                   "children": [
                     {
                       "id": "n_caseclose",
                       "kind": "ai",
-                      "title": "Case study success",
-                      "description": "That case study is really relevant — I’m ready to move forward.",
+                      "title": "Case Study Success",
+                      "description": "Relevant case study lands, buyer moves forward",
                       "success": 0.91
                     }
                   ]
@@ -150,8 +150,8 @@ export const GEN_TREE: RawNode = {
                 {
                   "id": "n_pushprice",
                   "kind": "ai",
-                  "title": "Price balking",
-                  "description": "I’m still not sure about the price.",
+                  "title": "Price Resistance",
+                  "description": "Buyer balks at the price",
                   "success": 0.08
                 }
               ]
@@ -159,15 +159,15 @@ export const GEN_TREE: RawNode = {
             {
               "id": "n_discount",
               "kind": "ai",
-              "title": "Discount lead",
-              "description": "We can offer you a discount to make this more appealing.",
+              "title": "Discount Offer",
+              "description": "Lead with a discount to win",
               "success": 0.11,
               "children": [
                 {
                   "id": "n_anchor",
                   "kind": "ai",
-                  "title": "Anchoring low",
-                  "description": "I was hoping for something even lower than that.",
+                  "title": "Buyer Anchors",
+                  "description": "Buyer anchors lower and stalls",
                   "success": 0.12
                 }
               ]

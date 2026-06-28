@@ -74,7 +74,14 @@ interface PracticeTarget { nodeId: Id; reason: string; drill: string; metric: ke
 interface AiFeedback { summary: string; strengths: string[]; weaknesses: string[]; practiceTargets: PracticeTarget[]; }
 
 // ---------- Derived / transport (not persisted) ----------
-interface CallSummary { id: Id; company: string; startedAt: string; outcome: "won"|"lost"|"open"; bestEV: number; }
+interface CallSummary {
+  id: Id; company: string; startedAt: string;
+  outcome: "won"|"lost"|"open";           // kept for internal use; UI shows the evaluation
+  bestEV: number;                         // max node EV in the tree
+  finalEV: number;                        // EV at the node the real call ended on (realized value)
+  buyer: { name: string; title: string }; // resolved from the call's buyerId
+  salesperson: { name: string };          // resolved from the call's salespersonId
+}
 interface CallDetail  { call: Call; tree: Tree; recordings: Recording[]; }
 interface TimelineCue { atMs: number; nodeId: Id; }
 interface WalkthroughBundle { audioUrl: string; timeline: TimelineCue[]; }
@@ -101,9 +108,9 @@ interface CreateCallReq     { companyId: Id; salespersonId: Id; buyerId: Id; sta
 ### A · Browse & read
 
 **1. `GET /calls?last=N&scope=me|team&companyId=` → `CallSummary[]`**
-Filter calls; per call derive `outcome` (from the real recording's final node) and `bestEV` (max node EV). Sort by `startedAt` desc, slice to `last`.
+Filter calls; per call derive `outcome` + `finalEV` (from the real recording's final node), `bestEV` (max node EV), and resolve `buyer`/`salesperson`. Sort by `startedAt` desc, slice to `last`.
 ```json
-[ { "id": "call_convex", "company": "Convex", "startedAt": "2026-06-25T17:00:00-07:00", "outcome": "lost", "bestEV": 45600 } ]
+[ { "id": "call_hero", "company": "Slack", "startedAt": "2026-06-28T00:00:00.000Z", "outcome": "lost", "bestEV": 42750, "finalEV": 3600, "buyer": { "name": "Sarah Chen", "title": "VP of Operations" }, "salesperson": { "name": "Jane Doe" } } ]
 ```
 
 **2. `GET /calls/:id` → `CallDetail`**

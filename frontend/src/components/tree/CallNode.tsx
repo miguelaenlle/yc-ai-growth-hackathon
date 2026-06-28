@@ -133,7 +133,16 @@ function CallNodeImpl({ data }: NodeProps) {
             {d.title}
           </div>
           {!titleOnly && d.description && (
-            <div className="mt-0.5 text-[13px] leading-snug text-text-muted">
+            <div
+              className="mt-0.5 text-[13px] leading-snug text-text-muted"
+              // Clamp to 2 lines so long copy can't overflow the fixed-height card.
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
               {d.description}
             </div>
           )}

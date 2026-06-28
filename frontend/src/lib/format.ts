@@ -15,6 +15,12 @@ export function formatDateTime(iso: string): string {
   return `${weekday}, ${date} ${time}`;
 }
 
+/** Currency → compact label: 42750 → "$42.8k", 3600 → "$3.6k", 800 → "$800". */
+export function formatEvK(n: number): string {
+  if (n >= 1000) return `$${(n / 1000).toFixed(1)}k`;
+  return `$${Math.round(n)}`;
+}
+
 /** Date key (YYYY-MM-DD) → short label like "Jun 25". */
 export function shortDate(key: string): string {
   const d = new Date(`${key}T00:00:00`);

@@ -68,6 +68,17 @@ export const recordingsForCall = (callId: Id): Recording[] =>
 export const companyName = (companyId: Id): string =>
   store.companies.find((c) => c.id === companyId)?.name ?? "Unknown";
 
+const getBuyer = (buyerId: Id): { name: string; title: string } => {
+  for (const c of store.companies) {
+    const b = c.buyers.find((x) => x.id === buyerId);
+    if (b) return { name: b.name, title: b.title };
+  }
+  return { name: "Unknown", title: "" };
+};
+
+const getSalespersonName = (salespersonId: Id): string =>
+  store.salespeople.find((s) => s.id === salespersonId)?.name ?? "Unknown";
+
 // Derive outcome from the real recording's final node, bestEV from max node EV.
 // Outcome thresholds: won >= 0.8, lost <= 0.1, open in between.
 export function toCallSummary(call: Call): CallSummary {
@@ -75,13 +86,19 @@ export function toCallSummary(call: Call): CallSummary {
   const real = recordingsForCall(call.id).find((r) => r.isReal);
 
   let outcome: CallSummary["outcome"] = "open";
-  if (real && !real.isActive) {
+  // finalEV — the EV at the node the real call actually ended on (realized value).
+  // Distinct per call even though all calls share one tree, so it differentiates them.
+  let finalEV = 0;
+  if (real) {
     const finalNode = tree?.nodes.find(
       (n) => n.id === real.traversal.finalNodeId,
     );
     if (finalNode) {
-      if (finalNode.successProbability >= 0.8) outcome = "won";
-      else if (finalNode.successProbability <= 0.1) outcome = "lost";
+      finalEV = finalNode.expectedValue;
+      if (!real.isActive) {
+        if (finalNode.successProbability >= 0.8) outcome = "won";
+        else if (finalNode.successProbability <= 0.1) outcome = "lost";
+      }
     }
   }
 
@@ -95,5 +112,8 @@ export function toCallSummary(call: Call): CallSummary {
     startedAt: call.startedAt,
     outcome,
     bestEV,
+    finalEV,
+    buyer: getBuyer(call.buyerId),
+    salesperson: { name: getSalespersonName(call.salespersonId) },
   };
 }
