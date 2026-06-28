@@ -136,7 +136,9 @@ Each object must have:
       return;
     }
 
-    const llmData = await llmRes.json() as { choices: { message: { content: string } }[] };
+    const llmData = (await llmRes.json()) as {
+      choices: { message: { content: string } }[];
+    };
     const parsed = JSON.parse(llmData.choices[0].message.content);
     const script = parsed.script || [];
 
@@ -256,7 +258,13 @@ export async function handleMockSession(
     if (speaker !== expectedSpeaker) return;
 
     try {
-      const result = matchOrCreateBranch(tree, currentNodeId, recentConversation.map(m => m.text).join(" "));
+      const utterance =
+        recentConversation
+          .filter((m) => m.role === speaker)
+          .map((m) => m.text)
+          .join(" ") ||
+        recentConversation.map((m) => m.text).join(" ");
+      const result = matchOrCreateBranch(tree, currentNodeId, utterance);
 
       let switchedNode = false;
       if (result.created) {

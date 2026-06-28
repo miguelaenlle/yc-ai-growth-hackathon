@@ -1,0 +1,47 @@
+{
+  "audioUrl": "/data/audio/walkthrough_v2_rec_real_review.mp3",
+  "timeline": [
+    {
+      "atMs": 0,
+      "nodeId": "n_open"
+    },
+    {
+      "atMs": 5602,
+      "nodeId": "n_disc"
+    },
+    {
+      "atMs": 13583,
+      "nodeId": "n_push"
+    },
+    {
+      "atMs": 20336,
+      "nodeId": "n_road"
+    },
+    {
+      "atMs": 29391,
+      "nodeId": "n_lost"
+    }
+  ],
+  "script": [
+    {
+      "nodeId": "n_open",
+      "narration": "You started strong with a clean opening, getting John engaged right away."
+    },
+    {
+      "nodeId": "n_disc",
+      "narration": "You then dove into discovery and asked about ticket volume, which helped tease out some relevant issues."
+    },
+    {
+      "nodeId": "n_push",
+      "narration": "But when the Tableau integration concern came up, your confidence dipped, and it showed."
+    },
+    {
+      "nodeId": "n_road",
+      "narration": "Instead of pursuing that high-value customization path, you went with the roadmap, which dropped the EV significantly."
+    },
+    {
+      "nodeId": "n_lost",
+      "narration": "In the end, he checked out, saying just send the deck, and that was it — deal lost."
+    }
+  ]
+}

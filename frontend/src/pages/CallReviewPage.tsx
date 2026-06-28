@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -11,6 +11,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
+  TREE,
   initialNodes,
   initialEdges,
   BASE_W,
@@ -22,9 +23,41 @@ import { CallNode } from "../components/tree/CallNode";
 import { NodePreview } from "../components/tree/NodePreview";
 import { TreeMiniMap } from "../components/tree/TreeMiniMap";
 import { OutcomeBadge } from "../components/OutcomeBadge";
+import { CallTabs } from "../components/CallTabs";
 import { Logo } from "../components/Logo";
+import { SUMMARIZE_START_NODE_ID } from "../components/summarize/summarize_constants";
+import { useSummarizePlayback } from "../components/summarize/useSummarizePlayback";
+import { useSummarizeTreeAnimation } from "../components/summarize/useSummarizeTreeAnimation";
+import { useCallDetail } from "../queries/useCallDetail";
+import { getWalkthrough, peekWalkthrough } from "../lib/walkthroughCache";
+import { participantsFor } from "../lib/placeholders";
+import { formatDateTime } from "../lib/format";
+import { isSimulatableUiNode, toBackendNodeId } from "../lib/nodeIdMap";
+import type { CallDetail, CallSummary, Outcome, WalkthroughBundle } from "../lib/types";
 
 const nodeTypes = { call: CallNode };
+
+/** Fallback outcome when we arrive without the list summary (deep link). */
+function deriveOutcome(detail: CallDetail): Outcome {
+  const real = detail.recordings.find((r) => r.isReal);
+  if (!real) return "open";
+  if (real.isActive) return "open";
+  const final = detail.tree.nodes.find((n) => n.id === real.traversal.finalNodeId);
+  if (!final) return "open";
+  return final.successProbability >= 0.5 ? "won" : "lost";
+}
+
+function dateOnly(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+type SummarizeStatus = "loading" | "ready" | "playing" | "error";
 
 function BackArrow() {
   return (
@@ -34,7 +67,19 @@ function BackArrow() {
   );
 }
 
-function Sidebar() {
+interface SidebarProps {
+  id: string;
+  summary?: CallSummary;
+  company: string;
+  startedAt: string;
+  outcome: Outcome;
+  buyerName: string;
+  buyerTitle: string;
+  sellerName: string;
+  sellerTitle: string;
+}
+
+function Sidebar({ id, summary, company, startedAt, outcome, buyerName, buyerTitle, sellerName, sellerTitle }: SidebarProps) {
   const navigate = useNavigate();
   return (
     <aside className="flex w-[300px] shrink-0 flex-col gap-6 border-r border-border bg-bg px-6 py-6">
@@ -49,38 +94,29 @@ function Sidebar() {
       <div className="space-y-3">
         <Logo />
         <h1 className="text-xl font-semibold tracking-tight text-text">
-          Convex <span className="font-mono text-base text-text-muted">6/25/2026</span>
+          {company} <span className="font-mono text-base text-text-muted">{dateOnly(startedAt)}</span>
         </h1>
       </div>
 
-      {/* tabs (visual only) */}
-      <div className="flex items-center gap-5 border-b border-border text-sm">
-        <span className="-mb-px border-b-2 border-accent pb-2 font-medium text-text">
-          CallTree
-        </span>
-        <span className="-mb-px border-b-2 border-transparent pb-2 text-text-faint">
-          Runs
-        </span>
-      </div>
+      <CallTabs id={id} state={summary ? { summary } : undefined} />
 
       <div className="space-y-4">
         <div>
-          <div className="font-medium text-text">John Doe</div>
-          <div className="text-sm text-text-muted">VP of Operations</div>
+          <div className="font-medium text-text">{buyerName}</div>
+          <div className="text-sm text-text-muted">{buyerTitle}</div>
         </div>
         <div>
-          <div className="font-medium text-text">Jane Doe</div>
-          <div className="text-sm text-text-muted">Sales Representative</div>
+          <div className="font-medium text-text">{sellerName}</div>
+          <div className="text-sm text-text-muted">{sellerTitle}</div>
         </div>
       </div>
 
       <div className="font-mono text-[13px] leading-relaxed text-text-muted">
-        6/25/2026 5:00 PM –<br />
-        6/25/2026 6:00 PM
+        {formatDateTime(startedAt)}
       </div>
 
       <div>
-        <OutcomeBadge outcome="lost" />
+        <OutcomeBadge outcome={outcome} />
       </div>
     </aside>
   );
@@ -94,28 +130,76 @@ function Avatar() {
   );
 }
 
-const DURATION = 440;
-const easeInOut = (t: number) =>
-  t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+function StateScreen({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-screen items-center justify-center bg-bg px-6 text-center text-sm text-text-muted">
+      {children}
+    </div>
+  );
+}
 
-function Flow() {
-  // Click a node to focus it; everything else shrinks with distance from it.
-  const [selectedId, setSelectedId] = useState("opening");
+interface FlowProps {
+  walkthrough: WalkthroughBundle | null;
+  summarizeStatus: SummarizeStatus;
+  onSummarize: () => void;
+  onPlaybackEnd: () => void;
+  /** Start a simulation from a (UI) tree node id. */
+  onSimulateNode: (uiNodeId: string) => void;
+}
+
+function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode }: FlowProps) {
+  const isSummarizePlaying = summarizeStatus === "playing";
+
+  // Inject a per-node "simulate from here" action onto the simulatable nodes.
+  // CallNode renders it only on the focused node, so the action is scoped to
+  // whatever node is selected. The augmented copy is what the animation repacks
+  // each frame, so onSimulate survives playback.
+  const baseNodes = useMemo(
+    () =>
+      initialNodes.map((n) =>
+        isSimulatableUiNode(n.id)
+          ? { ...n, data: { ...n.data, onSimulate: () => onSimulateNode(n.id) } }
+          : n,
+      ),
+    [onSimulateNode],
+  );
+
+  const [selectedId, setSelectedId] = useState(SUMMARIZE_START_NODE_ID);
   const [nodes, setNodes] = useState(
-    () => applyFocus(initialNodes, initialEdges, "opening").nodes,
+    () => applyFocus(TREE, baseNodes, initialEdges, SUMMARIZE_START_NODE_ID).nodes,
   );
   const [edges, setEdges] = useState(
-    () => applyFocus(initialNodes, initialEdges, "opening").edges,
+    () => applyFocus(TREE, baseNodes, initialEdges, SUMMARIZE_START_NODE_ID).edges,
   );
-  const { setCenter, getZoom, getViewport } = useReactFlow();
-  const first = useRef(true);
-  const raf = useRef<number | undefined>(undefined);
-  const nodesRef = useRef(nodes);
-  nodesRef.current = nodes;
+  const { getViewport } = useReactFlow();
 
-  // Hover preview for shrunk (title-only) nodes: a screen-space card anchored to
-  // the node so it stays readable regardless of zoom.
+  const { summarize_resetToStart } = useSummarizeTreeAnimation({
+    nodes,
+    selectedId,
+    setSelectedId,
+    setNodes,
+    setEdges,
+    isSummarizePlaying,
+    baseNodes,
+    baseEdges: initialEdges,
+  });
+
+  const handleSummarizeNodeFocus = useCallback((uiNodeId: string) => {
+    setSelectedId((prev) => (prev === uiNodeId ? prev : uiNodeId));
+  }, []);
+
+  const handleSummarizeEnded = useCallback(() => {
+    summarize_resetToStart();
+    onPlaybackEnd();
+  }, [summarize_resetToStart, onPlaybackEnd]);
+
+  useSummarizePlayback({
+    walkthrough,
+    isPlaying: isSummarizePlaying,
+    onNodeFocus: handleSummarizeNodeFocus,
+    onEnded: handleSummarizeEnded,
+  });
+
   const [preview, setPreview] = useState<{
     data: CallNodeData;
     x: number;
@@ -140,125 +224,202 @@ function Flow() {
     });
   };
 
-  // On selection change, tween every node's position/size from where it is now
-  // to the repacked target. Driving it through state (not CSS) means the edges
-  // re-route every frame and animate together with the nodes.
-  useEffect(() => {
-    const { nodes: target, edges: targetEdges } = applyFocus(
-      initialNodes,
-      initialEdges,
-      selectedId,
-    );
-    setEdges(targetEdges);
-    if (first.current) {
-      first.current = false;
-      setNodes(target);
-      return;
-    }
-    const fromById = new Map(nodesRef.current.map((n) => [n.id, n]));
-    const start = performance.now();
-    cancelAnimationFrame(raf.current!);
+  const buttonLabel =
+    summarizeStatus === "loading"
+      ? "Preparing summary…"
+      : summarizeStatus === "playing"
+        ? "Playing…"
+        : summarizeStatus === "error"
+          ? "Summary unavailable"
+          : "Summarize Call";
 
-    const tick = (now: number) => {
-      const t = easeInOut(Math.min(1, (now - start) / DURATION));
-      setNodes(
-        target.map((tn) => {
-          const fn = fromById.get(tn.id) ?? tn;
-          const tw = (tn.width ?? BASE_W), th = (tn.height ?? BASE_H);
-          const fw = (fn.width ?? BASE_W), fh = (fn.height ?? BASE_H);
-          const ts = (tn.data as { scale?: number }).scale ?? 1;
-          const fs = (fn.data as { scale?: number }).scale ?? 1;
-          return {
-            ...tn,
-            width: lerp(fw, tw, t),
-            height: lerp(fh, th, t),
-            position: {
-              x: lerp(fn.position.x, tn.position.x, t),
-              y: lerp(fn.position.y, tn.position.y, t),
-            },
-            data: { ...tn.data, scale: lerp(fs, ts, t) },
-          };
-        }),
-      );
-      if (t < 1) raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-
-    const f = target.find((n) => (n.data as { focused?: boolean }).focused);
-    if (f) {
-      setCenter(
-        f.position.x + (f.width ?? BASE_W) / 2,
-        f.position.y + (f.height ?? BASE_H) / 2,
-        { zoom: Math.max(getZoom(), 0.85), duration: DURATION },
-      );
-    }
-    return () => cancelAnimationFrame(raf.current!);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId]);
+  const buttonDisabled =
+    summarizeStatus === "loading" ||
+    summarizeStatus === "playing" ||
+    summarizeStatus === "error" ||
+    !walkthrough;
 
   return (
     <>
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      fitView
-      fitViewOptions={{ padding: 0.2 }}
-      minZoom={0.2}
-      nodesDraggable={false}
-      nodesConnectable={false}
-      proOptions={{ hideAttribution: true }}
-      onNodeClick={(_, n: Node) => setSelectedId(n.id)}
-      onNodeMouseEnter={onNodeEnter}
-      onNodeMouseLeave={() => setPreview(null)}
-    >
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={22}
-            size={1.5}
-            color="var(--color-border)"
-          />
-          <Panel position="bottom-right">
-            <TreeMiniMap nodes={nodes} edges={edges} />
-          </Panel>
-          <Panel position="top-right" className="flex items-center gap-3">
-            <button className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]">
-              Summarize Call
-            </button>
-            <Avatar />
-          </Panel>
-    </ReactFlow>
-    {preview && (
-      <div
-        className="pointer-events-none absolute z-50"
-        style={
-          preview.yTop > 180
-            ? {
-                left: preview.x,
-                top: preview.yTop - 12,
-                transform: "translate(-50%, -100%)",
-              }
-            : {
-                left: preview.x,
-                top: preview.yBottom + 12,
-                transform: "translate(-50%, 0)",
-              }
-        }
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.2}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        proOptions={{ hideAttribution: true }}
+        onNodeClick={(_, n: Node) => {
+          if (isSummarizePlaying) return;
+          setSelectedId(n.id);
+        }}
+        onNodeMouseEnter={onNodeEnter}
+        onNodeMouseLeave={() => setPreview(null)}
       >
-        <NodePreview data={preview.data} />
-      </div>
-    )}
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={22}
+          size={1.5}
+          color="var(--color-border)"
+        />
+        <Panel position="bottom-right">
+          <TreeMiniMap nodes={nodes} edges={edges} />
+        </Panel>
+        <Panel position="top-right" className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={buttonDisabled}
+            onClick={onSummarize}
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {buttonLabel}
+          </button>
+          <Avatar />
+        </Panel>
+      </ReactFlow>
+      {preview && (
+        <div
+          className="pointer-events-none absolute z-50"
+          style={
+            preview.yTop > 180
+              ? {
+                  left: preview.x,
+                  top: preview.yTop - 12,
+                  transform: "translate(-50%, -100%)",
+                }
+              : {
+                  left: preview.x,
+                  top: preview.yBottom + 12,
+                  transform: "translate(-50%, 0)",
+                }
+          }
+        >
+          <NodePreview data={preview.data} />
+        </div>
+      )}
     </>
   );
 }
 
 export function CallReviewPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const summary = (location.state as { summary?: CallSummary } | null)?.summary;
+
+  const { data: detail, isLoading, isError } = useCallDetail(id);
+
+  const company = summary?.company ?? "Call";
+  const { buyer, salesperson } = participantsFor(company);
+
+  const [walkthrough, setWalkthrough] = useState<WalkthroughBundle | null>(null);
+  const [summarizeStatus, setSummarizeStatus] = useState<SummarizeStatus>("loading");
+
+  // Prefetch the review walkthrough for the real recording once the call loads,
+  // so "Summarize Call" can play instantly.
+  useEffect(() => {
+    if (!detail) return;
+    let cancelled = false;
+
+    async function prefetch(d: CallDetail) {
+      try {
+        const realRecording = d.recordings.find((r) => r.isReal);
+        if (!realRecording) {
+          if (!cancelled) setSummarizeStatus("error");
+          return;
+        }
+
+        const cached = peekWalkthrough(realRecording.id, "review");
+        if (cached) {
+          if (!cancelled) {
+            setWalkthrough(cached);
+            setSummarizeStatus("ready");
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          setSummarizeStatus("loading");
+          setWalkthrough(null);
+        }
+
+        const bundle = await getWalkthrough(realRecording.id, "review");
+        if (!cancelled) {
+          setWalkthrough(bundle);
+          setSummarizeStatus("ready");
+        }
+      } catch (err) {
+        console.error("Failed to prefetch walkthrough:", err);
+        if (!cancelled) setSummarizeStatus("error");
+      }
+    }
+
+    void prefetch(detail);
+    return () => {
+      cancelled = true;
+    };
+  }, [detail]);
+
+  const handleSummarize = useCallback(() => {
+    if (!walkthrough || summarizeStatus !== "ready") return;
+    setSummarizeStatus("playing");
+  }, [walkthrough, summarizeStatus]);
+
+  const handlePlaybackEnd = useCallback(() => {
+    setSummarizeStatus("ready");
+  }, []);
+
+  // Simulate from a tree node: map the UI node id back to its backend node id
+  // (the simulate route resolves the start node against the real tree) and
+  // forward the buyer identity so the simulate screen can show real initials.
+  const handleSimulateNode = useCallback(
+    (uiNodeId: string) => {
+      const backendId = toBackendNodeId(uiNodeId);
+      navigate(`/call/${id}/simulate?from=${backendId}`, {
+        state: { buyerName: buyer.name, company },
+      });
+    },
+    [id, navigate, buyer.name, company],
+  );
+
+  if (isLoading) {
+    return <StateScreen>Loading call…</StateScreen>;
+  }
+  if (isError || !detail) {
+    return (
+      <StateScreen>
+        Couldn&apos;t load this call. Is the backend running on{" "}
+        <span className="font-mono text-text-muted">:3001</span>?
+      </StateScreen>
+    );
+  }
+
+  const outcome = summary?.outcome ?? deriveOutcome(detail);
+
   return (
     <div className="flex h-screen bg-bg text-text">
-      <Sidebar />
+      <Sidebar
+        id={id!}
+        summary={summary}
+        company={company}
+        startedAt={detail.call.startedAt}
+        outcome={outcome}
+        buyerName={buyer.name}
+        buyerTitle={buyer.title}
+        sellerName={salesperson.name}
+        sellerTitle={salesperson.title}
+      />
       <div className="relative flex-1">
         <ReactFlowProvider>
-          <Flow />
+          <Flow
+            walkthrough={walkthrough}
+            summarizeStatus={summarizeStatus}
+            onSummarize={handleSummarize}
+            onPlaybackEnd={handlePlaybackEnd}
+            onSimulateNode={handleSimulateNode}
+          />
         </ReactFlowProvider>
       </div>
     </div>

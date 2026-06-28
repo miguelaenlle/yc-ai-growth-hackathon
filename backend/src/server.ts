@@ -13,9 +13,6 @@ import multer from "multer";
 import { promises as fs } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-
-const __serverdirname = dirname(fileURLToPath(import.meta.url));
-import { handleMockSession } from "./mock.js";
 import { handleLiveSession } from "./live.js";
 import { generateAssistCard } from "./assist.js";
 import { getProductInfo } from "./product.js";
@@ -33,7 +30,6 @@ import {
   toCallSummary,
 } from "./store.js";
 import {
-  buildWalkthroughTimeline,
   getNodeById,
   getWeakNodes,
   matchOrCreateBranch,
@@ -58,17 +54,19 @@ import type {
   TraversalStep,
   Tree,
   TreeNode,
-  WalkthroughBundle,
 } from "./types.js";
+import { handleMockSession } from "./mock.js";
+import { getOrBuildWalkthrough } from "./walkthrough.js";
 
 const { app } = expressWs(express());
 const PORT = Number(process.env.PORT) || 3001;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(cors());
 app.use(express.json());
 
 // Serve generated/seed audio from /data/audio (referenced by audioPath/audioUrl).
-app.use("/data", express.static(new URL("../public/data", import.meta.url).pathname));
+app.use("/data", express.static(join(__dirname, "../public/data")));
 
 // Audio analyzer — created once at startup. AUDIO_ANALYZER env var selects
 // which implementation is used (local | none | custom). Falls back gracefully
@@ -371,15 +369,17 @@ app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
 });
 
 // 9. GET /recordings/:id/walkthrough?kind=intro|review → WalkthroughBundle
-app.get("/recordings/:id/walkthrough", (req: Request, res: Response) => {
+app.get("/recordings/:id/walkthrough", async (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
   const kind = req.query.kind === "intro" ? "intro" : "review";
-  const bundle: WalkthroughBundle = {
-    audioUrl: `/data/audio/walkthrough_${rec.id}_${kind}.mp3`,
-    timeline: buildWalkthroughTimeline(rec.traversal),
-  };
-  res.json(bundle);
+  try {
+    const bundle = await getOrBuildWalkthrough(rec, kind);
+    res.json(bundle);
+  } catch (e) {
+    console.error("Walkthrough error:", e);
+    fail(res, 500, "walkthrough_failed", e instanceof Error ? e.message : "Walkthrough generation failed");
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -590,7 +590,7 @@ app.post(
 
     if (!req.file) return fail(res, 400, "bad_input", "audio file required (field: audio)");
 
-    const dir = join(__serverdirname, "..", "public", "data", "audio", rec.id);
+    const dir = join(__dirname, "..", "public", "data", "audio", rec.id);
     await fs.mkdir(dir, { recursive: true });
     const filePath = join(dir, "full_call.webm");
     await fs.writeFile(filePath, req.file.buffer);

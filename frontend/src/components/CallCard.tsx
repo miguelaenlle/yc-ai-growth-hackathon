@@ -49,7 +49,7 @@ export function CallCard({ call, index }: { call: CallSummary; index: number }) 
 
   return (
     <button
-      onClick={() => navigate(`/call/${call.id}`)}
+      onClick={() => navigate(`/call/${call.id}`, { state: { summary: call } })}
       style={{ animationDelay: `${index * 60}ms` }}
       className={
         "group w-full animate-fade-up rounded-lg border border-border bg-surface " +
