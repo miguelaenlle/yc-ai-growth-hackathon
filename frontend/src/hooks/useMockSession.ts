@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { decodePcm16ToFloat32 } from "../lib/audioPcm";
 
 // Live mock-interview session. Two stages over two WebSocket connections:
 //   1. precap — narrate the path root→parent of the start node (no mic). The
@@ -143,15 +144,7 @@ export function useMockSession({
   const playPCM16 = useCallback((b64: string) => {
     const ctx = audioCtxRef.current;
     if (!ctx) return;
-    const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
-    const pcm16 = new Int16Array(bytes.buffer);
-    const float32 = new Float32Array(pcm16.length);
-    for (let i = 0; i < pcm16.length; i++) {
-      float32[i] = pcm16[i] / (pcm16[i] < 0 ? 0x8000 : 0x7fff);
-    }
+    const float32 = decodePcm16ToFloat32(b64);
     const audioBuffer = ctx.createBuffer(1, float32.length, 24000);
     audioBuffer.copyToChannel(float32, 0);
     const source = ctx.createBufferSource();
@@ -202,6 +195,10 @@ export function useMockSession({
     if (!item) return;
 
     if (item.type === "node") {
+      // Move tree focus here — sequenced with audio playback (audio items below
+      // block the queue), so the tree steps node-by-node in sync with narration
+      // instead of jumping ahead as the messages arrive in a burst.
+      setActiveNodeId(item.nodeId);
       processPrecapQueue();
     } else if (item.type === "audio") {
       isPlayingPrecapRef.current = true;
@@ -366,7 +363,8 @@ export function useMockSession({
       }
       switch (msg.type) {
         case "precap_node":
-          setActiveNodeId(msg.nodeId as string);
+          // Don't focus here — focus advances when this node's audio is dequeued
+          // in processPrecapQueue, keeping the tree in sync with the narration.
           precapQueueRef.current.push({ type: "node", nodeId: msg.nodeId as string });
           processPrecapQueue();
           break;

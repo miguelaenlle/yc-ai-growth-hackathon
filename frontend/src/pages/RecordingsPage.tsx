@@ -163,7 +163,15 @@ export function RecordingsPage() {
               items={(fb?.practiceTargets ?? []).map((t) => t.drill)}
             />
             <button
-              onClick={() => navigate(`/call/${id}`, { state: summary ? { summary } : undefined })}
+              onClick={() => {
+                const fromNode =
+                  selected.startNodeId ??
+                  selected.traversal.initialNodeId ??
+                  detail.tree.rootNodeId;
+                navigate(`/call/${id}/watch?from=${fromNode}`, {
+                  state: { buyerName, company },
+                });
+              }}
               className="mt-1 self-start rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
             >
               See ideal conversation
