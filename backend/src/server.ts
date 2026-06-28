@@ -219,11 +219,12 @@ app.post("/agent/branch", (req: Request, res: Response) => {
 app.ws("/mock/session/:recordingId", (ws, req) => {
   const { recordingId } = req.params;
   const currentNodeId = req.query.currentNodeId as string;
+  const includePrecap = req.query.includePrecap === "true";
   if (!recordingId || !currentNodeId) {
     ws.close(1008, "recordingId and currentNodeId required");
     return;
   }
-  handleMockSession(ws as any, recordingId, currentNodeId);
+  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap);
 });
 
 // 15. POST /tts (TtsReq) → { audioUrl }

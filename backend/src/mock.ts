@@ -69,9 +69,58 @@ INSTRUCTIONS:
 }
 
 /**
+ * Handles the precap phase by generating TTS for the path up to the current node.
+ */
+async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNodeId: Id) {
+  const rec = getRecording(recordingId);
+  const tree = rec ? getTree(rec.treeId) : undefined;
+  if (!tree || !currentNodeId) {
+    clientWs.send(JSON.stringify({ type: "precap_complete" }));
+    return;
+  }
+
+  try {
+    const summary = getDecisionSummary(tree, currentNodeId);
+    for (const node of summary.path) {
+      // Send the node sync event
+      clientWs.send(JSON.stringify({ type: "precap_node", nodeId: node.id }));
+      
+      // We simulate TTS by fetching from OpenAI TTS API
+      const text = `${node.speaker === 'seller' ? 'Seller' : 'Buyer'} said: ${node.description}`;
+      const response = await fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "tts-1",
+          input: text,
+          voice: node.speaker === 'seller' ? "alloy" : "echo",
+          response_format: "opus",
+        })
+      });
+
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        const b64_data = Buffer.from(arrayBuffer).toString('base64');
+        clientWs.send(JSON.stringify({ type: "precap_audio", b64_data }));
+      } else {
+        console.error("TTS failed:", await response.text());
+      }
+    }
+  } catch (e) {
+    console.error("Error during precap:", e);
+  }
+
+  // Signal the frontend that precap is complete
+  clientWs.send(JSON.stringify({ type: "precap_complete" }));
+}
+
+/**
  * Handles the WebSocket session connecting the frontend to OpenAI.
  */
-export function handleMockSession(clientWs: WebSocket, recordingId: Id, currentNodeId: Id) {
+export async function handleMockSession(clientWs: WebSocket, recordingId: Id, currentNodeId: Id, includePrecap: boolean) {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
   if (!OPENAI_API_KEY) {
     console.error("OPENAI_API_KEY is not set.");
@@ -79,7 +128,11 @@ export function handleMockSession(clientWs: WebSocket, recordingId: Id, currentN
     return;
   }
 
-  console.log(`Starting mock session for recording ${recordingId} at node ${currentNodeId}`);
+  console.log(`Starting mock session for recording ${recordingId} at node ${currentNodeId} (precap: ${includePrecap})`);
+
+  if (includePrecap) {
+    await handlePrecapPhase(clientWs, recordingId, currentNodeId);
+  }
 
   const systemPrompt = generateMockPrompt(recordingId, currentNodeId);
 

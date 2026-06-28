@@ -191,8 +191,11 @@ Add a node **only when the utterance is significantly different from existing de
 { "node": { "id": "n_looker", "parentId": "n_push", "childIds": [], "title": "Looker ask", "description": "What about Looker instead?", "speaker": "buyer", "tMs": 49000, "successProbability": 0.40, "expectedValue": 19200, "metrics": { "confidence": 0, "hesitation": 0, "enthusiasm": 0 } } }
 ```
 
-**14. `WS /mock/session/:recordingId`**
-WebSocket endpoint connecting the frontend to the OpenAI Realtime API (via the backend). The backend handles authentication, seeds the context using `getDecisionSummary` + persona info, and proxies the bidirectional audio stream. The transcript and tree progression are tracked in real-time.
+**14. `WS /mock/session/:recordingId?currentNodeId=...&includePrecap=true`**
+WebSocket endpoint connecting the frontend to the backend for the mock practice session.
+The session has two phases:
+1. **Precap (Optional)**: If `includePrecap=true`, the backend streams an audio intro (context of what happened so far) down the WebSocket. It sends `{ "type": "precap_node", "nodeId": "..." }` events right before sending the corresponding `{ "type": "precap_audio", "b64_data": "..." }` chunks, allowing the FE to animate the tree in sync. When finished, it sends `{ "type": "precap_complete" }`.
+2. **Interactive Mock**: The backend connects to the OpenAI Realtime API. It proxies bidirectional audio and events (like `response.audio.delta` and `input_audio_buffer.append`). The transcript and tree progression are tracked in real-time.
 
 **15. `POST /tts` (`TtsReq`) → `{ audioUrl }`**
 Proxy `text`+`voiceId` to ElevenLabs (key stays server-side), save under `/data/audio/`, return the URL. Cache by `hash(text+voiceId)`. Separate from SSE because audio is a binary pull the `<audio>` element streams/seeks/caches from a URL — not a text push.
