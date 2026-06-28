@@ -48,13 +48,26 @@ export function CitationRef({ citation }: { citation: Citation }) {
   );
 }
 
+/** Render a text fragment with **bold** markdown applied. */
+function Inline({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        const b = part.match(/^\*\*([^*]+)\*\*$/);
+        if (b) return <strong key={i} className="font-semibold text-text">{b[1]}</strong>;
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
 /**
  * Render a reason/description string, replacing [n] tokens with hoverable
- * CitationRef chips resolved against `citations`.
+ * CitationRef chips resolved against `citations`, and **bold** markdown.
  */
 export function CitedText({ text, citations }: { text: string; citations?: Citation[] }) {
-  if (!citations || citations.length === 0) return <>{text}</>;
-  const byId = new Map(citations.map((c) => [c.id, c]));
+  const byId = new Map((citations ?? []).map((c) => [c.id, c]));
   const parts = text.split(/(\[\d+\])/g);
   return (
     <>
@@ -64,7 +77,7 @@ export function CitedText({ text, citations }: { text: string; citations?: Citat
           const c = byId.get(Number(m[1]));
           if (c) return <CitationRef key={i} citation={c} />;
         }
-        return <span key={i}>{part}</span>;
+        return <Inline key={i} text={part} />;
       })}
     </>
   );

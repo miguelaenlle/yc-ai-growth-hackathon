@@ -30466,9 +30466,9 @@
         ],
         "recommendedStart": {
           "nodeId": "n_incumbent",
-          "heading": "Discussing engineering decision visibility",
-          "reason": "During this call, the rep explained how their solution helps with visibility on engineering decisions, which worked well and led to a win. However, a stronger approach would have been to ask what challenges they face with their current tool, which tends to be even more effective, winning about 9 out of 10 times. This moment appears in 9 instances across several calls, so it’s a great opportunity to practice for next time.",
-          "description": "During this call, the rep explained how their solution helps with visibility on engineering decisions, which worked well and led to a win. However, a stronger approach would have been to ask what challenges they face with their current tool, which tends to be even more effective, winning about 9 out of 10 times. This moment appears in 9 instances across several calls, so it’s a great opportunity to practice for next time.",
+          "heading": "When discussing engineering decisions",
+          "reason": "During this call, the rep highlighted how engineering decisions won't get lost and how incidents can flow directly into channels. A stronger approach would have been to ask what's frustrating about their current tool, which works about 9 out of 10 times compared to the 8 in 10 from what you said. This moment comes up often, so let's practice making this stronger move to ensure even better outcomes next time.",
+          "description": "During this call, the rep highlighted how engineering decisions won't get lost and how incidents can flow directly into channels. A stronger approach would have been to ask what's frustrating about their current tool, which works about 9 out of 10 times compared to the 8 in 10 from what you said. This moment comes up often, so let's practice making this stronger move to ensure even better outcomes next time.",
           "citations": [
             {
               "id": 1,
@@ -30508,24 +30508,6 @@
             },
             {
               "id": 3,
-              "callId": "call_a_33",
-              "company": "Northwind Logistics",
-              "buyer": {
-                "name": "Maria Nair",
-                "title": "Head of Customer Success"
-              },
-              "outcome": "won",
-              "nodeId": "n_coexist",
-              "nodeTitle": "Incumbent",
-              "takenTitle": "Coexist",
-              "betterTitle": "Find Pain",
-              "winTaken": 0.7907,
-              "winBest": 0.9375,
-              "evGap": 6606,
-              "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-            },
-            {
-              "id": 4,
               "callId": "call_a_21",
               "company": "Helio Robotics",
               "buyer": {
@@ -30541,6 +30523,24 @@
               "winBest": 0.9375,
               "evGap": 3964,
               "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+            },
+            {
+              "id": 4,
+              "callId": "call_a_05",
+              "company": "Lumen Health",
+              "buyer": {
+                "name": "Lena Lopez",
+                "title": "VP of People"
+              },
+              "outcome": "won",
+              "nodeId": "n_coexist",
+              "nodeTitle": "Incumbent",
+              "takenTitle": "Coexist",
+              "betterTitle": "Find Pain",
+              "winTaken": 0.7907,
+              "winBest": 0.9375,
+              "evGap": 3699,
+              "quote": "Runs alongside Google Chat — no rip-and-replace."
             }
           ]
         }
@@ -30556,10 +30556,60 @@
       "stopNodeId": null,
       "audioPath": "",
       "lengthMs": 0,
-      "transcript": [],
+      "transcript": [
+        {
+          "index": 0,
+          "speaker": "buyer",
+          "text": "That sounds reasonable. Could you walk me through what’s included at that price?",
+          "tStartMs": 0,
+          "tEndMs": 3000
+        },
+        {
+          "index": 1,
+          "speaker": "seller",
+          "text": "What's painful about Microsoft Teams?",
+          "tStartMs": 3000,
+          "tEndMs": 6000
+        },
+        {
+          "index": 2,
+          "speaker": "buyer",
+          "text": "Search is weak, and threads get lost. Honestly, if you can make that smoother, I’m in. How quickly could we get started?",
+          "tStartMs": 6000,
+          "tEndMs": 9000
+        },
+        {
+          "index": 3,
+          "speaker": "seller",
+          "text": "tomorrow.",
+          "tStartMs": 9000,
+          "tEndMs": 12000
+        },
+        {
+          "index": 4,
+          "speaker": "buyer",
+          "text": "Perfect, I love the speed. Book me for tomorrow—what time works, and is it a quick demo plus setup? Also, does it plug right into Teams so we can try it immediately?",
+          "tStartMs": 12000,
+          "tEndMs": 15000
+        },
+        {
+          "index": 5,
+          "speaker": "seller",
+          "text": "Yeah, we can meet tomorrow at 5 p.m. that works for me and the integration should be pretty easy or the demo.",
+          "tStartMs": 15000,
+          "tEndMs": 18000
+        },
+        {
+          "index": 6,
+          "speaker": "buyer",
+          "text": "Awesome, 5 p.m. tomorrow works for me. I’m excited. Send over the invite link, and I’ll be there. If there’s anything you want me to have ready, like admin access or a test workspace, let me know so we can get rolling right after the demo.",
+          "tStartMs": 18000,
+          "tEndMs": 21000
+        }
+      ],
       "traversal": {
         "initialNodeId": "n_incumbent",
-        "finalNodeId": "n_incumbent",
+        "finalNodeId": "n_pain",
         "steps": []
       },
       "aiNotes": null,

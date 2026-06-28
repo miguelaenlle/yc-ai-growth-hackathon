@@ -143,6 +143,8 @@ export interface AiFeedback {
     reason: string;
     /** LLM-written rationale; may contain [n] markers into citations. */
     description?: string;
+    /** Short bullet lines (plain language, **bold** + [n] markers). Preferred over description. */
+    reasons?: string[];
     citations?: Citation[];
   };
 }

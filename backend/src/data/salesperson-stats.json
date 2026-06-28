@@ -1,12 +1,12 @@
 {
   "sp_jane": {
     "salespersonId": "sp_jane",
-    "totalCalls": 23,
-    "wins": 11,
+    "totalCalls": 24,
+    "wins": 12,
     "skills": {
       "discovery": {
-        "attempts": 20,
-        "fails": 6
+        "attempts": 21,
+        "fails": 7
       },
       "objection-handling": {
         "attempts": 19,
@@ -17,7 +17,7 @@
         "fails": 10
       },
       "closing": {
-        "attempts": 14,
+        "attempts": 15,
         "fails": 7
       },
       "rapport": {
@@ -27,8 +27,8 @@
     },
     "personas": {
       "buy_polly": {
-        "attempts": 8,
-        "wins": 7,
+        "attempts": 9,
+        "wins": 8,
         "fails": 1
       },
       "buy_steve": {
@@ -74,6 +74,14 @@
         "fails": 1
       },
       "n_caseclose": {
+        "attempts": 1,
+        "fails": 1
+      },
+      "n_pain": {
+        "attempts": 1,
+        "fails": 1
+      },
+      "n_show": {
         "attempts": 1,
         "fails": 1
       }

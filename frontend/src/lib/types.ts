@@ -128,6 +128,7 @@ export interface AiFeedback {
     heading?: string;
     reason: string;
     description?: string;
+    reasons?: string[];
     citations?: Citation[];
   };
 }

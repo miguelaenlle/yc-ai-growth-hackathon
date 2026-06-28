@@ -75,7 +75,7 @@ interface AiNotes { commitments: string[]; objections: string[]; facts: string[]
 interface PracticeTarget { nodeId: Id; reason: string; drill: string; metric: keyof SignalMetrics; score: number; }
 interface AiFeedback {
   summary: string; strengths: string[]; weaknesses: string[]; practiceTargets: PracticeTarget[];
-  recommendedStart?: { nodeId: Id; heading?: string; reason: string; description?: string; citations?: Citation[] }; // top "start practicing here" pick (System 2) — plain-language, cites in-call signal + history
+  recommendedStart?: { nodeId: Id; heading?: string; reason: string; description?: string; reasons?: string[]; citations?: Citation[] }; // top "start practicing here" pick (System 2) — plain-language bullets, cites in-call signal + history
 }
 
 // ---------- Derived / transport (not persisted) ----------

@@ -168,12 +168,12 @@ export async function generateInsights(salespersonId = FEATURED_REP): Promise<In
       });
       const citeSources = [cf, ...others].slice(0, 4);
       const citations = citeSources.map((c, i) => citationFrom(i + 1, c));
-      const narrative = await buildPerCallNarrative(cf, seen.size, citations);
+      const narrative = await buildPerCallNarrative(cf, citations);
       perCall[cf.callId] = {
         nodeId: cf.fork.forkNodeId,
         heading: narrative.heading,
-        reason: narrative.description,
-        description: narrative.description,
+        reason: narrative.reasons.join(" "),
+        reasons: narrative.reasons,
         citations,
       };
     }),
@@ -300,24 +300,26 @@ async function buildNarrative(
  */
 async function buildPerCallNarrative(
   cf: CallFork,
-  recurCount: number,
   citations: Citation[],
-): Promise<{ heading: string; description: string }> {
+): Promise<{ heading: string; reasons: string[] }> {
   const inTen = (p: number) => Math.max(1, Math.min(9, Math.round(p * 10)));
-  const allMarkers = citations.map((c) => `[${c.id}]`).join("");
+  const otherMarkers = citations.slice(1).map((c) => `[${c.id}]`).join("");
+  const othersCited = citations.length - 1; // distinct other calls we can point at
+  const otherCalls = `${othersCited} other call${othersCited === 1 ? "" : "s"}`;
   const won = cf.outcome === "won";
   const tookOdds = inTen(cf.fork.takenP);
   const betterOdds = inTen(cf.fork.bestP);
 
-  const patternLine =
-    recurCount > 1
-      ? ` You've hit this same moment on ${recurCount} of your calls — worth drilling ${allMarkers}.`
-      : "";
+  // Deterministic plain-language bullets when the LLM is unavailable.
   const fallback = {
-    heading: won ? "A moment you got past — but could nail" : "Where the call started to slip",
-    description: won
-      ? `You won this one, but right here a stronger move was on the table. The path you took works about ${tookOdds} in 10 times; the better one works about ${betterOdds} of 10.${patternLine} Replay from here and try it.`
-      : `This is where the call started to slip. The move you made here works about ${tookOdds} in 10 times, while a better option works about ${betterOdds} of 10.${patternLine} Replay from here and try the stronger move [1].`,
+    heading: won ? "A moment you got past" : "Where the call started to slip",
+    reasons: [
+      won
+        ? `You **won** — but a stronger move was right here. [1]`
+        : `This is **where the call fell off**. [1]`,
+      `Asking **what's frustrating** about their current tool wins about **${betterOdds} of 10**; your move landed about **${tookOdds} in 10**. [1]`,
+      ...(othersCited > 0 ? [`Same slip on **${otherCalls}**. ${otherMarkers}`] : []),
+    ],
   };
 
   const cites = citations
@@ -330,6 +332,7 @@ async function buildPerCallNarrative(
     "- NEVER print internal jargon: no move names (e.g. 'Coexist', 'Find Pain', 'Knock Incumbent'), no persona names, no 'EV swing', no dollar figures, no 'fork' or 'node'.\n" +
     "- NEVER print raw percentages like '79%' or '94%'. Translate win-rates to plain odds like 'about 9 of 10 times' or '8 in 10'.\n" +
     "- Describe what the rep DID and the BETTER move in plain words (translate the move labels into a concrete action, e.g. 'ask what's frustrating about their current tool').\n" +
+    "- Use **bold** (markdown) to emphasize the ONE key phrase in each bullet — the action or the odds. Keep bullets SHORT (max ~14 words).\n" +
     "- Ground everything ONLY in the data given; do not invent numbers, quotes, buyers, or calls.\n" +
     "- Keep [n] markers that map to the numbered citations. Respond ONLY with JSON.";
   const user =
@@ -337,22 +340,27 @@ async function buildPerCallNarrative(
     `THE MOMENT (citation [1]): the rep said "${cf.quote}". The smarter move here was "${cf.fork.bestTitle}" (translate that into a plain action).\n` +
     `ODDS: the move taken works about ${tookOdds} in 10; the better move works about ${betterOdds} of 10.\n` +
     `FRAMING: ${won
-      ? "This call was WON — frame it as a good outcome where an even stronger move was available; call it a common slip worth drilling so it's automatic next time. Be encouraging."
+      ? "This call was WON — frame it as a good outcome where an even stronger move was available; a common slip worth drilling. Be encouraging."
       : "This call was LOST/STALLED — frame it as the moment where the call started to fall off."}\n` +
-    `HOW OFTEN: the rep hits this same moment on ${recurCount} call(s).\n` +
+    `HOW OFTEN: besides this call, the same slip shows up on ${otherCalls} you can cite.\n` +
     `CITATIONS (translate the stats, never echo the raw numbers):\n${cites}\n\n` +
     `Return JSON in this exact shape:\n` +
     `{\n` +
     `  "heading": string — a short plain phrase naming the MOMENT (4-7 words, no move labels), e.g. "When their current tool came up",\n` +
-    `  "description": string — 2-3 plain sentences: what happened at this moment, the better move in plain words (with plain odds), and${recurCount > 1 ? ` note it recurs across calls ending with ${allMarkers}` : " end the relevant clause with [1]"}. End with a nudge to replay this moment.\n` +
+    `  "reasons": [  // 2-3 SHORT bullets, each with one **bold** phrase\n` +
+    `    string — WHAT HAPPENED here (${won ? "you won, but…" : "this is where it slipped"}), end with [1],\n` +
+    `    string — THE BETTER MOVE in plain words with plain odds (e.g. 'wins about 9 of 10'), end with [1]${othersCited > 0 ? `,\n    string — it RECURS: exactly "Same slip on **${otherCalls}**." then the markers ${otherMarkers}` : ""}\n` +
+    `  ]\n` +
     `}`;
 
   const parsed = await callLLM(system, user);
   if (!parsed) return fallback;
   const heading = typeof parsed.heading === "string" && parsed.heading.trim() ? parsed.heading : fallback.heading;
-  const description =
-    typeof parsed.description === "string" && parsed.description.trim() ? parsed.description : fallback.description;
-  return { heading, description };
+  const reasons =
+    Array.isArray(parsed.reasons) && parsed.reasons.every((r) => typeof r === "string") && parsed.reasons.length
+      ? (parsed.reasons as string[])
+      : fallback.reasons;
+  return { heading, reasons };
 }
 
 // ---------------------------------------------------------------------------

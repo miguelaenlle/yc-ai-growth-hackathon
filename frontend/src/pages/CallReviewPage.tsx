@@ -301,12 +301,29 @@ function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, 
                 </svg>
                 Practice from here
               </p>
-              <p className="text-sm font-semibold text-text">
+              <span className="mb-2 inline-flex items-center gap-1.5 rounded-md border border-accent/30 bg-accent/10 px-2 py-1 text-xs font-medium text-accent">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                 {recommendation.nodeTitle}
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-text-muted">
-                <CitedText text={recommendation.reason} citations={recommendation.citations} />
-              </p>
+              </span>
+              {recommendation.heading && (
+                <p className="text-sm font-semibold text-text">{recommendation.heading}</p>
+              )}
+              {recommendation.reasons && recommendation.reasons.length > 0 ? (
+                <ul className="mt-1.5 space-y-1">
+                  {recommendation.reasons.map((r, i) => (
+                    <li key={i} className="flex items-start gap-2 text-[13px] leading-relaxed text-text-muted">
+                      <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent" />
+                      <span>
+                        <CitedText text={r} citations={recommendation.citations} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                  <CitedText text={recommendation.reason} citations={recommendation.citations} />
+                </p>
+              )}
               <button
                 onClick={() => onSimulateNode(recommendation.nodeId)}
                 className="mt-3 w-full rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
@@ -484,7 +501,9 @@ export function CallReviewPage() {
     recStart && recNode
       ? {
           nodeId: recStart.nodeId,
-          nodeTitle: recStart.heading ?? recNode.title,
+          nodeTitle: recNode.title,
+          heading: recStart.heading,
+          reasons: recStart.reasons,
           reason: recStart.description ?? recStart.reason,
           citations: recStart.citations,
         }
