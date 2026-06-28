@@ -28,6 +28,46 @@ import type {
 // to the same root so they render like every other call.
 const CANONICAL_ROOT_ID = "n_open";
 
+// The master move graph the seeded calls are built from. Generated trees should map
+// the real conversation onto THESE moves — same titles, same speaker per move, same
+// terse description voice — so uploaded calls read like seeded ones (and their titles
+// join the win-rate table). `{tool}` is filled with the prospect's incumbent.
+const CANONICAL_MOVES: { title: string; speaker: "seller" | "buyer"; description: string }[] = [
+  { title: "Opening", speaker: "seller", description: "Set the agenda" },
+  { title: "Discovery", speaker: "seller", description: "How does your team work today?" },
+  { title: "Incumbent", speaker: "buyer", description: "We already use {tool}" },
+  { title: "Coexist", speaker: "seller", description: "Runs alongside {tool}" },
+  { title: "Find Pain", speaker: "seller", description: "What's painful about {tool}?" },
+  { title: "Knock Incumbent", speaker: "seller", description: "Knock {tool} as clunky" },
+  { title: "Curious", speaker: "buyer", description: "Where does it win?" },
+  { title: "Pushback", speaker: "buyer", description: "We just standardized on {tool}" },
+  { title: "Pain Found", speaker: "buyer", description: "Search is weak, threads get lost" },
+  { title: "Defensive", speaker: "buyer", description: "Just send me some info" },
+  { title: "Show Fit", speaker: "seller", description: "Pitch the fix for their pain" },
+  { title: "Pilot Offer", speaker: "seller", description: "Offer a 2-week pilot" },
+  { title: "Pilot Won", speaker: "buyer", description: "Let's run the pilot" },
+  { title: "Demo Booked", speaker: "buyer", description: "Book me a demo" },
+  { title: "Price Ask", speaker: "buyer", description: "What's this run for us?" },
+  { title: "Anchor Value", speaker: "seller", description: "Anchor on value per seat" },
+  { title: "Discount", speaker: "seller", description: "Lead with a discount" },
+  { title: "Proof Ask", speaker: "buyer", description: "Prove it pays off at our size" },
+  { title: "Too Pricey", speaker: "buyer", description: "Still too expensive" },
+  { title: "Case Closes", speaker: "buyer", description: "That case study sells me" },
+  { title: "Anchored Low", speaker: "buyer", description: "Can you go lower?" },
+];
+
+/** Catalog string for the prompt: each canonical move with its speaker, win-rate, voice. */
+function formatMoveCatalog(): string {
+  const stats = store._nodeStats ?? [];
+  const wr = (title: string) => {
+    const e = stats.find((s) => s.title.toLowerCase() === title.toLowerCase());
+    return e ? `${Math.round(e.winRate * 100)}% win` : "—";
+  };
+  return CANONICAL_MOVES.map(
+    (m) => `- "${m.title}" — ${m.speaker.toUpperCase()} turn, ${wr(m.title)}, voiced like: "${m.description}"`,
+  ).join("\n");
+}
+
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 /**
@@ -112,23 +152,6 @@ export function refreshStatCache(): void {
   );
 }
 
-/**
- * Format the stat table as a compact table string for the GPT prompt.
- * ~200 tokens for 20 rows — negligible cost.
- */
-function formatStatTable(stats: NodeStatEntry[]): string {
-  const header = "Node Title                    WinRate  Sample";
-  const divider = "─".repeat(46);
-  const rows = stats
-    .map((e) => {
-      const pct = `${Math.round(e.winRate * 100)}%`.padStart(7);
-      const n = String(e.sampleSize).padStart(6);
-      return `${e.title.padEnd(30)}${pct}  ${n}`;
-    })
-    .join("\n");
-  return `${header}\n${divider}\n${rows}`;
-}
-
 // ---------------------------------------------------------------------------
 // GPT response types (internal)
 // ---------------------------------------------------------------------------
@@ -211,30 +234,38 @@ async function callGpt(transcript: TranscriptSegment[]): Promise<GptTreeOutput> 
     .map((seg, i) => `[${i}] ${seg.speaker.toUpperCase()}: ${seg.text}`)
     .join("\n");
 
-  // Use persisted stat table; fall back to empty if cache hasn't been seeded yet
-  const stats = store._nodeStats ?? [];
-  const statTableStr = stats.length > 0
-    ? formatStatTable(stats)
-    : "No historical data available yet.";
-
-  const wonCount = stats.reduce((s, e) => s + e.wins, 0);
-  const lostCount = stats.reduce((s, e) => s + e.losses, 0);
+  const moveCatalog = formatMoveCatalog();
 
   const prompt = `You are a sales call analyst for a B2B SaaS company (the seller is Slack).
 
-Your job is to generate a decision tree for the following uploaded sales call recording.
+Map this uploaded sales call onto our standard sales-call move graph, so it reads exactly
+like the calls already in our system.
 
-The tree must have:
-1. REAL PATH — the actual conversation nodes in order (what really happened)
-2. AI BRANCHES — 2-3 alternative paths at the weakest seller moments, showing better responses that lead to higher win rates based on the historical data below
+=== CANONICAL MOVES (use these EXACT titles and the speaker shown for each) ===
+${moveCatalog}
 
-=== HISTORICAL NODE WIN RATES (${wonCount} wins / ${lostCount} losses across ${store.calls.length} past calls) ===
-${statTableStr}
+A normal call flows: Opening (seller) → Discovery (seller) → the buyer raises their current
+tool (Incumbent, buyer) → the seller responds with ONE of: Coexist / Find Pain / Knock
+Incumbent (seller) → buyer reacts (Curious / Pain Found / Pushback / Defensive) → it advances
+to a Show Fit / Pilot Offer / Price Ask, etc. Pricing branches: Anchor Value vs Discount.
 
-IMPORTANT: Use winRate as the primary signal for successProbability on every node you generate.
-- When a moment matches a historical move, REUSE THAT EXACT TITLE VERBATIM (copy it character-for-character from the table) so the node inherits its real win statistics.
-- For AI branch nodes, target node titles with the highest win rates (Curious, Pilot Offer, etc.) — again, reuse the exact historical title.
-- Only invent a new title when no historical move fits; then estimate successProbability from semantic meaning.
+=== YOUR TASK ===
+1. REAL PATH — map what ACTUALLY happened onto the canonical moves, in order:
+   - ALWAYS start with "Opening" (seller), then "Discovery" (seller).
+   - Use a canonical title VERBATIM for each moment and the EXACT speaker listed for that
+     move (e.g. "Find Pain" is a SELLER turn, "Incumbent"/"Curious"/"Defensive" are BUYER turns).
+     This is critical — never flip a move's speaker.
+   - Do NOT repeat a title in the real path. Pick the single best-matching move per moment.
+   - 5-7 nodes, alternating seller→buyer→seller…, following a coherent path through the graph.
+2. AI BRANCHES — at the seller's key decision moment (usually right after "Incumbent"), add the
+   OTHER canonical seller responses they could have played instead, each followed by the buyer's
+   likely reaction. 2-3 branches, 2 nodes each (seller move → buyer reaction).
+
+=== STYLE ===
+- Descriptions must be TERSE — ≤6 words, in the voice of the catalog examples (e.g. "Set the
+  agenda", "What's painful about Teams?"). NO narration like "The seller asks…". Adapt the
+  wording to THIS call's specifics (their actual tool, their actual pain) but keep it short.
+- successProbability: anchor to the win-rate shown for that move; don't invent numbers.
 
 === UPLOADED CALL TRANSCRIPT ===
 ${transcriptText}
@@ -242,40 +273,23 @@ ${transcriptText}
 === OUTPUT FORMAT (JSON only, no prose) ===
 {
   "realPath": [
-    {
-      "title": "Short node title (≤5 words, match historical titles where possible)",
-      "description": "What was said or decided at this moment (1 sentence)",
-      "speaker": "seller or buyer",
-      "successProbability": 0.0-1.0,
-      "transcriptIndices": [0, 1, 2]
-    }
+    { "title": "Opening", "description": "Set the agenda", "speaker": "seller", "successProbability": 0.61, "transcriptIndices": [0] }
   ],
   "branches": [
     {
       "parentRealPathIndex": 2,
       "nodes": [
-        {
-          "title": "Better response title",
-          "description": "What the seller could have said instead",
-          "speaker": "seller",
-          "successProbability": 0.75
-        },
-        {
-          "title": "Buyer reaction",
-          "description": "How the buyer would likely have responded",
-          "speaker": "buyer",
-          "successProbability": 0.85
-        }
+        { "title": "Find Pain", "description": "What's painful about {tool}?", "speaker": "seller", "successProbability": 0.94 },
+        { "title": "Pain Found", "description": "Search is weak, threads get lost", "speaker": "buyer", "successProbability": 0.94 }
       ]
     }
   ]
 }
 
 Rules:
-- Every transcript segment must be in exactly one realPath node
-- successProbability must be anchored to the historical win rates — do not invent numbers
-- AI branches must target higher win-rate paths than the real path achieved
-- Aim for 4-8 realPath nodes and 2-3 branches with 2-3 nodes each`;
+- Every transcript segment must belong to exactly one realPath node.
+- Canonical title + its canonical speaker, verbatim; terse descriptions; no repeated titles.
+- AI branches show the stronger alternative seller moves at the key fork.`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
