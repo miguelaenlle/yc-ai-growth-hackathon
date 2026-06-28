@@ -138,6 +138,8 @@ export interface AiFeedback {
   /** Top "start practicing here" pick (System 2) — cites in-call signal + history. */
   recommendedStart?: {
     nodeId: Id;
+    /** Plain-language title of the moment (humanized; falls back to the node title). */
+    heading?: string;
     reason: string;
     /** LLM-written rationale; may contain [n] markers into citations. */
     description?: string;

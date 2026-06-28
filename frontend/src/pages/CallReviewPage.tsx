@@ -484,7 +484,7 @@ export function CallReviewPage() {
     recStart && recNode
       ? {
           nodeId: recStart.nodeId,
-          nodeTitle: recNode.title,
+          nodeTitle: recStart.heading ?? recNode.title,
           reason: recStart.description ?? recStart.reason,
           citations: recStart.citations,
         }

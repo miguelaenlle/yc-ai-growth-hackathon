@@ -31,7 +31,6 @@ const INSIGHTS_PATH = join(__dirname, "data", "insights.json");
 
 const FEATURED_REP = "sp_jane";
 const pct = (x: number) => Math.round(x * 100);
-const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
 // ---------------------------------------------------------------------------
 // Data layer — real regret forks + the exact quote where each happened
@@ -63,7 +62,12 @@ function quoteForNode(rec: Recording, nodeId: Id): string {
   return "";
 }
 
-/** Every losing-fork moment across the rep's calls, sorted by EV swing (worst first). */
+/**
+ * Every regret-fork moment across the rep's calls, sorted by EV swing (worst first).
+ * Includes won calls too — a won call can still have a missed-best-move moment worth
+ * drilling (`outcome` is recorded so copy can be framed accordingly). The Perfect
+ * Practice card filters won calls out before picking its single worst fork.
+ */
 function collectForks(salespersonId: Id): CallFork[] {
   const out: CallFork[] = [];
   for (const call of store.calls) {
@@ -72,7 +76,6 @@ function collectForks(salespersonId: Id): CallFork[] {
     const real = recordingsForCall(call.id).find((r) => r.isReal);
     if (!tree || !real) continue;
     const summary = toCallSummary(call);
-    if (summary.outcome === "won") continue; // practice pays off where it didn't win
     const fork = bestRegretFork(tree, real.traversal);
     if (!fork) continue;
     const buyer = buyerOf(call.buyerId);
@@ -148,23 +151,38 @@ export async function generateInsights(salespersonId = FEATURED_REP): Promise<In
   const sp = store.salespeople.find((s) => s.id === salespersonId);
   const forks = collectForks(salespersonId);
 
-  // Per-call recommended-start (every losing call gets one; quotes are real).
+  // Per-call recommended-start (every regret fork gets one; quotes are real).
+  // [1] is always THIS call's own moment; [2..] are other calls with the same mistake
+  // (the recurring pattern), so the card cites both the current call and history.
   const perCall: Record<Id, NonNullable<AiFeedback["recommendedStart"]>> = {};
-  for (const cf of forks) {
-    const sameMove = forks.filter((x) => x.fork.takenTitle === cf.fork.takenTitle).length;
-    const recur =
-      sameMove > 1 ? ` You make the ${cf.fork.takenTitle} on ${sameMove} of your calls — a pattern worth drilling.` : "";
-    perCall[cf.callId] = {
-      nodeId: cf.fork.forkNodeId,
-      reason: forkReason(cf.fork) + " Start here.",
-      description: forkReason(cf.fork) + recur,
-      citations: [citationFrom(1, cf)],
-    };
-  }
+  await Promise.all(
+    forks.map(async (cf) => {
+      const sameMove = forks.filter((x) => x.fork.takenTitle === cf.fork.takenTitle);
+      // Other calls with the same missed-best move, deduped by company (the same
+      // prospect can appear on several calls — don't cite it twice). Biggest gaps first.
+      const seen = new Set([cf.company]);
+      const others = sameMove.filter((x) => {
+        if (x.callId === cf.callId || seen.has(x.company)) return false;
+        seen.add(x.company);
+        return true;
+      });
+      const citeSources = [cf, ...others].slice(0, 4);
+      const citations = citeSources.map((c, i) => citationFrom(i + 1, c));
+      const narrative = await buildPerCallNarrative(cf, seen.size, citations);
+      perCall[cf.callId] = {
+        nodeId: cf.fork.forkNodeId,
+        heading: narrative.heading,
+        reason: narrative.description,
+        description: narrative.description,
+        citations,
+      };
+    }),
+  );
 
-  // Perfect practice call — the single worst fork, plus citations from other calls
-  // sharing the same mistake (the recurring pattern → [1][2][3]).
-  const top = forks[0];
+  // Perfect practice call — the single worst fork among calls that DIDN'T win (a won
+  // call's small-gap fork shouldn't outrank a real loss), plus citations from other
+  // calls sharing the same mistake (the recurring pattern → [1][2][3][4]).
+  const top = forks.find((f) => f.outcome !== "won");
   const usedLLM = !!process.env.OPENAI_API_KEY && forks.length > 0;
 
   if (!top || !sp) {
@@ -184,7 +202,8 @@ export async function generateInsights(salespersonId = FEATURED_REP): Promise<In
     return persist({ salespersonId, perfectPractice: empty, perCall, usedLLM: false });
   }
 
-  const sameMistake = forks.filter((x) => x.fork.takenTitle === top.fork.takenTitle);
+  // Only count/cite the non-won calls — the Perfect Practice copy says "all were lost".
+  const sameMistake = forks.filter((x) => x.fork.takenTitle === top.fork.takenTitle && x.outcome !== "won");
   const citeSources = [top, ...sameMistake.filter((x) => x.callId !== top.callId)].slice(0, 4);
   const citations = citeSources.map((cf, i) => citationFrom(i + 1, cf));
   const personaName = getPersona(top.personaId)?.name ?? top.personaId;
@@ -208,12 +227,6 @@ export async function generateInsights(salespersonId = FEATURED_REP): Promise<In
   };
 
   return persist({ salespersonId, perfectPractice, perCall, usedLLM: !!llm.usedLLM });
-}
-
-function forkReason(f: RegretFork): string {
-  return `You played the ${f.takenTitle} (${pct(f.takenP)}% win) at the ${f.forkTitle} — the ${f.bestTitle} wins ${pct(
-    f.bestP,
-  )}%, about a ${money(f.gapEV)} swing in expected value.`;
 }
 
 async function buildNarrative(
@@ -277,6 +290,69 @@ async function buildNarrative(
       ? (parsed.reasons as string[])
       : fallback.reasons;
   return { headline, reasons, usedLLM: true };
+}
+
+/**
+ * Plain-language, outcome-aware narrative for ONE call's "Practice from here" card.
+ * Same layperson style as buildNarrative: [1] is this call's own moment, [2..] are other
+ * calls with the same mistake. Won calls are framed as "a common slip you got past",
+ * lost/open calls as "where the call fell off". Falls back to a grounded template.
+ */
+async function buildPerCallNarrative(
+  cf: CallFork,
+  recurCount: number,
+  citations: Citation[],
+): Promise<{ heading: string; description: string }> {
+  const inTen = (p: number) => Math.max(1, Math.min(9, Math.round(p * 10)));
+  const allMarkers = citations.map((c) => `[${c.id}]`).join("");
+  const won = cf.outcome === "won";
+  const tookOdds = inTen(cf.fork.takenP);
+  const betterOdds = inTen(cf.fork.bestP);
+
+  const patternLine =
+    recurCount > 1
+      ? ` You've hit this same moment on ${recurCount} of your calls — worth drilling ${allMarkers}.`
+      : "";
+  const fallback = {
+    heading: won ? "A moment you got past — but could nail" : "Where the call started to slip",
+    description: won
+      ? `You won this one, but right here a stronger move was on the table. The path you took works about ${tookOdds} in 10 times; the better one works about ${betterOdds} of 10.${patternLine} Replay from here and try it.`
+      : `This is where the call started to slip. The move you made here works about ${tookOdds} in 10 times, while a better option works about ${betterOdds} of 10.${patternLine} Replay from here and try the stronger move [1].`,
+  };
+
+  const cites = citations
+    .map((c) => `[${c.id}] ${c.company} (${c.outcome}) — buyer ${c.buyer.name} (${c.buyer.title}). The rep said: "${c.quote}". Internal stats: this move won ${pct(c.winTaken)}%, the better move ("${c.betterTitle}") won ${pct(c.winBest)}%.`)
+    .join("\n");
+
+  const system =
+    "You are a sales coach writing for a brand-new salesperson who has NEVER seen a sales dashboard. " +
+    "Write in plain, everyday English a layperson can read at a glance. STRICT RULES:\n" +
+    "- NEVER print internal jargon: no move names (e.g. 'Coexist', 'Find Pain', 'Knock Incumbent'), no persona names, no 'EV swing', no dollar figures, no 'fork' or 'node'.\n" +
+    "- NEVER print raw percentages like '79%' or '94%'. Translate win-rates to plain odds like 'about 9 of 10 times' or '8 in 10'.\n" +
+    "- Describe what the rep DID and the BETTER move in plain words (translate the move labels into a concrete action, e.g. 'ask what's frustrating about their current tool').\n" +
+    "- Ground everything ONLY in the data given; do not invent numbers, quotes, buyers, or calls.\n" +
+    "- Keep [n] markers that map to the numbered citations. Respond ONLY with JSON.";
+  const user =
+    `THIS CALL: ${cf.company} — outcome: ${cf.outcome.toUpperCase()}.\n` +
+    `THE MOMENT (citation [1]): the rep said "${cf.quote}". The smarter move here was "${cf.fork.bestTitle}" (translate that into a plain action).\n` +
+    `ODDS: the move taken works about ${tookOdds} in 10; the better move works about ${betterOdds} of 10.\n` +
+    `FRAMING: ${won
+      ? "This call was WON — frame it as a good outcome where an even stronger move was available; call it a common slip worth drilling so it's automatic next time. Be encouraging."
+      : "This call was LOST/STALLED — frame it as the moment where the call started to fall off."}\n` +
+    `HOW OFTEN: the rep hits this same moment on ${recurCount} call(s).\n` +
+    `CITATIONS (translate the stats, never echo the raw numbers):\n${cites}\n\n` +
+    `Return JSON in this exact shape:\n` +
+    `{\n` +
+    `  "heading": string — a short plain phrase naming the MOMENT (4-7 words, no move labels), e.g. "When their current tool came up",\n` +
+    `  "description": string — 2-3 plain sentences: what happened at this moment, the better move in plain words (with plain odds), and${recurCount > 1 ? ` note it recurs across calls ending with ${allMarkers}` : " end the relevant clause with [1]"}. End with a nudge to replay this moment.\n` +
+    `}`;
+
+  const parsed = await callLLM(system, user);
+  if (!parsed) return fallback;
+  const heading = typeof parsed.heading === "string" && parsed.heading.trim() ? parsed.heading : fallback.heading;
+  const description =
+    typeof parsed.description === "string" && parsed.description.trim() ? parsed.description : fallback.description;
+  return { heading, description };
 }
 
 // ---------------------------------------------------------------------------

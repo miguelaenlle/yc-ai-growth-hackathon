@@ -125,6 +125,7 @@ export interface AiFeedback {
   /** Top "start practicing here" pick (System 2) — cites in-call signal + history. */
   recommendedStart?: {
     nodeId: Id;
+    heading?: string;
     reason: string;
     description?: string;
     citations?: Citation[];

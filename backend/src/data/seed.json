@@ -30466,7 +30466,83 @@
         ],
         "recommendedStart": {
           "nodeId": "n_incumbent",
-          "reason": "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $6,606 swing in expected value. Start here."
+          "heading": "Discussing engineering decision visibility",
+          "reason": "During this call, the rep explained how their solution helps with visibility on engineering decisions, which worked well and led to a win. However, a stronger approach would have been to ask what challenges they face with their current tool, which tends to be even more effective, winning about 9 out of 10 times. This moment appears in 9 instances across several calls, so it’s a great opportunity to practice for next time.",
+          "description": "During this call, the rep explained how their solution helps with visibility on engineering decisions, which worked well and led to a win. However, a stronger approach would have been to ask what challenges they face with their current tool, which tends to be even more effective, winning about 9 out of 10 times. This moment appears in 9 instances across several calls, so it’s a great opportunity to practice for next time.",
+          "citations": [
+            {
+              "id": 1,
+              "callId": "call_showcase",
+              "company": "Sundial Commerce",
+              "buyer": {
+                "name": "Rachel Kim",
+                "title": "VP of Engineering"
+              },
+              "outcome": "won",
+              "nodeId": "n_coexist",
+              "nodeTitle": "Incumbent",
+              "takenTitle": "Coexist",
+              "betterTitle": "Find Pain",
+              "winTaken": 0.7907,
+              "winBest": 0.9375,
+              "evGap": 6606,
+              "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
+            },
+            {
+              "id": 2,
+              "callId": "call_a_13",
+              "company": "Northwind Logistics",
+              "buyer": {
+                "name": "Sofia Lopez",
+                "title": "COO"
+              },
+              "outcome": "won",
+              "nodeId": "n_coexist",
+              "nodeTitle": "Incumbent",
+              "takenTitle": "Coexist",
+              "betterTitle": "Find Pain",
+              "winTaken": 0.7907,
+              "winBest": 0.9375,
+              "evGap": 6606,
+              "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+            },
+            {
+              "id": 3,
+              "callId": "call_a_33",
+              "company": "Northwind Logistics",
+              "buyer": {
+                "name": "Maria Nair",
+                "title": "Head of Customer Success"
+              },
+              "outcome": "won",
+              "nodeId": "n_coexist",
+              "nodeTitle": "Incumbent",
+              "takenTitle": "Coexist",
+              "betterTitle": "Find Pain",
+              "winTaken": 0.7907,
+              "winBest": 0.9375,
+              "evGap": 6606,
+              "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+            },
+            {
+              "id": 4,
+              "callId": "call_a_21",
+              "company": "Helio Robotics",
+              "buyer": {
+                "name": "Lena Carter",
+                "title": "Director of Engineering"
+              },
+              "outcome": "won",
+              "nodeId": "n_coexist",
+              "nodeTitle": "Incumbent",
+              "takenTitle": "Coexist",
+              "betterTitle": "Find Pain",
+              "winTaken": 0.7907,
+              "winBest": 0.9375,
+              "evGap": 3964,
+              "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
+            }
+          ]
         }
       }
     },
