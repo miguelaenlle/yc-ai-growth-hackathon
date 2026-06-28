@@ -33,7 +33,6 @@ import {
 import {
   getNodeById,
   getOutcome,
-  getWeakNodes,
   matchOrCreateBranch,
   routeTranscriptToNode,
   updateNodeMetrics,
@@ -46,6 +45,11 @@ import {
   getStats,
   summarizeStats,
 } from "./salesperson-stats.js";
+import {
+  buildRecommendedPractice,
+  listSalespeople,
+  rankPracticeTargets,
+} from "./practice-reco.js";
 import { computeMetrics } from "./signal-engine.js";
 import { createAudioAnalyzer } from "./audio/index.js";
 import type { AudioScoreByIndex } from "./audio/types.js";
@@ -61,7 +65,6 @@ import type {
   MockAnalysisReq,
   MockCallAnalysis,
   MockTurnReq,
-  PracticeTarget,
   Recording,
   TraversalStep,
   Tree,
@@ -160,6 +163,18 @@ app.get("/recordings/:id", (req: Request, res: Response) => {
 // GET /personas → PersonaInfo[]  (single source of truth for the picker)
 app.get("/personas", (_req: Request, res: Response) => {
   res.json(listPersonas().map((p) => ({ id: p.id, name: p.name, description: p.description })));
+});
+
+// 4c. GET /salespeople → SalespersonListItem[]  (rep picker for System 1)
+app.get("/salespeople", (_req: Request, res: Response) => {
+  res.json(listSalespeople());
+});
+
+// 4d. GET /salespeople/:id/recommended-practice → RecommendedPractice (System 1)
+app.get("/salespeople/:id/recommended-practice", (req: Request, res: Response) => {
+  const reco = buildRecommendedPractice(req.params.id);
+  if (!reco) return notFound(res, `salesperson ${req.params.id} not found`);
+  res.json(reco);
 });
 
 // ---------------------------------------------------------------------------
@@ -352,30 +367,42 @@ app.patch("/recordings/:id", async (req: Request, res: Response) => {
 });
 
 // 8. POST /recordings/:id/feedback → AiFeedback
+// System 2: blend THIS call's signal weakness with the rep's HISTORICAL stats
+// (per-node fail rate + weak-skill mapping) to rank practice targets and pick one
+// top "start practicing here" node. The rep is resolved from the recording's call.
 app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
 
-  if (rec.aiFeedback) return res.json(rec.aiFeedback);
-
   const tree = getTree(rec.treeId);
   if (!tree) return notFound(res, `tree ${rec.treeId} not found`);
 
-  const weakNodes = getWeakNodes(tree, { limit: 3 });
+  // Resolve the rep's historical stats from the recording's call (may be absent).
+  const call = getCall(rec.callId);
+  const stats = call ? getStats(call.salespersonId) : null;
 
-  const practiceTargets: PracticeTarget[] = weakNodes.map((wn) => ({
-    nodeId: wn.node.id,
-    reason: `Low ${wn.worstMetric} detected at "${wn.node.title}"`,
-    drill: `Practice handling "${wn.node.description}" with stronger ${wn.worstMetric}.`,
-    metric: wn.worstMetric,
-    score: wn.score,
-  }));
+  // Idempotent: keep curated/cached feedback, but attach recommendedStart when an
+  // older feedback predates the field so System 2 still surfaces on seed calls.
+  if (rec.aiFeedback) {
+    if (!rec.aiFeedback.recommendedStart) {
+      const { recommendedStart } = rankPracticeTargets(tree, stats);
+      if (recommendedStart) {
+        rec.aiFeedback.recommendedStart = recommendedStart;
+        putRecording(rec);
+        persist();
+      }
+    }
+    return res.json(rec.aiFeedback);
+  }
+
+  const { targets, recommendedStart } = rankPracticeTargets(tree, stats, { limit: 3 });
 
   const feedback: AiFeedback = {
-    summary: `Call reviewed. ${weakNodes.length} node(s) flagged for practice based on signal metrics.`,
+    summary: `Call reviewed. ${targets.length} moment(s) flagged for practice, ranked by this call's signal weakness blended with your history.`,
     strengths: ["Structured opening", "Clear discovery questions"],
-    weaknesses: weakNodes.map((wn) => `Weak ${wn.worstMetric} at "${wn.node.title}"`),
-    practiceTargets,
+    weaknesses: targets.map((t) => t.reason),
+    practiceTargets: targets,
+    recommendedStart,
   };
 
   rec.aiFeedback = feedback;

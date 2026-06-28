@@ -1,9 +1,12 @@
 import axios from "axios";
 import type {
+  AiFeedback,
   CallDetail,
   CallSummary,
   MockCallAnalysis,
   PersonaInfo,
+  RecommendedPractice,
+  SalespersonListItem,
   WalkthroughBundle,
 } from "./types";
 
@@ -35,6 +38,30 @@ export async function fetchMockAnalysis(
   const { data } = await api.post<MockCallAnalysis>(
     `/recordings/${recordingId}/mock-analysis`,
     { personaId }
+  );
+  return data;
+}
+
+/** GET /salespeople → SalespersonListItem[] (reps for the practice picker). */
+export async function fetchSalespeople(): Promise<SalespersonListItem[]> {
+  const { data } = await api.get<SalespersonListItem[]>("/salespeople");
+  return data;
+}
+
+/** GET /salespeople/:id/recommended-practice → RecommendedPractice (System 1). */
+export async function fetchRecommendedPractice(
+  salespersonId: string
+): Promise<RecommendedPractice> {
+  const { data } = await api.get<RecommendedPractice>(
+    `/salespeople/${salespersonId}/recommended-practice`
+  );
+  return data;
+}
+
+/** POST /recordings/:id/feedback → AiFeedback (post-call review + recommendedStart). */
+export async function fetchFeedback(recordingId: string): Promise<AiFeedback> {
+  const { data } = await api.post<AiFeedback>(
+    `/recordings/${recordingId}/feedback`
   );
   return data;
 }

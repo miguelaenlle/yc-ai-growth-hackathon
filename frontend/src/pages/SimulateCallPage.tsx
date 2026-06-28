@@ -161,6 +161,9 @@ export function SimulateCallPage() {
   const { id } = useParams<{ id: string }>();
   const [params] = useSearchParams();
   const from = params.get("from") ?? undefined;
+  // Deep-link persona (System 1 / System 2 CTAs): ?persona=buy_steve pre-selects
+  // the buyer the AI plays. Falls back to Practice Polly when absent.
+  const personaParam = params.get("persona") ?? undefined;
   const location = useLocation();
   const navState = (location.state as { buyerName?: string; company?: string } | null) ?? null;
 
@@ -169,7 +172,7 @@ export function SimulateCallPage() {
 
   // Which buyer persona the AI plays — chosen in the ready overlay, threaded into
   // both the live session and the post-call analysis.
-  const [personaId, setPersonaId] = useState("buy_polly");
+  const [personaId, setPersonaId] = useState(personaParam ?? "buy_polly");
 
   // Use the call's mock recording — the WS handler resolves the tree from it.
   const recordingId = useMemo(() => {

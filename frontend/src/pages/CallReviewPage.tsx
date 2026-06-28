@@ -29,6 +29,7 @@ import { SUMMARIZE_START_NODE_ID } from "../components/summarize/summarize_const
 import { useSummarizePlayback } from "../components/summarize/useSummarizePlayback";
 import { useSummarizeTreeAnimation } from "../components/summarize/useSummarizeTreeAnimation";
 import { useCallDetail } from "../queries/useCallDetail";
+import { useFeedback } from "../queries/useFeedback";
 import { getWalkthrough, peekWalkthrough } from "../lib/walkthroughCache";
 import { participantsFor } from "../lib/placeholders";
 import { formatDateTime } from "../lib/format";
@@ -146,9 +147,11 @@ interface FlowProps {
   onSimulateNode: (uiNodeId: string) => void;
   /** Watch the AI ace the path from a (UI) tree node id. */
   onWatchNode: (uiNodeId: string) => void;
+  /** System 2 — the top "start practicing here" pick, or undefined while loading. */
+  recommendation?: { nodeId: string; nodeTitle: string; reason: string };
 }
 
-function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode, onWatchNode }: FlowProps) {
+function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode, onWatchNode, recommendation }: FlowProps) {
   const isSummarizePlaying = summarizeStatus === "playing";
 
   // Inject per-node "simulate" + "watch AI" actions onto every node. Node ids are
@@ -269,6 +272,27 @@ function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimu
           size={1.5}
           color="var(--color-border)"
         />
+        {recommendation && !isSummarizePlaying && (
+          <Panel position="top-left" className="max-w-sm">
+            <div className="rounded-xl border border-accent/40 bg-surface/95 p-4 shadow-[0_8px_40px_rgba(0,0,0,0.5)] backdrop-blur-sm">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent/80">
+                Practice from here
+              </p>
+              <p className="text-sm font-semibold text-text">
+                {recommendation.nodeTitle}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                {recommendation.reason}
+              </p>
+              <button
+                onClick={() => onSimulateNode(recommendation.nodeId)}
+                className="mt-3 w-full rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+              >
+                Practice this moment
+              </button>
+            </div>
+          </Panel>
+        )}
         <Panel position="bottom-right">
           <TreeMiniMap nodes={nodes} edges={edges} />
         </Panel>
@@ -315,6 +339,11 @@ export function CallReviewPage() {
   const summary = (location.state as { summary?: CallSummary } | null)?.summary;
 
   const { data: detail, isLoading, isError } = useCallDetail(id);
+
+  // System 2 — post-call review for the real recording, including the top
+  // "start practicing here" pick blended from this call's signal + the rep's history.
+  const realRecordingId = detail?.recordings.find((r) => r.isReal)?.id;
+  const { data: feedback } = useFeedback(realRecordingId);
 
   const company = summary?.company ?? "Call";
   // Prefer the real per-call participants from the list summary; fall back to the
@@ -420,6 +449,16 @@ export function CallReviewPage() {
   const finalEV = summary?.finalEV ?? derived.finalEV;
   const bestEV = summary?.bestEV ?? derived.bestEV;
 
+  // Resolve the recommended-start node's title from the tree for the banner.
+  const recStart = feedback?.recommendedStart;
+  const recNode = recStart
+    ? detail.tree.nodes.find((n) => n.id === recStart.nodeId)
+    : undefined;
+  const recommendation =
+    recStart && recNode
+      ? { nodeId: recStart.nodeId, nodeTitle: recNode.title, reason: recStart.reason }
+      : undefined;
+
   return (
     <div className="flex h-screen bg-bg text-text">
       <Sidebar
@@ -443,6 +482,7 @@ export function CallReviewPage() {
             onPlaybackEnd={handlePlaybackEnd}
             onSimulateNode={handleSimulateNode}
             onWatchNode={handleWatchNode}
+            recommendation={recommendation}
           />
         </ReactFlowProvider>
       </div>
