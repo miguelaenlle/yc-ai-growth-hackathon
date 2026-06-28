@@ -149,9 +149,15 @@ export interface TimelineCue {
   atMs: number;
   nodeId: Id;
 }
-export interface WalkthroughBundle {
+/** A single node's TTS clip — the per-node bundle used for exact, gapless sync. */
+export interface WalkthroughSegment {
+  nodeId: Id;
   audioUrl: string;
-  timeline: TimelineCue[];
+}
+export interface WalkthroughBundle {
+  audioUrl: string; // single concatenated render (fallback playback)
+  timeline: TimelineCue[]; // cue offsets into audioUrl (fallback sync)
+  segments?: WalkthroughSegment[]; // one clip per path node → exact, gapless sync
 }
 
 export type LiveEvent =
