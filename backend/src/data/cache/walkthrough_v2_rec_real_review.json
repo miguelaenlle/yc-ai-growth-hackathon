@@ -1,0 +1,47 @@
+{
+  "audioUrl": "/data/audio/walkthrough_v2_rec_real_review.mp3",
+  "timeline": [
+    {
+      "atMs": 0,
+      "nodeId": "n_open"
+    },
+    {
+      "atMs": 7508,
+      "nodeId": "n_disc"
+    },
+    {
+      "atMs": 16796,
+      "nodeId": "n_push"
+    },
+    {
+      "atMs": 27323,
+      "nodeId": "n_road"
+    },
+    {
+      "atMs": 38392,
+      "nodeId": "n_lost"
+    }
+  ],
+  "script": [
+    {
+      "nodeId": "n_open",
+      "narration": "Great opening — you started with a friendly 'Thanks for hopping on, John,' which set a nice tone."
+    },
+    {
+      "nodeId": "n_disc",
+      "narration": "You quickly dug into the discovery by asking, 'How's ticket volume lately?' That got you talking about real pain points."
+    },
+    {
+      "nodeId": "n_push",
+      "narration": "But then Tableau came up, and you sensed some hesitation when he said, 'You don't have Tableau integration,' which really threw you off."
+    },
+    {
+      "nodeId": "n_road",
+      "narration": "Instead of home-running with that thirty-eight-K SQL connector option, you mentioned it's on your roadmap, which dropped the EV to just four K."
+    },
+    {
+      "nodeId": "n_lost",
+      "narration": "That left you with him saying, 'Just send me the deck,' signaling he was checked out. Tough spot."
+    }
+  ]
+}

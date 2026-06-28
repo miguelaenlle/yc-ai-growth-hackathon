@@ -23,13 +23,14 @@ import { NodePreview } from "../components/tree/NodePreview";
 import { TreeMiniMap } from "../components/tree/TreeMiniMap";
 import { OutcomeBadge } from "../components/OutcomeBadge";
 import { Logo } from "../components/Logo";
+import { SUMMARIZE_START_NODE_ID } from "../components/summarize/summarize_constants";
+import { useSummarizePlayback } from "../components/summarize/useSummarizePlayback";
+import { useSummarizeTreeAnimation } from "../components/summarize/useSummarizeTreeAnimation";
 import { fetchCallDetail } from "../lib/api";
 import { getWalkthrough, peekWalkthrough } from "../lib/walkthroughCache";
-import { toUiNodeId } from "../lib/nodeIdMap";
 import type { WalkthroughBundle } from "../lib/types";
 
 const nodeTypes = { call: CallNode };
-const START_NODE_ID = "opening";
 
 type SummarizeStatus = "loading" | "ready" | "playing" | "error";
 
@@ -100,20 +101,6 @@ function Avatar() {
   );
 }
 
-const DURATION = 440;
-const easeInOut = (t: number) =>
-  t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
-function activeCueIndex(timeline: WalkthroughBundle["timeline"], timeMs: number): number {
-  let idx = 0;
-  for (let i = 0; i < timeline.length; i++) {
-    if (timeMs >= timeline[i].atMs) idx = i;
-    else break;
-  }
-  return idx;
-}
-
 interface FlowProps {
   walkthrough: WalkthroughBundle | null;
   summarizeStatus: SummarizeStatus;
@@ -122,23 +109,40 @@ interface FlowProps {
 }
 
 function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd }: FlowProps) {
-  const [selectedId, setSelectedId] = useState(START_NODE_ID);
+  const isSummarizePlaying = summarizeStatus === "playing";
+  const [selectedId, setSelectedId] = useState(SUMMARIZE_START_NODE_ID);
   const [nodes, setNodes] = useState(
-    () => applyFocus(initialNodes, initialEdges, START_NODE_ID).nodes,
+    () => applyFocus(initialNodes, initialEdges, SUMMARIZE_START_NODE_ID).nodes,
   );
   const [edges, setEdges] = useState(
-    () => applyFocus(initialNodes, initialEdges, START_NODE_ID).edges,
+    () => applyFocus(initialNodes, initialEdges, SUMMARIZE_START_NODE_ID).edges,
   );
-  const { setCenter, getZoom, getViewport, fitView } = useReactFlow();
-  const first = useRef(true);
-  const raf = useRef<number | undefined>(undefined);
-  const nodesRef = useRef(nodes);
-  nodesRef.current = nodes;
-  const skipCenterRef = useRef(false);
+  const { getViewport } = useReactFlow();
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const walkthroughRef = useRef(walkthrough);
-  walkthroughRef.current = walkthrough;
+  const { summarize_resetToStart } = useSummarizeTreeAnimation({
+    nodes,
+    selectedId,
+    setSelectedId,
+    setNodes,
+    setEdges,
+    isSummarizePlaying,
+  });
+
+  const handleSummarizeNodeFocus = useCallback((uiNodeId: string) => {
+    setSelectedId((prev) => (prev === uiNodeId ? prev : uiNodeId));
+  }, []);
+
+  const handleSummarizeEnded = useCallback(() => {
+    summarize_resetToStart();
+    onPlaybackEnd();
+  }, [summarize_resetToStart, onPlaybackEnd]);
+
+  useSummarizePlayback({
+    walkthrough,
+    isPlaying: isSummarizePlaying,
+    onNodeFocus: handleSummarizeNodeFocus,
+    onEnded: handleSummarizeEnded,
+  });
 
   const [preview, setPreview] = useState<{
     data: CallNodeData;
@@ -163,100 +167,6 @@ function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd }: Flow
       yBottom: (n.position.y + h) * vp.zoom + vp.y,
     });
   };
-
-  useEffect(() => {
-    const { nodes: target, edges: targetEdges } = applyFocus(
-      initialNodes,
-      initialEdges,
-      selectedId,
-    );
-    setEdges(targetEdges);
-    if (first.current) {
-      first.current = false;
-      setNodes(target);
-      return;
-    }
-    const fromById = new Map(nodesRef.current.map((n) => [n.id, n]));
-    const start = performance.now();
-    cancelAnimationFrame(raf.current!);
-
-    const tick = (now: number) => {
-      const t = easeInOut(Math.min(1, (now - start) / DURATION));
-      setNodes(
-        target.map((tn) => {
-          const fn = fromById.get(tn.id) ?? tn;
-          const tw = (tn.width ?? BASE_W), th = (tn.height ?? BASE_H);
-          const fw = (fn.width ?? BASE_W), fh = (fn.height ?? BASE_H);
-          const ts = (tn.data as { scale?: number }).scale ?? 1;
-          const fs = (fn.data as { scale?: number }).scale ?? 1;
-          return {
-            ...tn,
-            width: lerp(fw, tw, t),
-            height: lerp(fh, th, t),
-            position: {
-              x: lerp(fn.position.x, tn.position.x, t),
-              y: lerp(fn.position.y, tn.position.y, t),
-            },
-            data: { ...tn.data, scale: lerp(fs, ts, t) },
-          };
-        }),
-      );
-      if (t < 1) raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-
-    const f = target.find((n) => (n.data as { focused?: boolean }).focused);
-    if (f) {
-      if (skipCenterRef.current) {
-        skipCenterRef.current = false;
-        void fitView({ padding: 0.2, duration: DURATION });
-      } else {
-        setCenter(
-          f.position.x + (f.width ?? BASE_W) / 2,
-          f.position.y + (f.height ?? BASE_H) / 2,
-          { zoom: Math.max(getZoom(), 0.85), duration: DURATION },
-        );
-      }
-    }
-    return () => cancelAnimationFrame(raf.current!);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId]);
-
-  const handleTimeUpdate = useCallback(() => {
-    const audio = audioRef.current;
-    const wt = walkthroughRef.current;
-    if (!audio || !wt) return;
-    const idx = activeCueIndex(wt.timeline, audio.currentTime * 1000);
-    const uiId = toUiNodeId(wt.timeline[idx].nodeId);
-    setSelectedId((prev) => (prev === uiId ? prev : uiId));
-  }, []);
-
-  const handleEnded = useCallback(() => {
-    skipCenterRef.current = true;
-    setSelectedId(START_NODE_ID);
-    onPlaybackEnd();
-  }, [onPlaybackEnd]);
-
-  useEffect(() => {
-    if (summarizeStatus !== "playing" || !walkthrough) return;
-
-    const audio = new Audio(walkthrough.audioUrl);
-    audioRef.current = audio;
-    audio.addEventListener("timeupdate", handleTimeUpdate);
-    audio.addEventListener("ended", handleEnded);
-
-    void audio.play().catch((err) => {
-      console.error("Walkthrough playback failed:", err);
-      onPlaybackEnd();
-    });
-
-    return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate);
-      audio.removeEventListener("ended", handleEnded);
-      audio.pause();
-      audioRef.current = null;
-    };
-  }, [summarizeStatus, walkthrough, handleTimeUpdate, handleEnded, onPlaybackEnd]);
 
   const buttonLabel =
     summarizeStatus === "loading"
@@ -286,7 +196,7 @@ function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd }: Flow
         nodesConnectable={false}
         proOptions={{ hideAttribution: true }}
         onNodeClick={(_, n: Node) => {
-          if (summarizeStatus === "playing") return;
+          if (isSummarizePlaying) return;
           setSelectedId(n.id);
         }}
         onNodeMouseEnter={onNodeEnter}
