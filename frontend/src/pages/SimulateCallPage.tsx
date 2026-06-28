@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { useCallDetail } from "../queries/useCallDetail";
+import { usePersonas } from "../queries/usePersonas";
+import { useMockAnalysis } from "../queries/useMockAnalysis";
 import { useMockSession } from "../hooks/useMockSession";
 import { buildTreeViewWithExtras } from "../lib/treeView";
 import { CallTree } from "../components/tree/CallTree";
 import { participantsFor } from "../lib/placeholders";
+import type { MockCallAnalysis } from "../lib/types";
 
 /** "John Doe" → "JD" (first letters of the first two words). */
 function initials(name: string): string {
@@ -60,6 +63,99 @@ function StatusPill({ label }: { label: string }) {
   );
 }
 
+const OUTCOME_BADGE: Record<MockCallAnalysis["outcome"], { label: string; cls: string }> = {
+  won: { label: "Closed", cls: "border-accent/50 bg-accent-quiet text-accent" },
+  lost: { label: "Lost", cls: "border-red-500/40 bg-red-500/10 text-red-300" },
+  open: { label: "Open", cls: "border-border-strong bg-surface text-text-muted" },
+};
+
+/** Small post-call analysis card shown when a human practice call ends. */
+function AnalysisPopup({
+  analysis,
+  loading,
+  failed,
+  startNodeId,
+  onWatchAi,
+  onBack,
+}: {
+  analysis: MockCallAnalysis | undefined;
+  loading: boolean;
+  failed: boolean;
+  startNodeId: string | undefined;
+  onWatchAi: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-bg/70 px-6 backdrop-blur-md">
+      <div className="w-full max-w-md rounded-2xl border border-border-strong bg-surface/95 p-6 shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
+        {loading || !analysis ? (
+          <div className="flex flex-col items-center gap-3 py-6">
+            <span className="h-2.5 w-2.5 animate-glow-pulse rounded-full bg-accent" />
+            <p className="text-sm text-text-muted">Analyzing your call…</p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-text">Call analysis</h2>
+              <span
+                className={
+                  "rounded-full border px-3 py-1 text-xs font-medium " +
+                  OUTCOME_BADGE[analysis.outcome].cls
+                }
+              >
+                {OUTCOME_BADGE[analysis.outcome].label}
+              </span>
+            </div>
+
+            <p className="text-sm leading-relaxed text-text">{analysis.summary}</p>
+
+            <div className="mt-4 space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 text-accent">✓</span>
+                <p className="text-sm text-text">{analysis.topStrength}</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 text-red-300">✗</span>
+                <p className="text-sm text-text">{analysis.topWeakness}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-accent/40 bg-accent-quiet px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-accent/80">
+                vs how you usually do
+              </p>
+              <p className="mt-1 text-sm font-medium text-text">{analysis.comparisonLine}</p>
+            </div>
+
+            {failed && (
+              <p className="mt-3 text-xs text-text-muted">
+                (The coaching model was unavailable, so this is a basic recap.)
+              </p>
+            )}
+          </>
+        )}
+
+        <div className="mt-5 flex items-center justify-end gap-3">
+          {startNodeId && (
+            <button
+              onClick={onWatchAi}
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+            >
+              See how the AI would've done it
+            </button>
+          )}
+          <button
+            onClick={onBack}
+            className="rounded-md border border-border px-4 py-2 text-sm text-text-muted transition-colors hover:border-border-strong hover:text-text"
+          >
+            Back to review
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SimulateCallPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -69,6 +165,11 @@ export function SimulateCallPage() {
   const navState = (location.state as { buyerName?: string; company?: string } | null) ?? null;
 
   const { data: detail } = useCallDetail(id);
+  const { data: personas } = usePersonas();
+
+  // Which buyer persona the AI plays — chosen in the ready overlay, threaded into
+  // both the live session and the post-call analysis.
+  const [personaId, setPersonaId] = useState("buy_polly");
 
   // Use the call's mock recording — the WS handler resolves the tree from it.
   const recordingId = useMemo(() => {
@@ -89,6 +190,7 @@ export function SimulateCallPage() {
     recordingId,
     currentNodeId: startNodeId,
     buyerFirst,
+    personaId,
     enabled: !!recordingId && !!startNodeId,
   });
 
@@ -96,6 +198,18 @@ export function SimulateCallPage() {
   const live = phase === "live";
   const ready = phase === "ready";
   const ended = phase === "ended";
+
+  // Post-call analysis — fire once when a real practice conversation ends.
+  const analysis = useMockAnalysis();
+  const analysisFiredRef = useRef(false);
+  const { liveStarted } = session;
+  const analyzed = ended && liveStarted; // a real conversation happened
+  useEffect(() => {
+    if (analyzed && recordingId && !analysisFiredRef.current) {
+      analysisFiredRef.current = true;
+      analysis.mutate({ recordingId, personaId });
+    }
+  }, [analyzed, recordingId, personaId, analysis]);
 
   // Terminal leaves of the *original* tree — reaching one means the path played
   // out (a sale made / lost / outcome), so the conversation is over.
@@ -229,9 +343,27 @@ export function SimulateCallPage() {
             </div>
           )}
 
-          {/* Ready — set breakpoints, then Play (avatars blurred behind) */}
+          {/* Ready — pick persona, set breakpoints, then Play (avatars blurred) */}
           {ready && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-bg/40 backdrop-blur-md">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-bg/40 backdrop-blur-md">
+              <label className="flex flex-col items-center gap-1.5">
+                <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
+                  Buyer persona
+                </span>
+                <select
+                  value={personaId}
+                  onChange={(e) => setPersonaId(e.target.value)}
+                  className="min-w-[220px] rounded-md border border-border-strong bg-surface px-3 py-2 text-sm text-text shadow-sm outline-none transition-colors hover:border-accent/60 focus:border-accent"
+                >
+                  {(personas ?? [{ id: "buy_polly", name: "Practice Polly", description: "" }]).map(
+                    (p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
               <button
                 onClick={session.play}
                 className="flex items-center gap-2 rounded-full bg-accent px-8 py-3.5 text-base font-semibold text-bg shadow-[0_4px_24px_-4px_rgba(61,214,208,0.6)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
@@ -247,8 +379,24 @@ export function SimulateCallPage() {
             </div>
           )}
 
-          {/* Conversation over */}
-          {ended && (
+          {/* Conversation over — analysis popup when a real call happened, else a
+              minimal notice (e.g. ended before the conversation started). */}
+          {ended && analyzed && (
+            <AnalysisPopup
+              analysis={analysis.data}
+              loading={analysis.isPending}
+              failed={analysis.isError}
+              startNodeId={startNodeId}
+              onWatchAi={() =>
+                startNodeId &&
+                navigate(`/call/${id}/watch?from=${startNodeId}`, {
+                  state: { buyerName, company: navState?.company },
+                })
+              }
+              onBack={() => navigate(-1)}
+            />
+          )}
+          {ended && !analyzed && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-bg/60 backdrop-blur-md">
               <p className="text-lg font-semibold text-text">Conversation ended</p>
               <p className="text-sm text-text-muted">{endReasonText}</p>

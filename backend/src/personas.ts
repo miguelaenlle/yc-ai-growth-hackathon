@@ -32,9 +32,18 @@ export const personas: Record<string, Persona> = {
   }
 };
 
+/** Resolve a persona by its id (`buy_polly`) or its key (`polly`). */
+export function getPersona(id: string): Persona | undefined {
+  return Object.values(personas).find(p => p.id === id) || personas[id];
+}
+
 export function getPersonaInfo(id: string): string {
-  // Try to find the predefined persona by key or ID
-  const p = Object.values(personas).find(p => p.id === id) || personas[id];
+  const p = getPersona(id);
   if (p) return p.description;
   return "Unknown persona.";
+}
+
+/** The persona list for the picker dropdown — single source of truth. */
+export function listPersonas(): Persona[] {
+  return Object.values(personas);
 }

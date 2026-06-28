@@ -23,12 +23,16 @@ const CACHE_DIR = join(__dirname, "data", "cache");
 import { getPersonaInfo } from "./personas.js";
 import { getProductInfo } from "./product.js";
 
-function generateMockPrompt(recordingId: Id, currentNodeId: Id): string {
+function generateMockPrompt(
+  recordingId: Id,
+  currentNodeId: Id,
+  personaId: Id = "buy_polly",
+): string {
   const rec = getRecording(recordingId);
   const tree = rec ? getTree(rec.treeId) : undefined;
 
   const productInfo = rec ? getProductInfo(rec.callId) : getProductInfo("co_convex");
-  const personaInfo = getPersonaInfo("buy_polly");
+  const personaInfo = getPersonaInfo(personaId);
 
   let pathContext = "No prior context.";
   let branchRules = "";
@@ -201,6 +205,7 @@ export async function handleMockSession(
   includePrecap: boolean,
   maxDepth?: number,
   targetNodeIds: string[] = [],
+  personaId: Id = "buy_polly",
 ) {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
   if (!OPENAI_API_KEY) {
@@ -213,13 +218,24 @@ export async function handleMockSession(
   let recentConversation: { role: string; text: string }[] = [];
   let routingQueue = Promise.resolve();
 
-  console.log(`Starting mock session for recording ${recordingId} at node ${currentNodeId} (precap: ${includePrecap}, maxDepth: ${maxDepth}, targetNodeIds: ${targetNodeIds})`);
+  console.log(`Starting mock session for recording ${recordingId} at node ${currentNodeId} (precap: ${includePrecap}, persona: ${personaId}, maxDepth: ${maxDepth}, targetNodeIds: ${targetNodeIds})`);
 
   if (includePrecap) {
     await handlePrecapPhase(clientWs, recordingId, currentNodeId);
   }
 
-  const systemPrompt = generateMockPrompt(recordingId, currentNodeId);
+  // This is the LIVE interactive session (precap runs on its own socket). Reset
+  // the shared recording's transcript + traversal so it holds exactly this
+  // session's turns — the post-call analysis endpoint reads them straight back.
+  if (!includePrecap) {
+    const rec = getRecording(recordingId);
+    if (rec) {
+      rec.transcript = [];
+      rec.traversal = { initialNodeId: currentNodeId, finalNodeId: currentNodeId, steps: [] };
+    }
+  }
+
+  const systemPrompt = generateMockPrompt(recordingId, currentNodeId, personaId);
 
   const url = "wss://api.openai.com/v1/realtime?model=gpt-realtime-2";
   const openaiWs = new WebSocket(url, {
@@ -291,8 +307,12 @@ export async function handleMockSession(
       if (switchedNode) {
         recentConversation = [];
 
+        // Keep the recording's traversal pointed at where we actually are, so the
+        // post-call analysis can derive the outcome from the final node reached.
+        if (rec) rec.traversal.finalNodeId = currentNodeId;
+
         // Update OpenAI system prompt with new node context
-        const newSystemPrompt = generateMockPrompt(recordingId, currentNodeId);
+        const newSystemPrompt = generateMockPrompt(recordingId, currentNodeId, personaId);
         const sessionUpdate = {
           type: "session.update",
           session: {

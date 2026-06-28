@@ -39,6 +39,8 @@ interface Options {
   includePrecap?: boolean;
   /** Have the AI buyer speak first (when starting on a buyer-spoken node). */
   buyerFirst?: boolean;
+  /** Which buyer persona the AI plays (persona id, e.g. "buy_polly"). */
+  personaId?: string;
   enabled: boolean;
 }
 
@@ -63,6 +65,8 @@ interface Session {
   stop: (reason?: EndReason) => void;
   /** Why the conversation ended (for the ended overlay). */
   endReason: EndReason;
+  /** True once the live conversation actually started (guards post-call analysis). */
+  liveStarted: boolean;
 }
 
 const WS_BASE = `ws://${window.location.hostname}:3001`;
@@ -72,6 +76,7 @@ export function useMockSession({
   currentNodeId,
   includePrecap = true,
   buyerFirst = false,
+  personaId = "buy_polly",
   enabled,
 }: Options): Session {
   const [phase, setPhase] = useState<SessionPhase>("idle");
@@ -82,6 +87,7 @@ export function useMockSession({
   const [newNodes, setNewNodes] = useState<SessionNode[]>([]);
   const [breakpoints, setBreakpoints] = useState<string[]>([]);
   const [endReason, setEndReason] = useState<EndReason>(null);
+  const [liveStarted, setLiveStarted] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -101,6 +107,8 @@ export function useMockSession({
   startRef.current = currentNodeId;
   const buyerFirstRef = useRef(buyerFirst);
   buyerFirstRef.current = buyerFirst;
+  const personaIdRef = useRef(personaId);
+  personaIdRef.current = personaId;
   const respondedRef = useRef(false); // buyer-first response.create sent once
 
   const setMuted = useCallback((m: boolean) => {
@@ -255,6 +263,7 @@ export function useMockSession({
     const url =
       `${WS_BASE}/mock/session/${recordingId}` +
       `?currentNodeId=${encodeURIComponent(start)}&includePrecap=false` +
+      `&personaId=${encodeURIComponent(personaIdRef.current)}` +
       (targets ? `&targetNodeIds=${encodeURIComponent(targets)}` : "");
 
     intentionalRef.current = false;
@@ -264,6 +273,7 @@ export function useMockSession({
 
     ws.onopen = () => {
       setPhase("live");
+      setLiveStarted(true);
       setActiveNodeId(start);
       startMicStreaming(ws, stream);
     };
@@ -419,6 +429,7 @@ export function useMockSession({
     setNewNodes([]);
     setBreakpoints([]);
     setEndReason(null);
+    setLiveStarted(false);
     bpRef.current = [];
     respondedRef.current = false;
 
@@ -467,5 +478,6 @@ export function useMockSession({
     play,
     stop,
     endReason,
+    liveStarted,
   };
 }

@@ -31,11 +31,20 @@ import {
 } from "./store.js";
 import {
   getNodeById,
+  getOutcome,
   getWeakNodes,
   matchOrCreateBranch,
   routeTranscriptToNode,
   updateNodeMetrics,
 } from "./tree-ops.js";
+import { getPersona, listPersonas } from "./personas.js";
+import { generateMockAnalysis } from "./analysis.js";
+import {
+  applyCall,
+  buildComparisonLine,
+  getStats,
+  summarizeStats,
+} from "./salesperson-stats.js";
 import { computeMetrics } from "./signal-engine.js";
 import { createAudioAnalyzer } from "./audio/index.js";
 import type { AudioScoreByIndex } from "./audio/types.js";
@@ -48,6 +57,8 @@ import type {
   CallSummary,
   CreateCallReq,
   LiveEvent,
+  MockAnalysisReq,
+  MockCallAnalysis,
   MockTurnReq,
   PracticeTarget,
   Recording,
@@ -143,6 +154,11 @@ app.get("/recordings/:id", (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
   res.json(rec);
+});
+
+// GET /personas → PersonaInfo[]  (single source of truth for the picker)
+app.get("/personas", (_req: Request, res: Response) => {
+  res.json(listPersonas().map((p) => ({ id: p.id, name: p.name, description: p.description })));
 });
 
 // ---------------------------------------------------------------------------
@@ -368,6 +384,66 @@ app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
   res.json(feedback);
 });
 
+// POST /recordings/:id/mock-analysis (MockAnalysisReq) → MockCallAnalysis
+// Post-mock-call review for the HUMAN practice flow. Reads the per-session
+// transcript + the rep's BASELINE stats, asks the LLM to grade the call, builds
+// a deterministic "vs how you usually do" line, then updates the stats on disk.
+app.post(
+  "/recordings/:id/mock-analysis",
+  async (req: Request<{ id: string }, {}, MockAnalysisReq>, res: Response) => {
+    const rec = getRecording(req.params.id);
+    if (!rec) return notFound(res, `recording ${req.params.id} not found`);
+
+    const call = getCall(rec.callId);
+    const tree = getTree(rec.treeId);
+    if (!call || !tree) return notFound(res, `call/tree for recording ${rec.id} not found`);
+
+    const personaId =
+      typeof req.body?.personaId === "string" ? req.body.personaId : "buy_polly";
+    const persona = getPersona(personaId);
+
+    const salespersonId = call.salespersonId;
+    const salespersonName =
+      store.salespeople.find((s) => s.id === salespersonId)?.name ?? "You";
+
+    // Snapshot the BASELINE stats BEFORE applying this call — the comparison
+    // line and the LLM context must reference pre-call numbers.
+    const baseline = structuredClone(getStats(salespersonId));
+
+    const outcome = getOutcome(tree, rec.traversal.finalNodeId);
+
+    const llm = await generateMockAnalysis({
+      transcript: rec.transcript,
+      productInfo: getProductInfo(call.companyId),
+      personaName: persona?.name ?? personaId,
+      personaDescription: persona?.description ?? "Unknown persona.",
+      statsSummary: summarizeStats(baseline),
+      nodeIds: tree.nodes.map((n) => n.id),
+    });
+
+    const comparisonLine = buildComparisonLine(baseline, llm.skillTags);
+
+    // Persist the call into the rep's stats (totalCalls/wins/skills/personas/nodes).
+    applyCall(salespersonId, {
+      outcome,
+      personaId,
+      skillTags: llm.skillTags,
+      nodeFails: llm.nodeFails,
+    });
+
+    const analysis: MockCallAnalysis = {
+      summary: llm.summary,
+      topStrength: llm.topStrength,
+      topWeakness: llm.topWeakness,
+      comparisonLine,
+      outcome,
+      skillTags: llm.skillTags,
+      salespersonName,
+    };
+    res.json(analysis);
+  },
+);
+
 // 9. GET /recordings/:id/walkthrough?kind=intro|review → WalkthroughBundle
 app.get("/recordings/:id/walkthrough", async (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
@@ -560,6 +636,10 @@ app.ws("/mock/session/:recordingId", (ws, req) => {
     typeof targetParam === "string" && targetParam.length > 0
       ? targetParam.split(",")
       : [];
+  // Which buyer persona the AI plays — chosen in the practice setup. Defaults to
+  // Practice Polly when absent (keeps existing callers working).
+  const personaParam = req.query["personaId"];
+  const personaId = typeof personaParam === "string" && personaParam.length > 0 ? personaParam : "buy_polly";
   if (!recordingId || !currentNodeId) {
     ws.close(1008, "recordingId and currentNodeId required");
     return;
@@ -570,7 +650,7 @@ app.ws("/mock/session/:recordingId", (ws, req) => {
     handleBothSession(ws as any, recordingId, currentNodeId);
     return;
   }
-  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap, undefined, targetNodeIds);
+  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap, undefined, targetNodeIds, personaId);
 });
 
 // ---------------------------------------------------------------------------
