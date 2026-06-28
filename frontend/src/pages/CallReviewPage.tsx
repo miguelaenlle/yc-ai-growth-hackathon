@@ -11,9 +11,16 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { initialNodes, initialEdges, BASE_W, BASE_H } from "../components/tree/treeData";
+import {
+  initialNodes,
+  initialEdges,
+  BASE_W,
+  BASE_H,
+  type CallNodeData,
+} from "../components/tree/treeData";
 import { applyFocus } from "../components/tree/focus";
 import { CallNode } from "../components/tree/CallNode";
+import { NodePreview } from "../components/tree/NodePreview";
 import { OutcomeBadge } from "../components/OutcomeBadge";
 import { Logo } from "../components/Logo";
 
@@ -101,11 +108,37 @@ function Flow() {
   const [edges, setEdges] = useState(
     () => applyFocus(initialNodes, initialEdges, "opening").edges,
   );
-  const { setCenter, getZoom } = useReactFlow();
+  const { setCenter, getZoom, getViewport } = useReactFlow();
   const first = useRef(true);
   const raf = useRef<number | undefined>(undefined);
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
+
+  // Hover preview for shrunk (title-only) nodes: a screen-space card anchored to
+  // the node so it stays readable regardless of zoom.
+  const [preview, setPreview] = useState<{
+    data: CallNodeData;
+    x: number;
+    yTop: number;
+    yBottom: number;
+  } | null>(null);
+
+  const onNodeEnter = (_: unknown, n: Node) => {
+    const data = n.data as CallNodeData;
+    if (!data.titleOnly) {
+      setPreview(null);
+      return;
+    }
+    const vp = getViewport();
+    const w = n.width ?? BASE_W;
+    const h = n.height ?? BASE_H;
+    setPreview({
+      data,
+      x: (n.position.x + w / 2) * vp.zoom + vp.x,
+      yTop: n.position.y * vp.zoom + vp.y,
+      yBottom: (n.position.y + h) * vp.zoom + vp.y,
+    });
+  };
 
   // On selection change, tween every node's position/size from where it is now
   // to the repacked target. Driving it through state (not CSS) means the edges
@@ -164,6 +197,7 @@ function Flow() {
   }, [selectedId]);
 
   return (
+    <>
     <ReactFlow
       nodes={nodes}
       edges={edges}
@@ -175,6 +209,8 @@ function Flow() {
       nodesConnectable={false}
       proOptions={{ hideAttribution: true }}
       onNodeClick={(_, n: Node) => setSelectedId(n.id)}
+      onNodeMouseEnter={onNodeEnter}
+      onNodeMouseLeave={() => setPreview(null)}
     >
           <Background
             variant={BackgroundVariant.Dots}
@@ -205,6 +241,27 @@ function Flow() {
             <Avatar />
           </Panel>
     </ReactFlow>
+    {preview && (
+      <div
+        className="pointer-events-none absolute z-50"
+        style={
+          preview.yTop > 180
+            ? {
+                left: preview.x,
+                top: preview.yTop - 12,
+                transform: "translate(-50%, -100%)",
+              }
+            : {
+                left: preview.x,
+                top: preview.yBottom + 12,
+                transform: "translate(-50%, 0)",
+              }
+        }
+      >
+        <NodePreview data={preview.data} />
+      </div>
+    )}
+    </>
   );
 }
 

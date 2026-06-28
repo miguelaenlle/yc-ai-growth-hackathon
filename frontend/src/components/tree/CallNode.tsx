@@ -53,7 +53,7 @@ function CallNodeImpl({ data }: NodeProps) {
         }}
       >
         <div
-          title={actorLabel}
+          title={titleOnly ? undefined : actorLabel}
           style={{
             animationDelay: `${depth * 70}ms`,
             width: "100%",
