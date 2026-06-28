@@ -42,6 +42,48 @@
       transform: translateY(0);
     }
   }
+
+  @keyframes glow-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(61, 214, 208, 0);
+    }
+    50% {
+      box-shadow: 0 0 14px 0 rgba(61, 214, 208, 0.18);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(120%);
+    }
+  }
+}
+
+/* AI tree nodes: soft accent glow breath + a periodic shimmer sweep. */
+.ct-glimmer {
+  animation:
+    fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both,
+    glow-pulse 3.6s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+.ct-glimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(61, 214, 208, 0.1) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: shimmer 4.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 html {
