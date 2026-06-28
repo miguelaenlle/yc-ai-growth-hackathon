@@ -15,6 +15,7 @@ import type {
   Tree,
   TreeNode,
   WalkthroughBundle,
+  WalkthroughSegment,
 } from "./types.js";
 
 dotenv.config();
@@ -73,7 +74,7 @@ async function readCache(
       fs.access(audioPath),
     ]);
     const cached = JSON.parse(jsonRaw) as CachedWalkthrough;
-    return { audioUrl: cached.audioUrl, timeline: cached.timeline };
+    return { audioUrl: cached.audioUrl, timeline: cached.timeline, segments: cached.segments };
   } catch {
     return null;
   }
@@ -224,24 +225,39 @@ async function synthesizeSegment(text: string): Promise<Buffer> {
   return Buffer.from(await response.arrayBuffer());
 }
 
+/**
+ * Render ONE TTS clip per node. Per-node clips are what make summarize sync exact:
+ * the frontend decodes each clip's true duration (Web Audio) and schedules them
+ * gaplessly, so a node lights up precisely when its line begins — no
+ * char-count/bitrate estimation anywhere. We also concatenate the clips into a
+ * single file + cue timeline as a fallback for the old playback path.
+ */
 async function renderWalkthroughAudio(
+  recordingId: Id,
+  kind: WalkthroughKind,
   script: ScriptSegment[]
-): Promise<{ audio: Buffer; timeline: TimelineCue[] }> {
-  // Single TTS pass — reads as one continuous coach monologue, not choppy clips.
-  const fullText = script.map((s) => s.narration.trim()).join(" ");
-  const audio = await synthesizeSegment(fullText);
-  const totalMs = getMp3DurationMs(audio);
+): Promise<{ audio: Buffer; timeline: TimelineCue[]; segments: WalkthroughSegment[] }> {
+  const key = cacheKey(recordingId, kind);
+  await fs.mkdir(AUDIO_DIR, { recursive: true });
 
-  const totalChars = script.reduce((sum, s) => sum + s.narration.length, 0) || 1;
+  const clips = await Promise.all(
+    script.map((s) => synthesizeSegment(s.narration.trim())),
+  );
+
+  const segments: WalkthroughSegment[] = [];
   const timeline: TimelineCue[] = [];
   let atMs = 0;
-
-  for (const segment of script) {
-    timeline.push({ atMs, nodeId: segment.nodeId });
-    atMs += Math.round(totalMs * (segment.narration.length / totalChars));
+  for (let i = 0; i < script.length; i++) {
+    const clipName = `${key}_${i}.mp3`;
+    await fs.writeFile(join(AUDIO_DIR, clipName), clips[i]);
+    segments.push({ nodeId: script[i].nodeId, audioUrl: `/data/audio/${clipName}` });
+    timeline.push({ atMs, nodeId: script[i].nodeId });
+    atMs += getMp3DurationMs(clips[i]);
   }
 
-  return { audio, timeline };
+  // Gapless single render for the fallback path (mp3 frames concatenate cleanly).
+  const audio = Buffer.concat(clips);
+  return { audio, timeline, segments };
 }
 
 async function generateWalkthrough(
@@ -267,15 +283,15 @@ async function generateWalkthrough(
     throw new Error("LLM returned empty walkthrough script");
   }
 
-  const { audio, timeline } = await renderWalkthroughAudio(script);
+  const { audio, timeline, segments } = await renderWalkthroughAudio(recording.id, kind, script);
 
-  await fs.mkdir(AUDIO_DIR, { recursive: true });
   const fileName = audioFileName(recording.id, kind);
   await fs.writeFile(join(AUDIO_DIR, fileName), audio);
 
   const bundle: CachedWalkthrough = {
     audioUrl: audioUrl(recording.id, kind),
     timeline,
+    segments,
     script,
   };
 
@@ -312,7 +328,7 @@ export async function getOrBuildWalkthrough(
   if (!tree) throw new Error(`tree ${recording.treeId} not found`);
 
   const promise = generateWalkthrough(recording, tree, kind)
-    .then((bundle) => ({ audioUrl: bundle.audioUrl, timeline: bundle.timeline }))
+    .then((bundle) => ({ audioUrl: bundle.audioUrl, timeline: bundle.timeline, segments: bundle.segments }))
     .finally(() => {
       generating.delete(inflightKey);
     });

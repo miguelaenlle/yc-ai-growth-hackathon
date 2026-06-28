@@ -84,7 +84,12 @@ interface CallSummary {
 }
 interface CallDetail  { call: Call; tree: Tree; recordings: Recording[]; }
 interface TimelineCue { atMs: number; nodeId: Id; }
-interface WalkthroughBundle { audioUrl: string; timeline: TimelineCue[]; }
+interface WalkthroughSegment { nodeId: Id; audioUrl: string; } // per-node TTS clip
+interface WalkthroughBundle {
+  audioUrl: string;                  // single concatenated render (fallback playback)
+  timeline: TimelineCue[];           // cue offsets into audioUrl (fallback sync)
+  segments?: WalkthroughSegment[];   // one clip per path node → exact, gapless sync (no timing estimate)
+}
 
 type LiveEvent =
   | { type: "transcript"; segment: TranscriptSegment }
