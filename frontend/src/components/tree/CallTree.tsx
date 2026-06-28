@@ -33,13 +33,27 @@ export interface CallTreeProps {
   rootId: string;
   /** Drives focus externally in real time (e.g. a live session moving nodes). */
   focusId?: string;
+  /** Bump this to re-center the viewport on the focused node (e.g. on Play). */
+  recenterToken?: number;
+  /** When false, clicking a node does not move focus (e.g. breakpoint setting). */
+  selectOnClick?: boolean;
   /** Fired on every node click, after focus moves to it. */
   onNodeClick?: (nodeId: string, data: CallNodeData) => void;
   /** Optional content rendered in the top-right panel. */
   topRight?: ReactNode;
 }
 
-function Flow({ root, nodes: baseNodes, edges: baseEdges, rootId, focusId, onNodeClick, topRight }: CallTreeProps) {
+function Flow({
+  root,
+  nodes: baseNodes,
+  edges: baseEdges,
+  rootId,
+  focusId,
+  recenterToken,
+  selectOnClick = true,
+  onNodeClick,
+  topRight,
+}: CallTreeProps) {
   // Click a node to focus it; everything else shrinks with distance from it.
   const [selectedId, setSelectedId] = useState(rootId);
   const [nodes, setNodes] = useState(
@@ -53,15 +67,42 @@ function Flow({ root, nodes: baseNodes, edges: baseEdges, rootId, focusId, onNod
   const raf = useRef<number | undefined>(undefined);
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
+  // Track the last focused node so we only re-center on real focus changes —
+  // not when the graph re-lays-out for a marker toggle / grafted node.
+  const prevSel = useRef(rootId);
+
+  // Center the viewport on whichever node is focused. Reused by focus changes
+  // and the explicit recenter signal.
+  const centerOnFocused = (list: typeof nodes) => {
+    const f = list.find((n) => (n.data as { focused?: boolean }).focused);
+    if (!f) return;
+    setCenter(
+      f.position.x + (f.width ?? BASE_W) / 2,
+      f.position.y + (f.height ?? BASE_H) / 2,
+      { zoom: Math.max(getZoom(), 0.85), duration: DURATION },
+    );
+  };
 
   // Re-run the focus layout whenever the graph itself changes (new nodes grafted
-  // on by a live session), not just on selection.
-  const graphKey = baseNodes.map((n) => n.id).join(",");
+  // on by a live session, or marker badges toggled), not just on selection.
+  const graphKey = baseNodes
+    .map((n) => `${n.id}:${(n.data as CallNodeData).marker ?? ""}`)
+    .join(",");
 
   // External focus: follow the session's active node in real time.
   useEffect(() => {
     if (focusId) setSelectedId(focusId);
   }, [focusId]);
+
+  // Explicit recenter signal (e.g. zoom back to the start node when Play is hit),
+  // even though the focused node hasn't changed.
+  const recenterRef = useRef(recenterToken);
+  useEffect(() => {
+    if (recenterToken === recenterRef.current) return;
+    recenterRef.current = recenterToken;
+    centerOnFocused(nodesRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recenterToken]);
 
   // Hover preview for shrunk (title-only) nodes: a screen-space card anchored to
   // the node so it stays readable regardless of zoom.
@@ -136,14 +177,11 @@ function Flow({ root, nodes: baseNodes, edges: baseEdges, rootId, focusId, onNod
     };
     raf.current = requestAnimationFrame(tick);
 
-    const f = target.find((n) => (n.data as { focused?: boolean }).focused);
-    if (f) {
-      setCenter(
-        f.position.x + (f.width ?? BASE_W) / 2,
-        f.position.y + (f.height ?? BASE_H) / 2,
-        { zoom: Math.max(getZoom(), 0.85), duration: DURATION },
-      );
-    }
+    // Only re-center when the focus actually moved — a marker toggle or a grafted
+    // node re-lays-out the tree but must leave the user's pan/zoom alone.
+    if (selectedId !== prevSel.current) centerOnFocused(target);
+    prevSel.current = selectedId;
+
     return () => cancelAnimationFrame(raf.current!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, graphKey]);
@@ -161,7 +199,7 @@ function Flow({ root, nodes: baseNodes, edges: baseEdges, rootId, focusId, onNod
         nodesConnectable={false}
         proOptions={{ hideAttribution: true }}
         onNodeClick={(_, n: Node) => {
-          setSelectedId(n.id);
+          if (selectOnClick) setSelectedId(n.id);
           onNodeClick?.(n.id, n.data as CallNodeData);
         }}
         onNodeMouseEnter={onNodeEnter}

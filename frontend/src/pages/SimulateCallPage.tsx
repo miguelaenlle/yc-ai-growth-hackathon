@@ -34,13 +34,13 @@ function Avatar({
     <div className="flex flex-col items-center gap-4">
       <div
         className={
-          "flex h-64 w-64 items-center justify-center rounded-full bg-text/90 " +
-          "text-[64px] font-bold tracking-tight text-bg select-none transition-all duration-200 " +
+          "flex h-44 w-44 items-center justify-center rounded-full bg-text/90 " +
+          "text-[44px] font-bold tracking-tight text-bg select-none transition-all duration-200 " +
           (active ? "ring-4 ring-accent ring-offset-4 ring-offset-bg " : "") +
           (active && speaking
-            ? "shadow-[0_0_60px_-4px_rgba(61,214,208,0.85)]"
+            ? "shadow-[0_0_48px_-4px_rgba(61,214,208,0.85)]"
             : active
-              ? "shadow-[0_0_36px_-8px_rgba(61,214,208,0.5)]"
+              ? "shadow-[0_0_30px_-8px_rgba(61,214,208,0.5)]"
               : "")
         }
       >
@@ -51,15 +51,10 @@ function Avatar({
   );
 }
 
-function StatusPill({ label, tone = "idle" }: { label: string; tone?: "idle" | "live" }) {
+function StatusPill({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2.5 rounded-full border border-border-strong bg-surface/90 px-5 py-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-sm">
-      <span
-        className={
-          "h-2.5 w-2.5 rounded-full " +
-          (tone === "live" ? "bg-signal-high animate-pulse" : "bg-accent animate-glow-pulse")
-        }
-      />
+      <span className="h-2.5 w-2.5 animate-glow-pulse rounded-full bg-accent" />
       <span className="text-sm font-medium text-text">{label}</span>
     </div>
   );
@@ -80,30 +75,72 @@ export function SimulateCallPage() {
     if (!detail) return undefined;
     return detail.recordings.find((r) => !r.isReal)?.id ?? detail.recordings[0]?.id;
   }, [detail]);
-  const currentNodeId = from ?? detail?.tree.rootNodeId;
+  const startNodeId = from ?? detail?.tree.rootNodeId;
 
   const buyerName =
     navState?.buyerName ??
     (navState?.company ? participantsFor(navState.company).buyer.name : "Buyer");
 
+  // If we start on a buyer-spoken node, the AI buyer should open the turn.
+  const buyerFirst =
+    detail?.tree.nodes.find((n) => n.id === startNodeId)?.speaker === "buyer";
+
   const session = useMockSession({
     recordingId,
-    currentNodeId,
-    enabled: !!recordingId && !!currentNodeId,
+    currentNodeId: startNodeId,
+    buyerFirst,
+    enabled: !!recordingId && !!startNodeId,
   });
 
-  // Tree, with any nodes the live session created grafted on; focus follows the
-  // active node in real time.
-  const view = useMemo(
-    () => (detail ? buildTreeViewWithExtras(detail, session.newNodes) : null),
-    [detail, session.newNodes],
-  );
+  const phase = session.phase;
+  const live = phase === "live";
+  const ready = phase === "ready";
+  const ended = phase === "ended";
 
-  // Timer counts up once the interactive phase begins; Pause freezes it.
+  // Terminal leaves of the *original* tree — reaching one means the path played
+  // out (a sale made / lost / outcome), so the conversation is over.
+  const leafIds = useMemo(
+    () =>
+      new Set(
+        (detail?.tree.nodes ?? [])
+          .filter((n) => n.childIds.length === 0)
+          .map((n) => n.id),
+      ),
+    [detail],
+  );
+  const { activeNodeId, stop } = session;
+  useEffect(() => {
+    if (live && activeNodeId && leafIds.has(activeNodeId)) stop("outcome");
+  }, [live, activeNodeId, leafIds, stop]);
+
+  // Re-center the tree on the start node when the conversation actually begins
+  // (the user may have panned away while setting breakpoints).
+  const [recenterTick, setRecenterTick] = useState(0);
+  useEffect(() => {
+    if (live) setRecenterTick((t) => t + 1);
+  }, [live]);
+
+  // Build the tree, graft live-created nodes, and badge start/breakpoint/end.
+  const endId = ended ? session.activeNodeId : undefined;
+  const bpKey = session.breakpoints.join(",");
+  const nodes = useMemo(() => {
+    if (!detail) return null;
+    const view = buildTreeViewWithExtras(detail, session.newNodes);
+    const bp = new Set(session.breakpoints);
+    const withMarkers = view.nodes.map((n) => {
+      let marker: "start" | "breakpoint" | "end" | undefined;
+      if (endId && n.id === endId) marker = "end";
+      else if (bp.has(n.id)) marker = "breakpoint";
+      else if (n.id === startNodeId) marker = "start";
+      return marker ? { ...n, data: { ...n.data, marker } } : n;
+    });
+    return { ...view, nodes: withMarkers };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail, session.newNodes, bpKey, startNodeId, endId]);
+
+  // Timer counts up once the conversation is live; Pause freezes it.
   const [seconds, setSeconds] = useState(0);
   const paused = session.muted;
-  const live = session.phase === "live";
-  const ended = session.phase === "ended";
   const running = live && !paused;
   useEffect(() => {
     if (!running) return;
@@ -112,14 +149,20 @@ export function SimulateCallPage() {
   }, [running]);
 
   const buyerSpeaking = session.aiSpeaking;
-  const yourTurn = live && !buyerSpeaking && !paused;
 
   const overlayLabel =
-    session.phase === "connecting"
+    phase === "connecting"
       ? "Connecting…"
-      : session.phase === "precap"
+      : phase === "precap"
         ? "Going over intro"
         : null;
+
+  const endReasonText =
+    session.endReason === "breakpoint"
+      ? "Breakpoint reached."
+      : session.endReason === "outcome"
+        ? "The conversation reached a final outcome."
+        : "The call ended.";
 
   const endCall = () => {
     session.stop();
@@ -150,39 +193,48 @@ export function SimulateCallPage() {
 
       {/* Body — avatars left, live tree right */}
       <div className="flex min-h-0 flex-1">
-        <div className="relative flex flex-1 items-center justify-center gap-20">
+        <div className="relative flex flex-1 items-center justify-center gap-12">
           <Avatar
             content={initials(buyerName)}
             caption={buyerName}
             active={buyerSpeaking}
             speaking={buyerSpeaking}
           />
-          <Avatar content="You" active={yourTurn} speaking={yourTurn} />
+          <Avatar content="You" />
 
-          {/* Precap / connecting indicator overlaid on the avatars */}
+          {/* Precap / connecting indicator — blur the avatars behind it */}
           {overlayLabel && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-bg/40 backdrop-blur-md">
               <StatusPill label={overlayLabel} />
             </div>
           )}
 
-          {/* Turn indicator once the conversation is live */}
-          {live && (
-            <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2">
-              <StatusPill
-                label={buyerSpeaking ? `${buyerName} is speaking…` : "Your turn — start talking"}
-                tone="live"
-              />
+          {/* Ready — set breakpoints, then Play (avatars blurred behind) */}
+          {ready && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-bg/40 backdrop-blur-md">
+              <button
+                onClick={session.play}
+                className="flex items-center gap-2 rounded-full bg-accent px-8 py-3.5 text-base font-semibold text-bg shadow-[0_4px_24px_-4px_rgba(61,214,208,0.6)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Play
+              </button>
+              <span className="text-sm text-text-muted">
+                Set breakpoints on the tree, then start the conversation
+              </span>
             </div>
           )}
 
           {/* Conversation over */}
           {ended && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-bg/80 backdrop-blur-[2px]">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-bg/60 backdrop-blur-md">
               <p className="text-lg font-semibold text-text">Conversation ended</p>
+              <p className="text-sm text-text-muted">{endReasonText}</p>
               <button
                 onClick={() => navigate(-1)}
-                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+                className="mt-3 rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
               >
                 Back to review
               </button>
@@ -190,8 +242,8 @@ export function SimulateCallPage() {
           )}
 
           {/* Error state */}
-          {session.phase === "error" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-bg/80 px-8 text-center">
+          {phase === "error" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-bg/60 px-8 text-center backdrop-blur-md">
               <p className="max-w-sm text-sm text-text-muted">
                 {session.error ??
                   "Couldn't start the call. Is the backend running on :3001 with an OPENAI_API_KEY set?"}
@@ -206,18 +258,26 @@ export function SimulateCallPage() {
           )}
         </div>
 
-        <aside className="flex w-[42%] shrink-0 flex-col border-l border-border bg-surface">
+        <aside className="flex w-[52%] shrink-0 flex-col border-l border-border bg-surface">
           <div className="relative flex-1">
-            {view && (
+            {nodes && (
               <CallTree
-                root={view.root}
-                nodes={view.nodes}
-                edges={view.edges}
-                rootId={view.rootId}
+                root={nodes.root}
+                nodes={nodes.nodes}
+                edges={nodes.edges}
+                rootId={nodes.rootId}
                 focusId={session.activeNodeId}
+                recenterToken={recenterTick}
+                selectOnClick={false}
+                onNodeClick={(nodeId) => session.toggleBreakpoint(nodeId)}
               />
             )}
           </div>
+          {ready && (
+            <p className="pb-6 pt-2 text-center text-sm text-text-muted">
+              Click a decision to set a breakpoint
+            </p>
+          )}
         </aside>
       </div>
     </div>

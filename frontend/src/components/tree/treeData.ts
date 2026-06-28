@@ -14,6 +14,7 @@ export interface CallNodeData {
   onPath?: boolean; // on the real recorded path
   actor?: Actor;
   onSimulate?: () => void; // shown on the focused node → start a simulation here
+  marker?: "start" | "breakpoint" | "end"; // simulation role badge
   [key: string]: unknown;
 }
 
