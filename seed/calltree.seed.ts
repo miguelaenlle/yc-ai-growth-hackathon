@@ -1,27 +1,43 @@
 // calltree.seed.ts — HAND-EDITABLE source of truth for the demo data.
 //
-// This file describes ONE canonical decision tree and the population of calls
-// that traverse it. `seed/build.ts` turns it into:
+// This file describes ONE canonical "move graph" (the master tree) and a
+// population of calls that traverse it. `seed/build.ts` turns it into:
 //   - backend/src/data/seed.json          (the backend SeedStore)
-//   - frontend/src/data/tree.generated.ts (the review-screen RawNode tree)
+//   - frontend/src/data/tree.generated.ts (the static review-screen RawNode tree)
 //
-// There are NO probabilities here on purpose — node win-rates and EVs are
-// DERIVED from the call outcomes below (Beta-smoothed) by the builder. Edit the
-// tree shape / archetype counts here, then run `npm run seed`. Never hand-edit
-// the generated files.
+// Each call gets its OWN distinct tree (a per-prospect, pruned view of the master
+// graph) so the past-calls list reads like a real pipeline of different companies.
+// There are NO probabilities here on purpose — node win-rates and EVs are DERIVED
+// from the call outcomes below, aggregated PER MOVE across the whole population and
+// Beta-smoothed by the builder. Real branching/transcripts come later, at the point
+// of file upload; this seed is fully deterministic synthetic data (no LLM needed).
+//
+// Edit the tree shape / archetype counts / prospects here, then run `npm run seed`.
+// Never hand-edit the generated files.
 
 import type { AiFeedback } from "../backend/src/types.js";
 
+// Default deal value for newly-created live calls (no prospect context yet). Seed
+// calls use their prospect's own dealValue = seats * PER_SEAT (see prospects).
 export const dealValue = 45000;
 
-export const company = { id: "co_slack", name: "Slack" };
+// Our org — the thing the rep sells. NOT a prospect; this is branding only.
+export const sellerOrg = { name: "Slack" };
+
+// $/seat/yr. dealValue = seats * PER_SEAT (250 seats → $45k, the classic deal).
+export const PER_SEAT = 180;
 
 // The hero call's buyer is pinned (the cached hero transcript names her), so it
 // must stay consistent across regenerations.
-export const heroBuyer = { id: "buy_sarah", name: "Sarah Chen", title: "VP of Operations" };
+export const heroBuyer = {
+  id: "buy_sarah",
+  name: "Sarah Chen",
+  title: "VP of Operations",
+  personaId: "buy_sam", // status-quo defender — the knock-loss buyer who shuts down
+};
 
-// 5 reps; calls rotate through them so the past-calls list reads like a team's
-// history. The hero call keeps Jane Doe.
+// 5 reps. The UI features ONE (Jane); the others exist so the data reads like a
+// team. Calls are biased toward Jane (see build.ts) so her pipeline is rich.
 export const salespeople = [
   { id: "sp_jane", name: "Jane Doe" },
   { id: "sp_marcus", name: "Marcus Reid" },
@@ -30,83 +46,141 @@ export const salespeople = [
   { id: "sp_ben", name: "Ben Harris" },
 ];
 
-// Name pools for the generated prospect buyers. 12 firsts × 5 lasts = 60 unique
-// (first[i % 12] + last[floor(i / 12)]); the builder makes 59 (the hero is Sarah).
-export const buyerFirstNames = [
-  "Maria", "Sam", "Priya", "Tom", "Lena", "David",
-  "Aisha", "Carlos", "Nina", "Raj", "Emma", "Kevin",
+export const FEATURED_SALESPERSON_ID = "sp_jane";
+
+// ---------------------------------------------------------------------------
+// Prospects — believable Slack adopters. Each call is assigned one; its name is
+// what shows in the past-calls list, and `incumbent`/`seats` template the tree
+// copy. `hasChatIncumbent: false` = greenfield (no competing chat tool), so those
+// only get price-led deals, not incumbent-objection deals.
+// ---------------------------------------------------------------------------
+export interface Prospect {
+  id: string; // company id (used as call.companyId)
+  name: string;
+  industry: string;
+  seats: number;
+  incumbent: string; // the tool they currently use that Slack would displace
+  hasChatIncumbent: boolean;
+}
+
+export const prospects: Prospect[] = [
+  { id: "co_sundial", name: "Sundial Commerce", industry: "E-commerce", seats: 250, incumbent: "Microsoft Teams", hasChatIncumbent: true },
+  { id: "co_northwind", name: "Northwind Logistics", industry: "Supply-chain SaaS", seats: 250, incumbent: "Microsoft Teams", hasChatIncumbent: true },
+  { id: "co_meridian", name: "Meridian Labs", industry: "AI research", seats: 80, incumbent: "Discord", hasChatIncumbent: true },
+  { id: "co_lumen", name: "Lumen Health", industry: "Telehealth", seats: 140, incumbent: "Google Chat", hasChatIncumbent: true },
+  { id: "co_pixel", name: "Pixel & Co", industry: "Design agency", seats: 45, incumbent: "email threads", hasChatIncumbent: false },
+  { id: "co_cobalt", name: "Cobalt Finance", industry: "Fintech", seats: 600, incumbent: "Microsoft Teams", hasChatIncumbent: true },
+  { id: "co_driftwave", name: "Driftwave", industry: "Consumer mobile", seats: 60, incumbent: "Discord", hasChatIncumbent: true },
+  { id: "co_arboretum", name: "Arboretum", industry: "Climate tech", seats: 110, incumbent: "Google Chat", hasChatIncumbent: true },
+  { id: "co_vantage", name: "Vantage Security", industry: "Cybersecurity", seats: 90, incumbent: "a legacy chat tool", hasChatIncumbent: true },
+  { id: "co_quill", name: "Quill", industry: "Media SaaS", seats: 200, incumbent: "Google Chat", hasChatIncumbent: true },
+  { id: "co_helio", name: "Helio Robotics", industry: "Robotics", seats: 150, incumbent: "Microsoft Teams", hasChatIncumbent: true },
 ];
-export const buyerLastNames = ["Lopez", "Carter", "Nair", "Becker", "Park"];
-export const buyerTitles = [
-  "VP of Operations", "Head of IT", "Director of Engineering",
-  "COO", "VP of People", "Head of Customer Success",
-];
+
+// Pinned prospects for the two curated demo calls (kept 250-seat / Teams so the
+// shared tree_slack + cached hero transcript stay consistent).
+export const SHOWCASE_PROSPECT_ID = "co_sundial";
+export const HERO_PROSPECT_ID = "co_northwind";
 
 /** Whose words/decision a node represents. */
 export type Speaker = "seller" | "buyer";
 
 /**
- * A node in the canonical tree. `key` is the stable node id (already `n_`-prefixed).
- * `intent` is a short brief of what happens at this beat — it seeds the LLM copy
- * pass that writes the node's title + description. NO probabilities live here.
+ * A node in the master move graph. `key` is the stable node id (already
+ * `n_`-prefixed) AND the "move id" the population win-rate is aggregated under.
+ * `title` + `descTpl` are the deterministic card copy; `descTpl` may contain
+ * `{incumbent}` / `{seats}` placeholders, substituted per prospect at build time.
+ * `intent` is kept only to seed the cached LLM hero transcript. NO probabilities.
  */
 export interface SeedTreeNode {
   key: string;
   speaker: Speaker;
+  title: string;
+  /** Short card line (the canonical phrasing). Equals examples[0]. */
+  descTpl: string;
+  /**
+   * 3–5 concise, specific, VARIED phrasings of this move (buyer = quotes,
+   * seller = moves). `{incumbent}`/`{seats}` are substituted per prospect.
+   * The builder rotates these across the population so every call through a node
+   * reads differently — backing the win-rate stats, the "you failed at X" [1][2][3]
+   * citations, and few-shot examples for the AI tree generator.
+   */
+  examples: string[];
   intent: string;
   children?: SeedTreeNode[];
 }
 
-// The 22-node tree (S = seller, B = buyer). Slack vs. an incumbent (MS Teams),
+// The master move graph (S = seller, B = buyer). Slack vs. an incumbent chat tool,
 // with a parallel price branch. Every seller fork is a plausible move; the two
-// "weak" plays (n_knock, n_discount) are real mistakes a rep could make, not
-// strawmen.
+// "weak" plays (n_knock, n_discount) are real mistakes a rep could make.
 export const tree: SeedTreeNode = {
-  key: "n_open", speaker: "seller", intent: "Warm opening — thank Sarah for the time and set a light agenda.",
+  key: "n_open", speaker: "seller", title: "Opening", descTpl: "Set the agenda",
+  examples: ["Set the agenda", "Thanks for the time — quick agenda", "Open warm, frame the next 20 min"],
+  intent: "Warm opening — thank the buyer for the time and set a light agenda.",
   children: [
     {
-      key: "n_disc", speaker: "seller", intent: "Discovery: ask how the team communicates and collaborates today.",
+      key: "n_disc", speaker: "seller", title: "Discovery", descTpl: "How does your team chat today?",
+      examples: ["How does your team chat today?", "Walk me through your current setup", "Where does collaboration happen now?"],
+      intent: "Discovery: ask how the team communicates and collaborates today.",
       children: [
         {
-          key: "n_incumbent", speaker: "buyer",
-          intent: "Incumbent objection: \"We already use Microsoft Teams — it's bundled with our license.\"",
+          key: "n_incumbent", speaker: "buyer", title: "Incumbent", descTpl: "We already use {incumbent}",
+          examples: [
+            "We already use {incumbent}.",
+            "We're on {incumbent} — it came with our license.",
+            "Honestly, {incumbent} is fine for us.",
+            "Everyone here already lives in {incumbent}.",
+          ],
+          intent: "Incumbent objection: the buyer already uses a competing chat tool.",
           children: [
             {
-              key: "n_coexist", speaker: "seller",
-              intent: "Reframe: Slack can run alongside Teams; it's not a rip-and-replace.",
+              key: "n_coexist", speaker: "seller", title: "Coexist", descTpl: "Runs alongside {incumbent}",
+              examples: [
+                "Runs alongside {incumbent} — no rip-and-replace.",
+                "Keep {incumbent}; add Slack on top.",
+                "Most customers run both side by side.",
+                "Not a migration — Slack layers in.",
+              ],
+              intent: "Reframe: Slack can run alongside the incumbent; it's not a rip-and-replace.",
               children: [
                 {
-                  key: "n_curious", speaker: "buyer",
-                  intent: "Buyer warms up and asks where Slack actually wins over Teams.",
+                  key: "n_curious", speaker: "buyer", title: "Curious", descTpl: "Where does Slack win?",
+                  examples: ["Where does Slack actually win?", "What does Slack do better than {incumbent}?", "Okay — so why switch any of it?"],
+                  intent: "Buyer warms up and asks where Slack actually wins.",
                   children: [
                     {
-                      key: "n_pilot", speaker: "seller",
+                      key: "n_pilot", speaker: "seller", title: "Pilot Offer", descTpl: "Offer a 2-week pilot",
+                      examples: ["Offer a 2-week pilot with one team.", "Low-risk pilot — one squad, two weeks.", "Try it with a single team first."],
                       intent: "Propose a low-risk 2-week pilot with one team.",
                       children: [
-                        { key: "n_yes", speaker: "buyer", intent: "Buyer agrees to run the pilot. (deal won)" },
+                        { key: "n_yes", speaker: "buyer", title: "Pilot Won", descTpl: "Let's run the pilot", examples: ["Let's run the pilot.", "One team, two weeks — I can say yes.", "That's low-risk enough, let's do it."], intent: "Buyer agrees to run the pilot. (deal won)" },
                       ],
                     },
                   ],
                 },
                 {
-                  key: "n_unconvinced", speaker: "buyer",
-                  intent: "Buyer pushes back: \"We just standardized on Teams — not now.\" (deal lost)",
+                  key: "n_unconvinced", speaker: "buyer", title: "Pushback", descTpl: "We just standardized on {incumbent}",
+                  examples: ["We just standardized on {incumbent}.", "Not now — bad timing.", "We're locked into {incumbent} for the year."],
+                  intent: "Buyer pushes back: just standardized on the incumbent. (deal lost)",
                 },
               ],
             },
             {
-              key: "n_discover", speaker: "seller",
-              intent: "Discovery-first: ask what about Teams is actually painful day to day.",
+              key: "n_discover", speaker: "seller", title: "Find Pain", descTpl: "What's painful about {incumbent}?",
+              examples: ["What's painful about {incumbent} day-to-day?", "Where does {incumbent} slow you down?", "What breaks down in {incumbent}?"],
+              intent: "Discovery-first: ask what about the incumbent is actually painful.",
               children: [
                 {
-                  key: "n_pain", speaker: "buyer",
+                  key: "n_pain", speaker: "buyer", title: "Pain Found", descTpl: "Search is weak, threads get lost",
+                  examples: ["Search is weak and threads get lost.", "We lose decisions in {incumbent} constantly.", "Finding anything later is a nightmare."],
                   intent: "Buyer admits real pain: search is weak and threads get lost.",
                   children: [
                     {
-                      key: "n_show", speaker: "seller",
+                      key: "n_show", speaker: "seller", title: "Show Fit", descTpl: "Pitch search + threads",
+                      examples: ["Tie it to Slack's search + threads.", "That's exactly what search and threads fix.", "Show how decisions stay findable."],
                       intent: "Tie the pain to Slack's search + threads and offer a demo.",
                       children: [
-                        { key: "n_demo", speaker: "buyer", intent: "Buyer books a demo. (deal won)" },
+                        { key: "n_demo", speaker: "buyer", title: "Demo Booked", descTpl: "Book me a demo", examples: ["Book me a demo.", "I'd want to see that live.", "Let's get a demo on the calendar."], intent: "Buyer books a demo. (deal won)" },
                       ],
                     },
                   ],
@@ -114,47 +188,66 @@ export const tree: SeedTreeNode = {
               ],
             },
             {
-              key: "n_knock", speaker: "seller",
-              intent: "Disparage Teams as clunky and outdated — a weak, dismissive move.",
+              key: "n_knock", speaker: "seller", title: "Knock Incumbent", descTpl: "Knock {incumbent} as clunky",
+              examples: [
+                "{incumbent} is clunky and outdated.",
+                "Honestly, {incumbent} is bloated and slow.",
+                "Your team deserves better than {incumbent}.",
+                "Nobody actually likes {incumbent}.",
+              ],
+              intent: "Disparage the incumbent as clunky and outdated — a weak, dismissive move.",
               children: [
                 {
-                  key: "n_defensive", speaker: "buyer",
-                  intent: "Buyer gets defensive: \"Just send me some info.\" (deal lost)",
+                  key: "n_defensive", speaker: "buyer", title: "Defensive", descTpl: "Just send me some info",
+                  examples: ["Just send me some info.", "{incumbent} works fine for us, thanks.", "We've adapted to it — I'll review materials."],
+                  intent: "Buyer gets defensive and disengages. (deal lost)",
                 },
               ],
             },
           ],
         },
         {
-          key: "n_price", speaker: "buyer",
-          intent: "Buyer jumps to cost: \"What does this run for 250 people?\"",
+          key: "n_price", speaker: "buyer", title: "Price Ask", descTpl: "What's this run for {seats}?",
+          examples: ["What does this run for {seats} people?", "Ballpark the cost for {seats} seats.", "What's the price at our size?"],
+          intent: "Buyer jumps to cost for their team size.",
           children: [
             {
-              key: "n_value", speaker: "seller",
+              key: "n_value", speaker: "seller", title: "Anchor Value", descTpl: "Anchor on value per seat",
+              examples: ["Anchor on value, not sticker price.", "It's time saved per seat — here's the math.", "Frame ROI before the number."],
               intent: "Anchor on value — time saved per seat, not sticker price.",
               children: [
                 {
-                  key: "n_proof", speaker: "buyer",
+                  key: "n_proof", speaker: "buyer", title: "Proof Ask", descTpl: "Prove it pays off at our size",
+                  examples: ["Prove it pays off at our size.", "Show me ROI for a team like ours.", "I need numbers before I commit."],
                   intent: "Buyer wants proof it pays off at their size.",
                   children: [
                     {
-                      key: "n_caseclose", speaker: "buyer",
+                      key: "n_caseclose", speaker: "buyer", title: "Case Closes", descTpl: "That case study sells me",
+                      examples: ["That case study sells me.", "If it worked for them, let's move.", "Okay — the numbers check out."],
                       intent: "A relevant case study lands and the buyer moves forward. (deal won)",
                     },
                   ],
                 },
                 {
-                  key: "n_pushprice", speaker: "buyer",
+                  key: "n_pushprice", speaker: "buyer", title: "Too Pricey", descTpl: "Still too expensive",
+                  examples: ["Still too expensive.", "That's over our budget.", "Can't justify it at that price."],
                   intent: "Buyer still balks at the price. (deal lost)",
                 },
               ],
             },
             {
-              key: "n_discount", speaker: "seller",
+              key: "n_discount", speaker: "seller", title: "Discount", descTpl: "Lead with a discount",
+              examples: [
+                "Open with a discount to win it.",
+                "Drop the price before proving value.",
+                "Lead with 20% off.",
+                "Cave on price to keep them engaged.",
+              ],
               intent: "Lead with a discount to win the deal — a weak, margin-eroding move.",
               children: [
                 {
-                  key: "n_anchor", speaker: "buyer",
+                  key: "n_anchor", speaker: "buyer", title: "Anchored Low", descTpl: "Can you go lower?",
+                  examples: ["Can you go lower?", "Match that and we'll talk.", "We'd need a deeper cut than that."],
                   intent: "Buyer anchors even lower and stalls. (no decision — still open)",
                 },
               ],
@@ -174,45 +267,57 @@ export interface Archetype {
   path: string[]; // contiguous root→leaf node keys
   outcome: Outcome;
   count: number;
+  /** Whether this archetype centers on the incumbent fork (true) or price fork. */
+  incumbentShape: boolean;
 }
 
-// ~60 calls. Counts chosen so derived win-rates read realistically:
-// incumbent ≈65%, coexist ≈78%, knock ≈9%, price ≈45%, value ≈69%, overall ≈58%.
+// ~100 calls. Counts chosen so per-move win-rates read realistically:
+// incumbent ≈70%, coexist ≈79%, knock ≈7%, price ≈43%, value ≈65%, overall ≈61%.
 export const calls: Archetype[] = [
-  { key: "A", outcome: "won",  count: 18, path: ["n_open", "n_disc", "n_incumbent", "n_coexist", "n_curious", "n_pilot", "n_yes"] },
-  { key: "B", outcome: "lost", count: 5,  path: ["n_open", "n_disc", "n_incumbent", "n_coexist", "n_unconvinced"] },
-  { key: "C", outcome: "won",  count: 8,  path: ["n_open", "n_disc", "n_incumbent", "n_discover", "n_pain", "n_show", "n_demo"] },
-  { key: "D", outcome: "lost", count: 9,  path: ["n_open", "n_disc", "n_incumbent", "n_knock", "n_defensive"] },
-  { key: "E", outcome: "won",  count: 9,  path: ["n_open", "n_disc", "n_price", "n_value", "n_proof", "n_caseclose"] },
-  { key: "F", outcome: "lost", count: 4,  path: ["n_open", "n_disc", "n_price", "n_value", "n_pushprice"] },
-  { key: "G", outcome: "open", count: 7,  path: ["n_open", "n_disc", "n_price", "n_discount", "n_anchor"] },
+  { key: "A", outcome: "won",  count: 33, incumbentShape: true,  path: ["n_open", "n_disc", "n_incumbent", "n_coexist", "n_curious", "n_pilot", "n_yes"] },
+  { key: "B", outcome: "lost", count: 8,  incumbentShape: true,  path: ["n_open", "n_disc", "n_incumbent", "n_coexist", "n_unconvinced"] },
+  { key: "C", outcome: "won",  count: 14, incumbentShape: true,  path: ["n_open", "n_disc", "n_incumbent", "n_discover", "n_pain", "n_show", "n_demo"] },
+  { key: "D", outcome: "lost", count: 12, incumbentShape: true,  path: ["n_open", "n_disc", "n_incumbent", "n_knock", "n_defensive"] },
+  { key: "E", outcome: "won",  count: 14, incumbentShape: false, path: ["n_open", "n_disc", "n_price", "n_value", "n_proof", "n_caseclose"] },
+  { key: "F", outcome: "lost", count: 7,  incumbentShape: false, path: ["n_open", "n_disc", "n_price", "n_value", "n_pushprice"] },
+  { key: "G", outcome: "open", count: 12, incumbentShape: false, path: ["n_open", "n_disc", "n_price", "n_discount", "n_anchor"] },
 ];
 
-// The hero call (gets a full LLM transcript + AI feedback + a mock recording) is
-// one of the knock-loss calls — the demo's "this is the moment it slipped".
+// The hero call (full LLM transcript + AI feedback + a mock recording) is one of
+// the knock-loss calls — the demo's "this is the moment it slipped".
 export const hero = "D";
 
+// Buyer persona pools per archetype, so a rep's calls show varied buyers. The AI
+// plays the assigned persona in practice (never user-picked). Synthetic for now;
+// an LLM will infer the persona from the real transcript later.
+export const personaByArchetype: Record<string, string[]> = {
+  A: ["buy_charlie", "buy_polly", "buy_nina"],
+  B: ["buy_sam", "buy_greg"],
+  C: ["buy_tina", "buy_ed"],
+  D: ["buy_steve", "buy_sam"],
+  E: ["buy_ed", "buy_charlie"],
+  F: ["buy_bob", "buy_nate"],
+  G: ["buy_nate", "buy_bob", "buy_greg"],
+};
+
 // ---------------------------------------------------------------------------
-// Showcase call — hand-authored, the BEST "Summarize Call" demo.
-//
-// It walks the full 7-node winning line (open → discovery → Teams objection →
-// coexistence reframe → buyer warms → pilot → yes), so the summarize animation
-// steps through the most nodes and tells a clean arc that ends in a win. It is
-// the first call of archetype A, gets the richest transcript + feedback, and the
-// builder pins it as the most recent call so it tops the list. The frontend marks
-// this path as the recorded "real" spine on the review tree.
+// Showcase call — hand-authored, the BEST "Summarize Call" demo. Kept identical
+// (buyer Rachel Kim, this transcript, this feedback, the full tree_slack tree).
+// It walks the full 7-node winning line and tops the past-calls list.
 // ---------------------------------------------------------------------------
 export const showcase: {
   callId: string;
   archetype: string; // which archetype's path it follows (must be a WON path)
-  buyer: { id: string; name: string; title: string };
+  prospectId: string;
+  buyer: { id: string; name: string; title: string; personaId: string };
   salespersonId: string;
   transcript: { speaker: Speaker; text: string }[];
   feedback: AiFeedback;
 } = {
   callId: "call_showcase",
   archetype: "A",
-  buyer: { id: "buy_rachel", name: "Rachel Kim", title: "VP of Engineering" },
+  prospectId: SHOWCASE_PROSPECT_ID,
+  buyer: { id: "buy_rachel", name: "Rachel Kim", title: "VP of Engineering", personaId: "buy_polly" },
   salespersonId: "sp_jane",
   transcript: [
     { speaker: "seller", text: "Hey Rachel, thanks for making the time — I know you're heads-down shipping, so I'll keep this useful." },

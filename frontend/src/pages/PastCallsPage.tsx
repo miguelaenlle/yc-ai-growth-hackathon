@@ -24,14 +24,25 @@ function PlusIcon() {
   );
 }
 
+// The rep whose pipeline this account belongs to. The list defaults to them;
+// the others stay selectable so the data still reads like a team.
+const FEATURED_REP_ID = "sp_jane";
+
 export function PastCallsPage() {
   const navigate = useNavigate();
   const { data, isLoading, isError } = useCalls();
 
   const [company, setCompany] = useState("");
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+  const [repId, setRepId] = useState<string>(FEATURED_REP_ID);
 
   const calls = data ?? [];
+
+  const reps = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of calls) if (c.salesperson?.id) map.set(c.salesperson.id, c.salesperson.name);
+    return [...map.entries()].map(([id, name]) => ({ id, name }));
+  }, [calls]);
 
   const companies = useMemo(
     () => Array.from(new Set(calls.map((c) => c.company))).sort(),
@@ -41,13 +52,14 @@ export function PastCallsPage() {
   const shown = useMemo(
     () =>
       calls.filter((c) => {
+        if (repId !== "all" && c.salesperson?.id !== repId) return false;
         if (company && c.company !== company) return false;
         const key = toDateKey(c.startedAt);
         if (range.start && key < range.start) return false;
         if (range.end && key > range.end) return false;
         return true;
       }),
-    [calls, company, range],
+    [calls, repId, company, range],
   );
 
   const activeCount = (company ? 1 : 0) + (range.start || range.end ? 1 : 0);
@@ -59,9 +71,9 @@ export function PastCallsPage() {
   return (
     <main className="min-h-screen bg-bg text-text">
       <div className="mx-auto max-w-4xl px-6 py-10">
-        {/* logo on its own line */}
+        {/* logo on its own line — with the tenant org chip */}
         <div className="mb-6 animate-fade-up">
-          <Logo />
+          <Logo org="Slack" />
         </div>
 
         {/* title + count on the left, actions on the right — one line */}
@@ -75,6 +87,21 @@ export function PastCallsPage() {
             </span>
           </div>
           <div className="ml-auto flex items-center gap-3">
+            {reps.length > 1 && (
+              <select
+                value={repId}
+                onChange={(e) => setRepId(e.target.value)}
+                className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-colors hover:border-border-strong focus:border-accent"
+                aria-label="Filter by rep"
+              >
+                {reps.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+                <option value="all">All reps</option>
+              </select>
+            )}
             <FilterBar
               companies={companies}
               company={company}

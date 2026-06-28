@@ -170,9 +170,12 @@ export function SimulateCallPage() {
   const { data: detail } = useCallDetail(id);
   const { data: personas } = usePersonas();
 
-  // Which buyer persona the AI plays — chosen in the ready overlay, threaded into
-  // both the live session and the post-call analysis.
-  const [personaId, setPersonaId] = useState(personaParam ?? "buy_polly");
+  // Which buyer persona the AI plays — NOT user-picked. It's the persona assigned
+  // to this call's buyer (auto-derived; an LLM will infer it from the transcript
+  // later). A deep-link ?persona= from a practice CTA overrides it.
+  const personaId = personaParam ?? detail?.buyer?.personaId ?? "buy_polly";
+  const personaName =
+    personas?.find((p) => p.id === personaId)?.name ?? detail?.buyer?.name ?? "Buyer";
 
   // Use the call's mock recording — the WS handler resolves the tree from it.
   const recordingId = useMemo(() => {
@@ -347,27 +350,18 @@ export function SimulateCallPage() {
             </div>
           )}
 
-          {/* Ready — pick persona, set breakpoints, then Play (avatars blurred) */}
+          {/* Ready — persona is fixed to this call's buyer (not picked); set
+              breakpoints, then Play (avatars blurred) */}
           {ready && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-bg/40 backdrop-blur-md">
-              <label className="flex flex-col items-center gap-1.5">
+              <div className="flex flex-col items-center gap-1.5">
                 <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
-                  Buyer persona
+                  Buyer
                 </span>
-                <select
-                  value={personaId}
-                  onChange={(e) => setPersonaId(e.target.value)}
-                  className="min-w-[220px] rounded-md border border-border-strong bg-surface px-3 py-2 text-sm text-text shadow-sm outline-none transition-colors hover:border-accent/60 focus:border-accent"
-                >
-                  {(personas ?? [{ id: "buy_polly", name: "Practice Polly", description: "" }]).map(
-                    (p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </label>
+                <span className="min-w-[220px] rounded-md border border-border-strong bg-surface px-3 py-2 text-center text-sm font-medium text-text shadow-sm">
+                  {personaName}
+                </span>
+              </div>
               <button
                 onClick={session.play}
                 className="flex items-center gap-2 rounded-full bg-accent px-8 py-3.5 text-base font-semibold text-bg shadow-[0_4px_24px_-4px_rgba(61,214,208,0.6)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"

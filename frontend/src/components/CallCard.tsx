@@ -71,6 +71,17 @@ export function CallCard({ call, index }: { call: CallSummary; index: number }) 
           <h3 className="truncate text-lg font-semibold text-text">
             {call.company}
           </h3>
+          {(call.industry || call.seats || call.incumbent) && (
+            <p className="truncate text-[13px] text-text-faint">
+              {[
+                call.industry,
+                call.seats ? `${call.seats} seats` : null,
+                call.incumbent ? `on ${call.incumbent}` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
           <PersonRow icon={<BuyerIcon />} person={buyer} />
           <PersonRow icon={<SellerIcon />} person={salesperson} />
         </div>

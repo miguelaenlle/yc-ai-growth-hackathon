@@ -15,7 +15,11 @@ other way around.**
 - **The contract is canonical.** `backend/src/types.ts` is transcribed verbatim from
   contract §2 — if a type changes, change the contract first, then mirror it. Don't
   invent fields or endpoints not in `calltree-api-contract.md`.
-- **EV rule:** `expectedValue = round(successProbability * 45000)` (Slack is a $45k, 250-seat deal).
+- **EV rule:** `expectedValue = round(successProbability * dealValue)`. Seller org = **Slack**;
+  each seed call is a different **prospect** with `dealValue = seats * $180/seat` (250 seats = $45k).
+  Live-created calls default to `DEAL_VALUE = 45000`. Each call has its **own tree** (a per-prospect
+  pruned view of the master move graph); per-node `successProbability` is the Beta-smoothed win-rate
+  of that *move* across the ~100-call population — grounded, not invented.
 - **Scope:** hackathon — one user, local JSON store, single Express process on `:3001`.
   The goal is to demo the full loop end-to-end on the one seeded call, not to scale.
 - **Current state:** backend read endpoints serve real seed data; lifecycle/realtime/agent

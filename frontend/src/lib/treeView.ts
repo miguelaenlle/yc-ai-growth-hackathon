@@ -47,6 +47,8 @@ function toRawTree(detail: CallDetail, real: Set<string>): RawNode {
       title: n.title,
       description: n.description,
       success: n.successProbability,
+      visits: n.stats?.visits,
+      winRate: n.stats?.winRate,
       onPath: isReal,
       children: n.childIds.filter((c) => byId.has(c)).map(build),
     };

@@ -65,13 +65,16 @@ export const getRecording = (id: Id): Recording | undefined =>
 export const recordingsForCall = (callId: Id): Recording[] =>
   Object.values(store.recordings).filter((r) => r.callId === callId);
 
-export const companyName = (companyId: Id): string =>
-  store.companies.find((c) => c.id === companyId)?.name ?? "Unknown";
+export const getCompany = (companyId: Id) =>
+  store.companies.find((c) => c.id === companyId);
 
-const getBuyer = (buyerId: Id): { name: string; title: string } => {
+export const companyName = (companyId: Id): string =>
+  getCompany(companyId)?.name ?? "Unknown";
+
+export const getBuyer = (buyerId: Id): { name: string; title: string; personaId?: Id } => {
   for (const c of store.companies) {
     const b = c.buyers.find((x) => x.id === buyerId);
-    if (b) return { name: b.name, title: b.title };
+    if (b) return { name: b.name, title: b.title, personaId: b.personaId };
   }
   return { name: "Unknown", title: "" };
 };
@@ -79,10 +82,10 @@ const getBuyer = (buyerId: Id): { name: string; title: string } => {
 const getSalespersonName = (salespersonId: Id): string =>
   store.salespeople.find((s) => s.id === salespersonId)?.name ?? "Unknown";
 
-// Deterministic per-call downward jitter (0–8%) on the realized EV. All calls
-// share one tree, so many land on the same leaf and would otherwise show an
-// identical figure; this varies the displayed dollars without crossing an
-// evaluation grade boundary. Rounded to the nearest $50.
+// Deterministic per-call downward jitter (0–8%) on the realized EV. Calls of the
+// same archetype land on the same leaf and would otherwise show an identical
+// figure; this varies the displayed dollars without crossing an evaluation grade
+// boundary. Rounded to the nearest $50.
 function jitterEV(baseEV: number, callId: Id): number {
   let h = 0;
   for (let i = 0; i < callId.length; i++) h = (h * 31 + callId.charCodeAt(i)) >>> 0;
@@ -117,14 +120,19 @@ export function toCallSummary(call: Call): CallSummary {
     ? Math.max(0, ...tree.nodes.map((n) => n.expectedValue))
     : 0;
 
+  const company = getCompany(call.companyId);
+
   return {
     id: call.id,
-    company: companyName(call.companyId),
+    company: company?.name ?? "Unknown",
+    industry: company?.industry,
+    seats: company?.seats,
+    incumbent: company?.incumbent,
     startedAt: call.startedAt,
     outcome,
     bestEV,
     finalEV,
     buyer: getBuyer(call.buyerId),
-    salesperson: { name: getSalespersonName(call.salespersonId) },
+    salesperson: { id: call.salespersonId, name: getSalespersonName(call.salespersonId) },
   };
 }

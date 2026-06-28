@@ -9,12 +9,15 @@ export type Outcome = "won" | "lost" | "open";
 export interface CallSummary {
   id: Id;
   company: string;
+  industry?: string; // prospect context, resolved from the call's company
+  seats?: number;
+  incumbent?: string;
   startedAt: string; // ISO 8601
   outcome: Outcome; // kept for internal use; UI shows the evaluation
   bestEV: number; // max node EV in the tree
   finalEV: number; // EV at the node the real call ended on (realized value)
-  buyer: { name: string; title: string }; // resolved from the call's buyerId
-  salesperson: { name: string }; // resolved from the call's salespersonId
+  buyer: { name: string; title: string; personaId?: Id }; // resolved from the call's buyerId
+  salesperson: { id: Id; name: string }; // resolved from the call's salespersonId
 }
 
 /** GET /recordings/:id/walkthrough → WalkthroughBundle */
@@ -144,6 +147,7 @@ export interface CallDetail {
   call: Call;
   tree: Tree;
   recordings: Recording[];
+  buyer?: { name: string; title: string; personaId?: Id };
 }
 
 /** GET /personas → PersonaInfo[] — the buyer personas the AI can play. */

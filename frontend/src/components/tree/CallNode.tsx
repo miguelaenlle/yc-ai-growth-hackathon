@@ -89,17 +89,29 @@ function CallNodeImpl({ data }: NodeProps) {
           {!titleOnly && (
             <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">
               {isAi ? (
-                <>
-                  <span className="text-accent">
-                    <Sparkle />
-                  </span>
-                  <span className="text-accent">AI</span>
-                  {typeof d.success === "number" && (
-                    <span style={{ color: rampColor(d.success) }}>
-                      · {Math.round(d.success * 100)}% success
+                typeof d.visits === "number" && d.visits > 0 ? (
+                  // Population evidence — a branch other reps actually walked,
+                  // scored by its real win-rate. NOT an AI hallucination.
+                  <>
+                    <span style={{ color: rampColor(d.winRate ?? d.success ?? 0) }}>
+                      {Math.round((d.winRate ?? d.success ?? 0) * 100)}% win
                     </span>
-                  )}
-                </>
+                    <span className="text-text-faint">· {d.visits} calls</span>
+                  </>
+                ) : (
+                  // A node a live/mock session spawned — genuinely AI-generated.
+                  <>
+                    <span className="text-accent">
+                      <Sparkle />
+                    </span>
+                    <span className="text-accent">AI</span>
+                    {typeof d.success === "number" && (
+                      <span style={{ color: rampColor(d.success) }}>
+                        · {Math.round(d.success * 100)}% success
+                      </span>
+                    )}
+                  </>
+                )
               ) : (
                 <>
                   <span className="h-2 w-2 shrink-0 rounded-full bg-text-muted" />

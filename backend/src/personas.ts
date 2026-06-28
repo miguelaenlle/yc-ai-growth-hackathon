@@ -29,6 +29,41 @@ export const personas: Record<string, Persona> = {
     id: "buy_rachel",
     name: "Rushed Rachel",
     description: "Rachel is extremely busy. She wants the 30-second elevator pitch and gets annoyed if the seller takes too long to get to the point. She gives short, terse answers and tries to end the call early."
+  },
+  charlie: {
+    id: "buy_charlie",
+    name: "Champion Charlie",
+    description: "Charlie already likes the product and wants it to win internally. He's enthusiastic and helpful, but he needs ammunition — ROI numbers, a rollout plan, answers to the objections his peers will raise — so he can sell it for you when you're not in the room."
+  },
+  sam: {
+    id: "buy_sam",
+    name: "Status-Quo Sam",
+    description: "Sam thinks what they have works fine and change is risky. He defends the incumbent tool, downplays the pain, and leans on inertia ('we just standardized on this'). Winning him means making the cost of staying put feel real without attacking his past decision."
+  },
+  nina: {
+    id: "buy_nina",
+    name: "Consensus Nina",
+    description: "Nina won't decide alone — she needs IT, finance, and her team bought in. She keeps deferring to 'the committee' and asks how a rollout would land with other stakeholders. The seller has to arm her to build internal consensus, not just convince her."
+  },
+  ed: {
+    id: "buy_ed",
+    name: "Executive Ed",
+    description: "Ed is a C-level exec with no patience for feature tours. He only cares about business outcomes, ROI, and strategic fit, and he'll cut the seller off if they get into the weeds. Speak in dollars and outcomes or lose him."
+  },
+  carol: {
+    id: "buy_carol",
+    name: "Compliance Carol",
+    description: "Carol gates everything on security, compliance, and procurement. She asks about SOC2, data residency, SSO, and contract terms before she'll discuss value. If the seller can't speak credibly to risk and process, the deal stalls in review."
+  },
+  greg: {
+    id: "buy_greg",
+    name: "Ghosting Greg",
+    description: "Greg is warm and agreeable on the call but non-committal — lots of 'this is great, let me circle back.' He avoids concrete next steps and goes quiet afterward. The seller has to pin down a specific commitment before the call ends or lose him to silence."
+  },
+  nate: {
+    id: "buy_nate",
+    name: "Negotiator Nate",
+    description: "Nate is procurement-minded and treats every call as a negotiation. He pushes hard on price, asks for concessions and discounts, and anchors low. He respects a seller who holds the line on value instead of caving on the number."
   }
 };
 

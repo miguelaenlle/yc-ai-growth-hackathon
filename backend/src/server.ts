@@ -18,6 +18,7 @@ import { generateAssistCard } from "./assist.js";
 import { getProductInfo } from "./product.js";
 import {
   DEAL_VALUE,
+  getBuyer,
   getCall,
   getRecording,
   getTree,
@@ -46,9 +47,9 @@ import {
   summarizeStats,
 } from "./salesperson-stats.js";
 import {
+  buildAiFeedback,
   buildRecommendedPractice,
   listSalespeople,
-  rankPracticeTargets,
 } from "./practice-reco.js";
 import { computeMetrics } from "./signal-engine.js";
 import { createAudioAnalyzer } from "./audio/index.js";
@@ -142,6 +143,7 @@ app.get("/calls/:id", (req: Request, res: Response) => {
     call,
     tree,
     recordings: recordingsForCall(call.id),
+    buyer: getBuyer(call.buyerId),
   };
   res.json(detail);
 });
@@ -377,15 +379,11 @@ app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
   const tree = getTree(rec.treeId);
   if (!tree) return notFound(res, `tree ${rec.treeId} not found`);
 
-  // Resolve the rep's historical stats from the recording's call (may be absent).
-  const call = getCall(rec.callId);
-  const stats = call ? getStats(call.salespersonId) : null;
-
   // Idempotent: keep curated/cached feedback, but attach recommendedStart when an
   // older feedback predates the field so System 2 still surfaces on seed calls.
   if (rec.aiFeedback) {
     if (!rec.aiFeedback.recommendedStart) {
-      const { recommendedStart } = rankPracticeTargets(tree, stats);
+      const { recommendedStart } = buildAiFeedback(tree, rec.traversal);
       if (recommendedStart) {
         rec.aiFeedback.recommendedStart = recommendedStart;
         putRecording(rec);
@@ -395,15 +393,8 @@ app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
     return res.json(rec.aiFeedback);
   }
 
-  const { targets, recommendedStart } = rankPracticeTargets(tree, stats, { limit: 3 });
-
-  const feedback: AiFeedback = {
-    summary: `Call reviewed. ${targets.length} moment(s) flagged for practice, ranked by this call's signal weakness blended with your history.`,
-    strengths: ["Structured opening", "Clear discovery questions"],
-    weaknesses: targets.map((t) => t.reason),
-    practiceTargets: targets,
-    recommendedStart,
-  };
+  // Fresh feedback, grounded in this call's tree + the path it actually walked.
+  const feedback: AiFeedback = buildAiFeedback(tree, rec.traversal, { limit: 3 });
 
   rec.aiFeedback = feedback;
   putRecording(rec);

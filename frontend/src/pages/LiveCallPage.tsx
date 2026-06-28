@@ -72,7 +72,7 @@ export function LiveCallPage() {
         </button>
 
         <div className="space-y-3">
-          <Logo />
+          <Logo org="Slack" />
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text">Live Call</h1>
             <div className="mt-1.5 flex items-center gap-2 text-sm font-medium text-signal-low">

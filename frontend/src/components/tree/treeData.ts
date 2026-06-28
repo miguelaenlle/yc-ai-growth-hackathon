@@ -13,6 +13,8 @@ export interface CallNodeData {
   title: string;
   description?: string;
   success?: number; // 0..1, AI nodes only → signal ramp
+  visits?: number; // population calls that passed through this move (evidence)
+  winRate?: number; // 0..1 — observed win-rate of this move across the population
   onPath?: boolean; // on the real recorded path
   actor?: Actor;
   onSimulate?: () => void; // shown on the focused node → start a simulation here
@@ -30,6 +32,8 @@ export interface RawNode {
   title: string;
   description?: string;
   success?: number;
+  visits?: number;
+  winRate?: number;
   onPath?: boolean;
   children?: RawNode[];
 }
@@ -89,6 +93,8 @@ export function buildView(
       title: node.title,
       description: node.description,
       success: node.success,
+      visits: node.visits,
+      winRate: node.winRate,
       onPath: node.onPath,
       actor: actorOf(node.id),
       depth,
