@@ -26,31 +26,31 @@ export const GEN_TREE: RawNode = {
           "children": [
             {
               "id": "n_coexist",
-              "kind": "ai",
+              "kind": "real",
               "title": "Coexist Reframe",
               "description": "Slack runs alongside Teams, not a rip-and-replace",
-              "success": 0.76,
+              "onPath": true,
               "children": [
                 {
                   "id": "n_curious",
-                  "kind": "ai",
+                  "kind": "real",
                   "title": "Curious Buyer",
                   "description": "Where does Slack win over Teams?",
-                  "success": 0.95,
+                  "onPath": true,
                   "children": [
                     {
                       "id": "n_pilot",
-                      "kind": "ai",
+                      "kind": "real",
                       "title": "Pilot Offer",
                       "description": "Low-risk 2-week pilot with one team",
-                      "success": 0.95,
+                      "onPath": true,
                       "children": [
                         {
                           "id": "n_yes",
-                          "kind": "ai",
+                          "kind": "real",
                           "title": "Pilot Agreement",
                           "description": "Buyer agrees to run the pilot",
-                          "success": 0.95
+                          "onPath": true
                         }
                       ]
                     }
@@ -101,17 +101,17 @@ export const GEN_TREE: RawNode = {
             },
             {
               "id": "n_knock",
-              "kind": "real",
+              "kind": "ai",
               "title": "Weak Move",
               "description": "Teams is clunky and outdated",
-              "onPath": true,
+              "success": 0.09,
               "children": [
                 {
                   "id": "n_defensive",
-                  "kind": "real",
+                  "kind": "ai",
                   "title": "Defensive Buyer",
                   "description": "Just send me some info",
-                  "onPath": true
+                  "success": 0.08
                 }
               ]
             }
@@ -168,7 +168,7 @@ export const GEN_TREE: RawNode = {
                   "kind": "ai",
                   "title": "Buyer Anchors",
                   "description": "Buyer anchors lower and stalls",
-                  "success": 0.12
+                  "success": 0.18
                 }
               ]
             }

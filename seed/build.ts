@@ -23,6 +23,7 @@ import {
   hero,
   heroBuyer,
   salespeople,
+  showcase,
   tree as seedTree,
   type Outcome,
   type SeedTreeNode,
@@ -171,8 +172,8 @@ function successProbability(
       return round4(Math.max(stat.winRate, 0.85));
     case "lost":
       return round4(Math.min(stat.winRate, 0.08));
-    default: // open — keep it strictly between the won/lost thresholds
-      return round4(clamp(stat.winRate, 0.12, 0.78));
+    default: // open — keep it clearly between the won/lost thresholds, with margin
+      return round4(clamp(stat.winRate, 0.18, 0.78));
   }
 }
 
@@ -413,11 +414,6 @@ function fallbackHeroAssist(heroPath: TreeNode[]): AssistCard {
 // Fixed base instant so startedAt values are deterministic across runs.
 const BASE_MS = Date.parse("2026-06-27T17:00:00-07:00");
 
-function isoAt(globalIndex: number, isHero: boolean): string {
-  // Hero is the most recent (tops the call list); others fan back ~8h each.
-  const ms = isHero ? BASE_MS : BASE_MS - (globalIndex + 1) * 8 * 3600_000;
-  return new Date(ms).toISOString();
-}
 
 function codeBuiltTranscript(path: TreeNode[]): TranscriptSegment[] {
   return path.map((n, i) => ({
@@ -464,8 +460,21 @@ function buildTraversal(
 interface BuiltPopulation {
   calls: Call[];
   recordings: Record<string, Recording>;
-  heroReal: Recording;
   samples: { callId: string; archetype: string; outcome: Outcome; recording: Recording }[];
+}
+
+/** A hand/LLM-authored "feature" call (hero, showcase): richer than the population default. */
+interface SpecialCall {
+  callId: string;
+  realRecId: string;
+  mockRecId: string;
+  mockStartNode: string;
+  buyer: Buyer;
+  sellerId: string;
+  transcript: TranscriptSegment[];
+  lengthMs: number;
+  aiNotes: AssistCard | null;
+  aiFeedback: AiFeedback | null;
 }
 
 /**
@@ -486,12 +495,11 @@ function buildBuyerPool(count: number): Buyer[] {
 function buildPopulation(
   nodeById: Map<string, TreeNode>,
   buyerPool: Buyer[],
-  heroExtras: { transcript: TranscriptSegment[]; lengthMs: number; aiNotes: AssistCard; aiFeedback: AiFeedback },
+  specials: Map<string, SpecialCall>,
 ): BuiltPopulation {
   const callRecords: Call[] = [];
   const recordings: Record<string, Recording> = {};
   const samples: BuiltPopulation["samples"] = [];
-  let heroReal: Recording | null = null;
   let globalIndex = 0;
   let poolIdx = 0;
 
@@ -503,23 +511,23 @@ function buildPopulation(
     });
 
     for (let i = 0; i < arc.count; i++) {
-      const isHero = arc.key === hero && i === 0;
-      const callId = isHero ? HERO_CALL_ID : `call_${arc.key.toLowerCase()}_${pad2(i + 1)}`;
-      const realRecId = isHero ? HERO_REAL_REC : `rec_${arc.key.toLowerCase()}_${pad2(i + 1)}`;
-      const startedAt = isoAt(globalIndex, isHero);
+      const special = specials.get(`${arc.key}#${i}`);
+      const callId = special?.callId ?? `call_${arc.key.toLowerCase()}_${pad2(i + 1)}`;
+      const realRecId = special?.realRecId ?? `rec_${arc.key.toLowerCase()}_${pad2(i + 1)}`;
 
-      // Hero keeps the pinned buyer (Sarah) + Jane; everyone else gets a unique
-      // buyer from the pool and a rep round-robined across all 5.
-      const buyer = isHero ? heroBuyer : buyerPool[poolIdx++];
-      const sellerId = isHero ? salespeople[0].id : salespeople[globalIndex % salespeople.length].id;
+      // Special calls carry a pinned buyer + rep; everyone else gets a unique
+      // pool buyer and a rep round-robined across all 5. startedAt is assigned
+      // later (interleaved) so the list mixes outcomes instead of grouping them.
+      const buyer = special?.buyer ?? buyerPool[poolIdx++];
+      const sellerId = special?.sellerId ?? salespeople[globalIndex % salespeople.length].id;
 
-      const transcript = isHero ? heroExtras.transcript : codeBuiltTranscript(path);
-      const lengthMs = isHero ? heroExtras.lengthMs : path.length * STEP_MS;
+      const transcript = special?.transcript ?? codeBuiltTranscript(path);
+      const lengthMs = special?.lengthMs ?? path.length * STEP_MS;
 
       // Map each non-root path node to the transcript segment that lands on it.
-      // Hero transcript is free-form, so just attribute steps to evenly-spaced
-      // segments; non-hero is 1 segment per node.
-      const segIndexForNode = isHero
+      // Special transcripts are free-form, so attribute steps to evenly-spaced
+      // segments; population calls are 1 segment per node.
+      const segIndexForNode = special
         ? (_id: string, pathIdx: number) =>
             Math.min(transcript.length - 1, Math.round((pathIdx / (path.length - 1 || 1)) * (transcript.length - 1)))
         : (_id: string, pathIdx: number) => pathIdx;
@@ -536,33 +544,32 @@ function buildPopulation(
         lengthMs,
         transcript,
         traversal: buildTraversal(path, segIndexForNode),
-        aiNotes: isHero ? heroExtras.aiNotes : null,
-        aiFeedback: isHero ? heroExtras.aiFeedback : null,
+        aiNotes: special?.aiNotes ?? null,
+        aiFeedback: special?.aiFeedback ?? null,
       };
       recordings[realRecId] = real;
 
       const recordingIds = [realRecId];
 
-      if (isHero) {
-        heroReal = real;
+      if (special) {
         // A mock recording so SimulateCallPage (recordings.find(r => !r.isReal)) resolves the tree.
         const mock: Recording = {
-          id: HERO_MOCK_REC,
+          id: special.mockRecId,
           callId,
           treeId: TREE_ID,
           isReal: false,
           isActive: false,
-          startNodeId: "n_incumbent",
+          startNodeId: special.mockStartNode,
           stopNodeId: null,
           audioPath: "",
           lengthMs: 0,
           transcript: [],
-          traversal: { initialNodeId: "n_incumbent", finalNodeId: "n_incumbent", steps: [] },
+          traversal: { initialNodeId: special.mockStartNode, finalNodeId: special.mockStartNode, steps: [] },
           aiNotes: null,
           aiFeedback: null,
         };
-        recordings[HERO_MOCK_REC] = mock;
-        recordingIds.push(HERO_MOCK_REC);
+        recordings[special.mockRecId] = mock;
+        recordingIds.push(special.mockRecId);
       }
 
       callRecords.push({
@@ -570,7 +577,7 @@ function buildPopulation(
         companyId: company.id,
         salespersonId: sellerId,
         buyerId: buyer.id,
-        startedAt,
+        startedAt: "", // assigned (interleaved) after the full population is built
         treeId: TREE_ID,
         recordingIds,
       });
@@ -584,8 +591,40 @@ function buildPopulation(
     }
   }
 
-  if (!heroReal) die(`hero archetype "${hero}" produced no hero call`);
-  return { calls: callRecords, recordings, heroReal: heroReal!, samples };
+  return { calls: callRecords, recordings, samples };
+}
+
+/**
+ * Assign startedAt so the list reads like a real history: the showcase is newest
+ * (tops the list), the hero second, and the rest round-robined across archetypes
+ * so outcomes alternate (win, loss, win, stall, …) instead of clustering.
+ */
+function assignDates(callRecords: Call[]) {
+  const pinned = [showcase.callId, HERO_CALL_ID];
+  const rest = callRecords.filter((c) => !pinned.includes(c.id));
+
+  // Bucket by archetype letter (call_a_01 → "a"), then pull one from each bucket
+  // per round so adjacent calls come from different archetypes.
+  const buckets = new Map<string, Call[]>();
+  for (const c of rest) {
+    const letter = c.id.split("_")[1] ?? "z";
+    if (!buckets.has(letter)) buckets.set(letter, []);
+    buckets.get(letter)!.push(c);
+  }
+  const lists = [...buckets.values()];
+  const interleaved: Call[] = [];
+  for (let round = 0; interleaved.length < rest.length; round++) {
+    for (const list of lists) if (round < list.length) interleaved.push(list[round]);
+  }
+
+  const ordered = [
+    callRecords.find((c) => c.id === showcase.callId)!,
+    callRecords.find((c) => c.id === HERO_CALL_ID)!,
+    ...interleaved,
+  ];
+  ordered.forEach((c, i) => {
+    c.startedAt = new Date(BASE_MS - i * 8 * 3600_000).toISOString();
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -706,13 +745,14 @@ function printStats(nodes: TreeNode[]) {
   console.log(`incumbent=${pct("n_incumbent")} coexist=${pct("n_coexist")} knock=${pct("n_knock")} price=${pct("n_price")} value=${pct("n_value")}`);
 }
 
-function printHeroTranscript(rec: Recording) {
-  console.log(`\n=== Hero transcript (${rec.id}, ${rec.transcript.length} segments, ${rec.lengthMs}ms) ===`);
+function printTranscript(label: string, rec: Recording) {
+  console.log(`\n=== ${label} (${rec.id}, ${rec.transcript.length} segments, ${rec.lengthMs}ms) ===`);
+  console.log(`  path: ${[rec.traversal.initialNodeId, ...rec.traversal.steps.map((s) => s.toNodeId)].join(" → ")}`);
   for (const s of rec.transcript) {
     console.log(`  [${s.speaker.toUpperCase().padEnd(6)}] ${s.text}`);
   }
-  console.log(`\n  practiceTargets: ${rec.aiFeedback?.practiceTargets.map((t) => t.nodeId).join(", ")}`);
-  console.log(`  assist trigger: "${rec.aiNotes?.triggerText}"`);
+  if (rec.aiFeedback) console.log(`  practiceTargets: ${rec.aiFeedback.practiceTargets.map((t) => t.nodeId).join(", ") || "(none)"}`);
+  if (rec.aiNotes) console.log(`  assist trigger: "${rec.aiNotes.triggerText}"`);
 }
 
 function printSamples(samples: BuiltPopulation["samples"], nodeById: Map<string, TreeNode>) {
@@ -745,32 +785,49 @@ async function main() {
   validate(nodes);
   console.log("Validation passed.");
 
-  // Hero extras.
+  // Hero extras (LLM — the knock-loss "moment it slipped" call).
   const heroArc = calls.find((c) => c.key === hero)!;
   const heroPath = heroArc.path.map((id) => nodeById.get(id)!);
-  const heroPathIds = new Set(heroArc.path);
 
   console.log("\nGenerating hero transcript / feedback / assist…");
   const heroLines = await cachedLLM("hero_transcript", () => buildHeroTranscript(heroPath), () => fallbackHeroTranscript(heroPath));
   const heroFeedback = await cachedLLM("hero_feedback", () => buildHeroFeedback(heroPath), () => fallbackHeroFeedback());
   const heroAssist = await cachedLLM("hero_assist", () => buildHeroAssist(heroPath), () => fallbackHeroAssist(heroPath));
 
-  const lengthMs = Math.max(heroLines.length, heroPath.length) * STEP_MS;
-  const heroTx = heroTranscript(heroLines, lengthMs);
+  const heroLen = Math.max(heroLines.length, heroPath.length) * STEP_MS;
+  const heroTx = heroTranscript(heroLines, heroLen);
 
-  // 59 generated prospect buyers + the pinned hero buyer (Sarah).
-  const buyerPool = buildBuyerPool(calls.reduce((a, c) => a + c.count, 0) - 1);
-  const allBuyers: Buyer[] = [heroBuyer, ...buyerPool];
+  // Showcase extras (hand-authored — the best "Summarize Call" demo: the full
+  // winning line). This path is also the frontend's recorded "real" spine.
+  const showcaseArc = calls.find((c) => c.key === showcase.archetype)!;
+  const showcasePath = showcaseArc.path.map((id) => nodeById.get(id)!);
+  const realSpineIds = new Set(showcaseArc.path);
+  const showcaseLen = Math.max(showcase.transcript.length, showcasePath.length) * STEP_MS;
+  const showcaseTx = heroTranscript(showcase.transcript, showcaseLen);
 
-  const population = buildPopulation(nodeById, buyerPool, {
-    transcript: heroTx,
-    lengthMs,
-    aiNotes: heroAssist,
-    aiFeedback: heroFeedback,
-  });
+  // Two pinned buyers (hero + showcase); every other call draws from the pool.
+  const totalCalls = calls.reduce((a, c) => a + c.count, 0);
+  const buyerPool = buildBuyerPool(totalCalls - 2);
+  const allBuyers: Buyer[] = [heroBuyer, showcase.buyer, ...buyerPool];
 
-  // Refresh the hero recording reference (built inside buildPopulation).
+  const specials = new Map<string, SpecialCall>([
+    [`${hero}#0`, {
+      callId: HERO_CALL_ID, realRecId: HERO_REAL_REC, mockRecId: HERO_MOCK_REC,
+      mockStartNode: "n_incumbent", buyer: heroBuyer, sellerId: salespeople[0].id,
+      transcript: heroTx, lengthMs: heroLen, aiNotes: heroAssist, aiFeedback: heroFeedback,
+    }],
+    [`${showcase.archetype}#0`, {
+      callId: showcase.callId, realRecId: "rec_showcase", mockRecId: "rec_showcase_mock",
+      mockStartNode: "n_incumbent", buyer: showcase.buyer, sellerId: showcase.salespersonId,
+      transcript: showcaseTx, lengthMs: showcaseLen, aiNotes: null, aiFeedback: showcase.feedback,
+    }],
+  ]);
+
+  const population = buildPopulation(nodeById, buyerPool, specials);
+  assignDates(population.calls);
+
   const heroReal = population.recordings[HERO_REAL_REC];
+  const showcaseReal = population.recordings["rec_showcase"];
 
   const treeObj = { id: TREE_ID, callId: HERO_CALL_ID, rootNodeId: seedTree.key, nodes };
 
@@ -790,9 +847,11 @@ async function main() {
 
   // Reports.
   printStats(nodes);
-  printHeroTranscript(heroReal);
+  printTranscript("SHOWCASE transcript (Summarize demo, win)", showcaseReal);
+  printTranscript("Hero transcript (loss)", heroReal);
   printSamples(population.samples, nodeById);
   console.log(`\nPopulation: ${population.calls.length} calls, ${Object.keys(population.recordings).length} recordings.`);
+  console.log(`Newest 3 calls (top of list): ${[...population.calls].sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, 3).map((c) => c.id).join(", ")}`);
 
   if (DRY_RUN) {
     console.log("\n— DRY RUN complete. No files written. Review the above, then run `npm run seed` to emit. —\n");
@@ -804,7 +863,7 @@ async function main() {
   console.log(`\n✓ wrote ${BACKEND_SEED}`);
 
   await fs.mkdir(dirname(FE_GENERATED), { recursive: true });
-  await fs.writeFile(FE_GENERATED, emitFrontend(nodes, heroPathIds));
+  await fs.writeFile(FE_GENERATED, emitFrontend(nodes, realSpineIds));
   console.log(`✓ wrote ${FE_GENERATED}`);
   console.log("\n✓ seed build complete.\n");
 }

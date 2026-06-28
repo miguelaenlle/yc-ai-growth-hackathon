@@ -79,6 +79,17 @@ const getBuyer = (buyerId: Id): { name: string; title: string } => {
 const getSalespersonName = (salespersonId: Id): string =>
   store.salespeople.find((s) => s.id === salespersonId)?.name ?? "Unknown";
 
+// Deterministic per-call downward jitter (0–8%) on the realized EV. All calls
+// share one tree, so many land on the same leaf and would otherwise show an
+// identical figure; this varies the displayed dollars without crossing an
+// evaluation grade boundary. Rounded to the nearest $50.
+function jitterEV(baseEV: number, callId: Id): number {
+  let h = 0;
+  for (let i = 0; i < callId.length; i++) h = (h * 31 + callId.charCodeAt(i)) >>> 0;
+  const downPct = (h % 9) / 100; // 0.00 .. 0.08
+  return Math.round((baseEV * (1 - downPct)) / 50) * 50;
+}
+
 // Derive outcome from the real recording's final node, bestEV from max node EV.
 // Outcome thresholds: won >= 0.8, lost <= 0.1, open in between.
 export function toCallSummary(call: Call): CallSummary {
@@ -94,7 +105,7 @@ export function toCallSummary(call: Call): CallSummary {
       (n) => n.id === real.traversal.finalNodeId,
     );
     if (finalNode) {
-      finalEV = finalNode.expectedValue;
+      finalEV = jitterEV(finalNode.expectedValue, call.id);
       if (!real.isActive) {
         if (finalNode.successProbability >= 0.8) outcome = "won";
         else if (finalNode.successProbability <= 0.1) outcome = "lost";

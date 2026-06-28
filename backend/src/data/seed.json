@@ -14,6 +14,11 @@
           "title": "VP of Operations"
         },
         {
+          "id": "buy_rachel",
+          "name": "Rachel Kim",
+          "title": "VP of Engineering"
+        },
+        {
           "id": "buy_01",
           "name": "Maria Lopez",
           "title": "VP of Operations"
@@ -302,11 +307,6 @@
           "id": "buy_58",
           "name": "Raj Nair",
           "title": "COO"
-        },
-        {
-          "id": "buy_59",
-          "name": "Emma Becker",
-          "title": "VP of People"
         }
       ]
     }
@@ -335,21 +335,22 @@
   ],
   "calls": [
     {
-      "id": "call_a_01",
+      "id": "call_showcase",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_01",
-      "startedAt": "2026-06-27T16:00:00.000Z",
+      "buyerId": "buy_rachel",
+      "startedAt": "2026-06-28T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
-        "rec_a_01"
+        "rec_showcase",
+        "rec_showcase_mock"
       ]
     },
     {
       "id": "call_a_02",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_02",
+      "buyerId": "buy_01",
       "startedAt": "2026-06-27T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
@@ -360,8 +361,8 @@
       "id": "call_a_03",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_03",
-      "startedAt": "2026-06-27T00:00:00.000Z",
+      "buyerId": "buy_02",
+      "startedAt": "2026-06-25T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_03"
@@ -371,8 +372,8 @@
       "id": "call_a_04",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_04",
-      "startedAt": "2026-06-26T16:00:00.000Z",
+      "buyerId": "buy_03",
+      "startedAt": "2026-06-22T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_04"
@@ -382,8 +383,8 @@
       "id": "call_a_05",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_05",
-      "startedAt": "2026-06-26T08:00:00.000Z",
+      "buyerId": "buy_04",
+      "startedAt": "2026-06-20T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_05"
@@ -393,8 +394,8 @@
       "id": "call_a_06",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_06",
-      "startedAt": "2026-06-26T00:00:00.000Z",
+      "buyerId": "buy_05",
+      "startedAt": "2026-06-18T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_06"
@@ -404,8 +405,8 @@
       "id": "call_a_07",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_07",
-      "startedAt": "2026-06-25T16:00:00.000Z",
+      "buyerId": "buy_06",
+      "startedAt": "2026-06-16T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_07"
@@ -415,8 +416,8 @@
       "id": "call_a_08",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_08",
-      "startedAt": "2026-06-25T08:00:00.000Z",
+      "buyerId": "buy_07",
+      "startedAt": "2026-06-14T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_08"
@@ -426,8 +427,8 @@
       "id": "call_a_09",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_09",
-      "startedAt": "2026-06-25T00:00:00.000Z",
+      "buyerId": "buy_08",
+      "startedAt": "2026-06-12T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_09"
@@ -437,8 +438,8 @@
       "id": "call_a_10",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_10",
-      "startedAt": "2026-06-24T16:00:00.000Z",
+      "buyerId": "buy_09",
+      "startedAt": "2026-06-11T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_10"
@@ -448,8 +449,8 @@
       "id": "call_a_11",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_11",
-      "startedAt": "2026-06-24T08:00:00.000Z",
+      "buyerId": "buy_10",
+      "startedAt": "2026-06-10T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_11"
@@ -459,8 +460,8 @@
       "id": "call_a_12",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_12",
-      "startedAt": "2026-06-24T00:00:00.000Z",
+      "buyerId": "buy_11",
+      "startedAt": "2026-06-10T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_12"
@@ -470,8 +471,8 @@
       "id": "call_a_13",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_13",
-      "startedAt": "2026-06-23T16:00:00.000Z",
+      "buyerId": "buy_12",
+      "startedAt": "2026-06-10T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_13"
@@ -481,8 +482,8 @@
       "id": "call_a_14",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_14",
-      "startedAt": "2026-06-23T08:00:00.000Z",
+      "buyerId": "buy_13",
+      "startedAt": "2026-06-09T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_14"
@@ -492,8 +493,8 @@
       "id": "call_a_15",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_15",
-      "startedAt": "2026-06-23T00:00:00.000Z",
+      "buyerId": "buy_14",
+      "startedAt": "2026-06-09T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_15"
@@ -503,8 +504,8 @@
       "id": "call_a_16",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_16",
-      "startedAt": "2026-06-22T16:00:00.000Z",
+      "buyerId": "buy_15",
+      "startedAt": "2026-06-09T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_16"
@@ -514,8 +515,8 @@
       "id": "call_a_17",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_17",
-      "startedAt": "2026-06-22T08:00:00.000Z",
+      "buyerId": "buy_16",
+      "startedAt": "2026-06-08T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_17"
@@ -525,8 +526,8 @@
       "id": "call_a_18",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_18",
-      "startedAt": "2026-06-22T00:00:00.000Z",
+      "buyerId": "buy_17",
+      "startedAt": "2026-06-08T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_a_18"
@@ -536,8 +537,8 @@
       "id": "call_b_01",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_19",
-      "startedAt": "2026-06-21T16:00:00.000Z",
+      "buyerId": "buy_18",
+      "startedAt": "2026-06-27T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_b_01"
@@ -547,8 +548,8 @@
       "id": "call_b_02",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_20",
-      "startedAt": "2026-06-21T08:00:00.000Z",
+      "buyerId": "buy_19",
+      "startedAt": "2026-06-24T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_b_02"
@@ -558,8 +559,8 @@
       "id": "call_b_03",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_21",
-      "startedAt": "2026-06-21T00:00:00.000Z",
+      "buyerId": "buy_20",
+      "startedAt": "2026-06-22T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_b_03"
@@ -569,8 +570,8 @@
       "id": "call_b_04",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_22",
-      "startedAt": "2026-06-20T16:00:00.000Z",
+      "buyerId": "buy_21",
+      "startedAt": "2026-06-20T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_b_04"
@@ -580,8 +581,8 @@
       "id": "call_b_05",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_23",
-      "startedAt": "2026-06-20T08:00:00.000Z",
+      "buyerId": "buy_22",
+      "startedAt": "2026-06-17T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_b_05"
@@ -591,8 +592,8 @@
       "id": "call_c_01",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_24",
-      "startedAt": "2026-06-20T00:00:00.000Z",
+      "buyerId": "buy_23",
+      "startedAt": "2026-06-26T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_c_01"
@@ -602,8 +603,8 @@
       "id": "call_c_02",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_25",
-      "startedAt": "2026-06-19T16:00:00.000Z",
+      "buyerId": "buy_24",
+      "startedAt": "2026-06-24T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_c_02"
@@ -613,8 +614,8 @@
       "id": "call_c_03",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_26",
-      "startedAt": "2026-06-19T08:00:00.000Z",
+      "buyerId": "buy_25",
+      "startedAt": "2026-06-22T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_c_03"
@@ -624,8 +625,8 @@
       "id": "call_c_04",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_27",
-      "startedAt": "2026-06-19T00:00:00.000Z",
+      "buyerId": "buy_26",
+      "startedAt": "2026-06-19T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_c_04"
@@ -635,8 +636,8 @@
       "id": "call_c_05",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_28",
-      "startedAt": "2026-06-18T16:00:00.000Z",
+      "buyerId": "buy_27",
+      "startedAt": "2026-06-17T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_c_05"
@@ -646,8 +647,8 @@
       "id": "call_c_06",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_29",
-      "startedAt": "2026-06-18T08:00:00.000Z",
+      "buyerId": "buy_28",
+      "startedAt": "2026-06-15T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_c_06"
@@ -657,8 +658,8 @@
       "id": "call_c_07",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_30",
-      "startedAt": "2026-06-18T00:00:00.000Z",
+      "buyerId": "buy_29",
+      "startedAt": "2026-06-14T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_c_07"
@@ -668,8 +669,8 @@
       "id": "call_c_08",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_31",
-      "startedAt": "2026-06-17T16:00:00.000Z",
+      "buyerId": "buy_30",
+      "startedAt": "2026-06-12T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_c_08"
@@ -680,7 +681,7 @@
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
       "buyerId": "buy_sarah",
-      "startedAt": "2026-06-28T00:00:00.000Z",
+      "startedAt": "2026-06-27T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_real",
@@ -691,8 +692,8 @@
       "id": "call_d_02",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_32",
-      "startedAt": "2026-06-17T00:00:00.000Z",
+      "buyerId": "buy_31",
+      "startedAt": "2026-06-26T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_d_02"
@@ -702,8 +703,8 @@
       "id": "call_d_03",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_33",
-      "startedAt": "2026-06-16T16:00:00.000Z",
+      "buyerId": "buy_32",
+      "startedAt": "2026-06-24T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_d_03"
@@ -713,8 +714,8 @@
       "id": "call_d_04",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_34",
-      "startedAt": "2026-06-16T08:00:00.000Z",
+      "buyerId": "buy_33",
+      "startedAt": "2026-06-21T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_d_04"
@@ -724,8 +725,8 @@
       "id": "call_d_05",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_35",
-      "startedAt": "2026-06-16T00:00:00.000Z",
+      "buyerId": "buy_34",
+      "startedAt": "2026-06-19T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_d_05"
@@ -735,8 +736,8 @@
       "id": "call_d_06",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_36",
-      "startedAt": "2026-06-15T16:00:00.000Z",
+      "buyerId": "buy_35",
+      "startedAt": "2026-06-17T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_d_06"
@@ -746,7 +747,7 @@
       "id": "call_d_07",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_37",
+      "buyerId": "buy_36",
       "startedAt": "2026-06-15T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
@@ -757,8 +758,8 @@
       "id": "call_d_08",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_38",
-      "startedAt": "2026-06-15T00:00:00.000Z",
+      "buyerId": "buy_37",
+      "startedAt": "2026-06-13T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_d_08"
@@ -768,8 +769,8 @@
       "id": "call_d_09",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_39",
-      "startedAt": "2026-06-14T16:00:00.000Z",
+      "buyerId": "buy_38",
+      "startedAt": "2026-06-12T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_d_09"
@@ -779,8 +780,8 @@
       "id": "call_e_01",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_40",
-      "startedAt": "2026-06-14T08:00:00.000Z",
+      "buyerId": "buy_39",
+      "startedAt": "2026-06-26T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_01"
@@ -790,8 +791,8 @@
       "id": "call_e_02",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_41",
-      "startedAt": "2026-06-14T00:00:00.000Z",
+      "buyerId": "buy_40",
+      "startedAt": "2026-06-23T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_02"
@@ -801,8 +802,8 @@
       "id": "call_e_03",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_42",
-      "startedAt": "2026-06-13T16:00:00.000Z",
+      "buyerId": "buy_41",
+      "startedAt": "2026-06-21T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_03"
@@ -812,8 +813,8 @@
       "id": "call_e_04",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_43",
-      "startedAt": "2026-06-13T08:00:00.000Z",
+      "buyerId": "buy_42",
+      "startedAt": "2026-06-19T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_04"
@@ -823,8 +824,8 @@
       "id": "call_e_05",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_44",
-      "startedAt": "2026-06-13T00:00:00.000Z",
+      "buyerId": "buy_43",
+      "startedAt": "2026-06-16T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_05"
@@ -834,8 +835,8 @@
       "id": "call_e_06",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_45",
-      "startedAt": "2026-06-12T16:00:00.000Z",
+      "buyerId": "buy_44",
+      "startedAt": "2026-06-15T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_06"
@@ -845,8 +846,8 @@
       "id": "call_e_07",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_46",
-      "startedAt": "2026-06-12T08:00:00.000Z",
+      "buyerId": "buy_45",
+      "startedAt": "2026-06-13T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_07"
@@ -856,8 +857,8 @@
       "id": "call_e_08",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_47",
-      "startedAt": "2026-06-12T00:00:00.000Z",
+      "buyerId": "buy_46",
+      "startedAt": "2026-06-11T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_08"
@@ -867,8 +868,8 @@
       "id": "call_e_09",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_48",
-      "startedAt": "2026-06-11T16:00:00.000Z",
+      "buyerId": "buy_47",
+      "startedAt": "2026-06-11T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_e_09"
@@ -878,8 +879,8 @@
       "id": "call_f_01",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_49",
-      "startedAt": "2026-06-11T08:00:00.000Z",
+      "buyerId": "buy_48",
+      "startedAt": "2026-06-25T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_f_01"
@@ -889,8 +890,8 @@
       "id": "call_f_02",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_50",
-      "startedAt": "2026-06-11T00:00:00.000Z",
+      "buyerId": "buy_49",
+      "startedAt": "2026-06-23T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_f_02"
@@ -900,8 +901,8 @@
       "id": "call_f_03",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_51",
-      "startedAt": "2026-06-10T16:00:00.000Z",
+      "buyerId": "buy_50",
+      "startedAt": "2026-06-21T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_f_03"
@@ -911,8 +912,8 @@
       "id": "call_f_04",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_52",
-      "startedAt": "2026-06-10T08:00:00.000Z",
+      "buyerId": "buy_51",
+      "startedAt": "2026-06-18T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_f_04"
@@ -922,8 +923,8 @@
       "id": "call_g_01",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_53",
-      "startedAt": "2026-06-10T00:00:00.000Z",
+      "buyerId": "buy_52",
+      "startedAt": "2026-06-25T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_g_01"
@@ -933,8 +934,8 @@
       "id": "call_g_02",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_54",
-      "startedAt": "2026-06-09T16:00:00.000Z",
+      "buyerId": "buy_53",
+      "startedAt": "2026-06-23T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_g_02"
@@ -944,8 +945,8 @@
       "id": "call_g_03",
       "companyId": "co_slack",
       "salespersonId": "sp_jane",
-      "buyerId": "buy_55",
-      "startedAt": "2026-06-09T08:00:00.000Z",
+      "buyerId": "buy_54",
+      "startedAt": "2026-06-20T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_g_03"
@@ -955,8 +956,8 @@
       "id": "call_g_04",
       "companyId": "co_slack",
       "salespersonId": "sp_marcus",
-      "buyerId": "buy_56",
-      "startedAt": "2026-06-09T00:00:00.000Z",
+      "buyerId": "buy_55",
+      "startedAt": "2026-06-18T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_g_04"
@@ -966,8 +967,8 @@
       "id": "call_g_05",
       "companyId": "co_slack",
       "salespersonId": "sp_dana",
-      "buyerId": "buy_57",
-      "startedAt": "2026-06-08T16:00:00.000Z",
+      "buyerId": "buy_56",
+      "startedAt": "2026-06-16T08:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_g_05"
@@ -977,8 +978,8 @@
       "id": "call_g_06",
       "companyId": "co_slack",
       "salespersonId": "sp_olivia",
-      "buyerId": "buy_58",
-      "startedAt": "2026-06-08T08:00:00.000Z",
+      "buyerId": "buy_57",
+      "startedAt": "2026-06-14T16:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_g_06"
@@ -988,8 +989,8 @@
       "id": "call_g_07",
       "companyId": "co_slack",
       "salespersonId": "sp_ben",
-      "buyerId": "buy_59",
-      "startedAt": "2026-06-08T00:00:00.000Z",
+      "buyerId": "buy_58",
+      "startedAt": "2026-06-13T00:00:00.000Z",
       "treeId": "tree_slack",
       "recordingIds": [
         "rec_g_07"
@@ -1464,12 +1465,12 @@
           "description": "Buyer anchors lower and stalls",
           "speaker": "buyer",
           "tMs": 44000,
-          "successProbability": 0.12,
-          "expectedValue": 5400,
+          "successProbability": 0.18,
+          "expectedValue": 8100,
           "metrics": {
-            "confidence": 0.41,
-            "hesitation": 0.77,
-            "enthusiasm": 0.37
+            "confidence": 0.44,
+            "hesitation": 0.72,
+            "enthusiasm": 0.41
           },
           "stats": {
             "visits": 7,
@@ -1481,65 +1482,100 @@
     }
   },
   "recordings": {
-    "rec_a_01": {
-      "id": "rec_a_01",
-      "callId": "call_a_01",
+    "rec_showcase": {
+      "id": "rec_showcase",
+      "callId": "call_showcase",
       "treeId": "tree_slack",
       "isReal": true,
       "isActive": false,
       "startNodeId": "n_open",
       "stopNodeId": null,
-      "audioPath": "/data/audio/rec_a_01.webm",
-      "lengthMs": 77000,
+      "audioPath": "/data/audio/rec_showcase.webm",
+      "lengthMs": 132000,
       "transcript": [
         {
           "index": 0,
           "speaker": "seller",
-          "text": "Thank Sarah, set light agenda",
+          "text": "Hey Rachel, thanks for making the time — I know you're heads-down shipping, so I'll keep this useful.",
           "tStartMs": 0,
           "tEndMs": 11000
         },
         {
           "index": 1,
-          "speaker": "seller",
-          "text": "How does your team communicate today?",
+          "speaker": "buyer",
+          "text": "Appreciate it. We're slammed, but I carved out twenty minutes.",
           "tStartMs": 11000,
           "tEndMs": 22000
         },
         {
           "index": 2,
-          "speaker": "buyer",
-          "text": "We use Microsoft Teams — it's bundled",
+          "speaker": "seller",
+          "text": "Perfect. Before I pitch anything — how's your team actually communicating day to day right now?",
           "tStartMs": 22000,
           "tEndMs": 33000
         },
         {
           "index": 3,
-          "speaker": "seller",
-          "text": "Slack runs alongside Teams, not a rip-and-replace",
+          "speaker": "buyer",
+          "text": "Mostly Microsoft Teams. It came bundled with our license, so that's just where everyone landed.",
           "tStartMs": 33000,
           "tEndMs": 44000
         },
         {
           "index": 4,
-          "speaker": "buyer",
-          "text": "Where does Slack win over Teams?",
+          "speaker": "seller",
+          "text": "Totally makes sense, and to be clear I'm not here to rip Teams out — most of our customers run Slack right alongside it.",
           "tStartMs": 44000,
           "tEndMs": 55000
         },
         {
           "index": 5,
-          "speaker": "seller",
-          "text": "Low-risk 2-week pilot with one team",
+          "speaker": "buyer",
+          "text": "Okay, that's good to hear. So where does Slack actually win for a team like mine?",
           "tStartMs": 55000,
           "tEndMs": 66000
         },
         {
           "index": 6,
-          "speaker": "buyer",
-          "text": "Buyer agrees to run the pilot",
+          "speaker": "seller",
+          "text": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels.",
           "tStartMs": 66000,
           "tEndMs": 77000
+        },
+        {
+          "index": 7,
+          "speaker": "buyer",
+          "text": "The buried-threads thing is real. We lose decisions in Teams all the time.",
+          "tStartMs": 77000,
+          "tEndMs": 88000
+        },
+        {
+          "index": 8,
+          "speaker": "seller",
+          "text": "That's exactly what we fix. What if we ran a two-week pilot with one squad — no migration, no commitment?",
+          "tStartMs": 88000,
+          "tEndMs": 99000
+        },
+        {
+          "index": 9,
+          "speaker": "buyer",
+          "text": "One team, two weeks… yeah, that's low-risk enough that I can say yes to it.",
+          "tStartMs": 99000,
+          "tEndMs": 110000
+        },
+        {
+          "index": 10,
+          "speaker": "seller",
+          "text": "Love it. I'll spin up the workspace and get your platform squad in today.",
+          "tStartMs": 110000,
+          "tEndMs": 121000
+        },
+        {
+          "index": 11,
+          "speaker": "buyer",
+          "text": "Let's do it. If search is as good as you say, this'll be an easy expansion conversation.",
+          "tStartMs": 121000,
+          "tEndMs": 132000
         }
       ],
       "traversal": {
@@ -1547,42 +1583,81 @@
         "finalNodeId": "n_yes",
         "steps": [
           {
-            "transcriptIndex": 1,
+            "transcriptIndex": 2,
             "fromNodeId": "n_open",
             "toNodeId": "n_disc",
             "tMs": 11000
           },
           {
-            "transcriptIndex": 2,
+            "transcriptIndex": 4,
             "fromNodeId": "n_disc",
             "toNodeId": "n_incumbent",
             "tMs": 22000
           },
           {
-            "transcriptIndex": 3,
+            "transcriptIndex": 6,
             "fromNodeId": "n_incumbent",
             "toNodeId": "n_coexist",
             "tMs": 33000
           },
           {
-            "transcriptIndex": 4,
+            "transcriptIndex": 7,
             "fromNodeId": "n_coexist",
             "toNodeId": "n_curious",
             "tMs": 44000
           },
           {
-            "transcriptIndex": 5,
+            "transcriptIndex": 9,
             "fromNodeId": "n_curious",
             "toNodeId": "n_pilot",
             "tMs": 55000
           },
           {
-            "transcriptIndex": 6,
+            "transcriptIndex": 11,
             "fromNodeId": "n_pilot",
             "toNodeId": "n_yes",
             "tMs": 66000
           }
         ]
+      },
+      "aiNotes": null,
+      "aiFeedback": {
+        "summary": "A disciplined coexistence play, start to finish. You refused to bash Teams, reframed to running alongside it, mirrored the buyer's own pain — buried decisions — and closed a concrete, low-risk pilot. This is the line to copy.",
+        "strengths": [
+          "Didn't knock the incumbent — reframed to coexistence",
+          "Surfaced the buried-threads pain in the buyer's own words before pitching",
+          "Closed a specific, low-risk next step (a two-week one-squad pilot)"
+        ],
+        "weaknesses": [
+          "Left value unquantified — a dollar figure on lost decisions would have anchored EV higher",
+          "Could have set the expansion frame earlier instead of at the very end"
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_curious",
+            "reason": "The buyer asked where Slack wins — a prime moment to quantify the cost of buried decisions.",
+            "drill": "Tie the buried-threads pain to hours lost per week, then to dollars.",
+            "metric": "enthusiasm",
+            "score": 0.3
+          }
+        ]
+      }
+    },
+    "rec_showcase_mock": {
+      "id": "rec_showcase_mock",
+      "callId": "call_showcase",
+      "treeId": "tree_slack",
+      "isReal": false,
+      "isActive": false,
+      "startNodeId": "n_incumbent",
+      "stopNodeId": null,
+      "audioPath": "",
+      "lengthMs": 0,
+      "transcript": [],
+      "traversal": {
+        "initialNodeId": "n_incumbent",
+        "finalNodeId": "n_incumbent",
+        "steps": []
       },
       "aiNotes": null,
       "aiFeedback": null

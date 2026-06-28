@@ -10,6 +10,8 @@
 // tree shape / archetype counts here, then run `npm run seed`. Never hand-edit
 // the generated files.
 
+import type { AiFeedback } from "../backend/src/types.js";
+
 export const dealValue = 45000;
 
 export const company = { id: "co_slack", name: "Slack" };
@@ -189,3 +191,63 @@ export const calls: Archetype[] = [
 // The hero call (gets a full LLM transcript + AI feedback + a mock recording) is
 // one of the knock-loss calls — the demo's "this is the moment it slipped".
 export const hero = "D";
+
+// ---------------------------------------------------------------------------
+// Showcase call — hand-authored, the BEST "Summarize Call" demo.
+//
+// It walks the full 7-node winning line (open → discovery → Teams objection →
+// coexistence reframe → buyer warms → pilot → yes), so the summarize animation
+// steps through the most nodes and tells a clean arc that ends in a win. It is
+// the first call of archetype A, gets the richest transcript + feedback, and the
+// builder pins it as the most recent call so it tops the list. The frontend marks
+// this path as the recorded "real" spine on the review tree.
+// ---------------------------------------------------------------------------
+export const showcase: {
+  callId: string;
+  archetype: string; // which archetype's path it follows (must be a WON path)
+  buyer: { id: string; name: string; title: string };
+  salespersonId: string;
+  transcript: { speaker: Speaker; text: string }[];
+  feedback: AiFeedback;
+} = {
+  callId: "call_showcase",
+  archetype: "A",
+  buyer: { id: "buy_rachel", name: "Rachel Kim", title: "VP of Engineering" },
+  salespersonId: "sp_jane",
+  transcript: [
+    { speaker: "seller", text: "Hey Rachel, thanks for making the time — I know you're heads-down shipping, so I'll keep this useful." },
+    { speaker: "buyer", text: "Appreciate it. We're slammed, but I carved out twenty minutes." },
+    { speaker: "seller", text: "Perfect. Before I pitch anything — how's your team actually communicating day to day right now?" },
+    { speaker: "buyer", text: "Mostly Microsoft Teams. It came bundled with our license, so that's just where everyone landed." },
+    { speaker: "seller", text: "Totally makes sense, and to be clear I'm not here to rip Teams out — most of our customers run Slack right alongside it." },
+    { speaker: "buyer", text: "Okay, that's good to hear. So where does Slack actually win for a team like mine?" },
+    { speaker: "seller", text: "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels." },
+    { speaker: "buyer", text: "The buried-threads thing is real. We lose decisions in Teams all the time." },
+    { speaker: "seller", text: "That's exactly what we fix. What if we ran a two-week pilot with one squad — no migration, no commitment?" },
+    { speaker: "buyer", text: "One team, two weeks… yeah, that's low-risk enough that I can say yes to it." },
+    { speaker: "seller", text: "Love it. I'll spin up the workspace and get your platform squad in today." },
+    { speaker: "buyer", text: "Let's do it. If search is as good as you say, this'll be an easy expansion conversation." },
+  ],
+  feedback: {
+    summary:
+      "A disciplined coexistence play, start to finish. You refused to bash Teams, reframed to running alongside it, mirrored the buyer's own pain — buried decisions — and closed a concrete, low-risk pilot. This is the line to copy.",
+    strengths: [
+      "Didn't knock the incumbent — reframed to coexistence",
+      "Surfaced the buried-threads pain in the buyer's own words before pitching",
+      "Closed a specific, low-risk next step (a two-week one-squad pilot)",
+    ],
+    weaknesses: [
+      "Left value unquantified — a dollar figure on lost decisions would have anchored EV higher",
+      "Could have set the expansion frame earlier instead of at the very end",
+    ],
+    practiceTargets: [
+      {
+        nodeId: "n_curious",
+        reason: "The buyer asked where Slack wins — a prime moment to quantify the cost of buried decisions.",
+        drill: "Tie the buried-threads pain to hours lost per week, then to dollars.",
+        metric: "enthusiasm",
+        score: 0.3,
+      },
+    ],
+  },
+};
