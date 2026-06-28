@@ -70,8 +70,13 @@ interface Traversal     { initialNodeId: Id; finalNodeId: Id; steps: TraversalSt
 interface TraversalStep { transcriptIndex: number; fromNodeId: Id; toNodeId: Id; tMs: number; }
 
 interface AiNotes { commitments: string[]; objections: string[]; facts: string[]; suggestions: string[]; }
+// reason is stats-aware: it blends THIS call's signal weakness with the rep's HISTORICAL stats
+// (per-node fail rate, weak-skill mapping) when those are available.
 interface PracticeTarget { nodeId: Id; reason: string; drill: string; metric: keyof SignalMetrics; score: number; }
-interface AiFeedback { summary: string; strengths: string[]; weaknesses: string[]; practiceTargets: PracticeTarget[]; }
+interface AiFeedback {
+  summary: string; strengths: string[]; weaknesses: string[]; practiceTargets: PracticeTarget[];
+  recommendedStart?: { nodeId: Id; reason: string }; // top "start practicing here" pick (System 2) — cites in-call signal + history
+}
 
 // ---------- Derived / transport (not persisted) ----------
 interface CallSummary {
@@ -92,6 +97,19 @@ interface WalkthroughBundle {
 }
 
 interface PersonaInfo  { id: Id; name: string; description: string; } // a buyer persona the AI can play
+
+// ---------- Practice recommendations (System 1) ----------
+interface SalespersonListItem { id: Id; name: string; totalCalls: number; winRate: number; } // for the rep picker (winRate 0..1)
+// The single "perfect practice call" for one rep, derived from their baseline stats:
+// the persona they perform WORST against + a start node exercising their weakest skill,
+// on a representative call of theirs. reasons[] cite REAL baseline numbers.
+interface RecommendedPractice {
+  salespersonId: Id; salespersonName: string;
+  callId: Id; treeId: Id;
+  startNodeId: Id; startNodeTitle: string;
+  personaId: Id; personaName: string;
+  headline: string; reasons: string[];
+}
 interface MockSkillTag { category: string; passed: boolean; }         // category ∈ the skill taxonomy
 // Post-mock-call review for the HUMAN practice flow (POST /recordings/:id/mock-analysis).
 interface MockCallAnalysis {
@@ -149,6 +167,25 @@ The buyer personas the AI can play, for the practice-setup picker. Single source
 [ { "id": "buy_polly", "name": "Practice Polly", "description": "Incredibly agreeable and optimistic…" } ]
 ```
 
+**4c. `GET /salespeople` → `SalespersonListItem[]`**
+The reps, for the practice picker. Resolves each rep's name + a short stats summary (career totalCalls and winRate) from `salesperson-stats.json`.
+```json
+[ { "id": "sp_jane", "name": "Jane Doe", "totalCalls": 20, "winRate": 0.55 } ]
+```
+
+**4d. `GET /salespeople/:id/recommended-practice` → `RecommendedPractice`**
+The "perfect practice call" for one rep, derived deterministically from their BASELINE stats: the buyer persona they perform WORST against (lowest win rate among personas with a meaningful sample) and a start node exercising their `weakestSkill`, on a representative call of theirs (most recent; `call_showcase` for `sp_jane`). `reasons[]` cite REAL numbers ("You lose 5 of 6 calls to Skeptical Steve"; "Pricing is your weakest skill at 57% miss"). `404` when the rep id is unknown.
+```json
+{
+  "salespersonId": "sp_jane", "salespersonName": "Jane Doe",
+  "callId": "call_showcase", "treeId": "tree_slack",
+  "startNodeId": "n_price", "startNodeTitle": "Price Inquiry",
+  "personaId": "buy_steve", "personaName": "Skeptical Steve",
+  "headline": "Drill Price Inquiry against Skeptical Steve",
+  "reasons": [ "You lose 5 of 6 calls to Skeptical Steve.", "Pricing is your weakest skill at 57% miss." ]
+}
+```
+
 ### B · Recording lifecycle
 
 **5. `POST /calls` (`CreateCallReq`) → `{ callId, treeId, recordingId }`**
@@ -173,7 +210,7 @@ Append segments. Run the Tree Engine to confirm/derive `steps` (matching a child
 ```
 
 **8. `POST /recordings/:id/feedback` → `AiFeedback`**
-Build the review from transcript + node metrics (LLM). Independently scan the path for weak nodes (`hesitation` high / `confidence` low), rank by `score`, emit one `PracticeTarget` each. Persist into `recording.aiFeedback`.
+Build the review from transcript + node metrics. Scan the path for weak nodes (`hesitation` high / `confidence` low) and BLEND that in-call signal with the rep's HISTORICAL stats (resolved from the recording's call → `salespersonId`): per-node fail rate from `stats.nodes`, plus whether the node maps to the rep's weakest skill. Rank by the blended `score`, emit one stats-aware `PracticeTarget` each, and set `recommendedStart` to the single top "start practicing here" pick — its `reason` cites BOTH the in-call metric and the rep's history. Persist into `recording.aiFeedback`. Idempotent: returns the cached `aiFeedback` once computed; when a cached feedback predates `recommendedStart`, that field is computed and attached without disturbing curated text.
 ```json
 {
   "summary": "You surfaced strong pain quickly, but the Tableau objection turned the call...",
@@ -279,6 +316,8 @@ data: {"type":"notes","notes":{"commitments":[],"objections":["No Tableau integr
 | 3 | GET | `/trees/:id` | — | `Tree` |
 | 4 | GET | `/recordings/:id` | — | `Recording` |
 | 4b | GET | `/personas` | — | `PersonaInfo[]` |
+| 4c | GET | `/salespeople` | — | `SalespersonListItem[]` |
+| 4d | GET | `/salespeople/:id/recommended-practice` | — | `RecommendedPractice` |
 | 5 | POST | `/calls` | `CreateCallReq` | `{callId,treeId,recordingId}` |
 | 6 | POST | `/recordings` | `StartRecordingReq` | `{recordingId}` |
 | 7 | PATCH | `/recordings/:id` | `AppendReq` | `{ok,currentNodeId}` |

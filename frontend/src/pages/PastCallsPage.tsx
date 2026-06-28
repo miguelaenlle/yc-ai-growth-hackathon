@@ -7,6 +7,7 @@ import { Button } from "../components/Button";
 import { FilterBar } from "../components/FilterBar";
 import type { DateRange } from "../components/DateRangePicker";
 import { CallCard } from "../components/CallCard";
+import { PerfectPracticeCard } from "../components/PerfectPracticeCard";
 
 const EMPTY_RANGE: DateRange = { start: null, end: null };
 
@@ -89,6 +90,9 @@ export function PastCallsPage() {
             </Button>
           </div>
         </header>
+
+        {/* System 1 — the perfect practice call for a selectable rep */}
+        <PerfectPracticeCard />
 
         {/* list */}
         <div className="space-y-3">

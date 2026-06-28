@@ -119,6 +119,8 @@ export interface AiFeedback {
   strengths: string[];
   weaknesses: string[];
   practiceTargets: PracticeTarget[];
+  /** Top "start practicing here" pick (System 2) — cites in-call signal + history. */
+  recommendedStart?: { nodeId: Id; reason: string };
 }
 
 export interface Recording {
@@ -149,6 +151,28 @@ export interface PersonaInfo {
   id: Id;
   name: string;
   description: string;
+}
+
+/** GET /salespeople → rep list for the practice picker (winRate 0..1). */
+export interface SalespersonListItem {
+  id: Id;
+  name: string;
+  totalCalls: number;
+  winRate: number;
+}
+
+/** GET /salespeople/:id/recommended-practice → the "perfect practice call" (System 1). */
+export interface RecommendedPractice {
+  salespersonId: Id;
+  salespersonName: string;
+  callId: Id;
+  treeId: Id;
+  startNodeId: Id;
+  startNodeTitle: string;
+  personaId: Id;
+  personaName: string;
+  headline: string;
+  reasons: string[];
 }
 
 /** A skill verdict for a single mock call. */
