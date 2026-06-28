@@ -3,9 +3,16 @@ import { getDecisionSummary, matchOrCreateBranch } from "./tree-ops.js";
 import { getRecording, getTree, store } from "./store.js";
 import type { Id, Recording, Tree, TranscriptSegment } from "./types.js";
 
+import { promises as fs } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 // Ensure the API key is loaded
 import dotenv from "dotenv";
 dotenv.config();
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CACHE_DIR = join(__dirname, "data", "cache");
 
 import { getPersonaInfo } from "./personas.js";
 
@@ -27,15 +34,36 @@ function generateMockPrompt(recordingId: Id, currentNodeId: Id): string {
   const tree = rec ? getTree(rec.treeId) : undefined;
 
   const productInfo = rec ? getProductInfo(rec.callId) : getProductInfo("co_convex"); // simplification
-  const personaInfo = getPersonaInfo("buy_polly"); // Hardcoded to Practice Polly per user request
+  const personaInfo = getPersonaInfo("skeptical_steve");
 
   let pathContext = "No prior context.";
+  let branchRules = "";
   if (tree && currentNodeId) {
     try {
       const summary = getDecisionSummary(tree, currentNodeId);
       pathContext = summary.path.map(n => `[${n.speaker.toUpperCase()}]: ${n.description}`).join("\n");
     } catch (e) {
       console.warn("Could not get decision summary, using fallback");
+    }
+
+    const current = tree.nodes.find(n => n.id === currentNodeId);
+    if (current) {
+      const children = current.childIds.map(id => tree.nodes.find(n => n.id === id)).filter(Boolean) as any[];
+      if (children.length > 0) {
+        branchRules = "\nEXPECTED NEXT STEPS (Use these as a guide for how to evaluate the seller's response and what to say next):\n";
+        for (const child of children) {
+           branchRules += `- If the seller's response maps to "${child.title}" (${child.description}):\n`;
+           const grandchildren = child.childIds.map((id: Id) => tree.nodes.find(n => n.id === id)).filter(Boolean) as any[];
+           const buyerResponses = grandchildren.filter(n => n.speaker === "buyer");
+           if (buyerResponses.length > 0) {
+             const options = buyerResponses.map(r => `"${r.description}"`).join(" OR ");
+             branchRules += `  -> You MUST respond with something similar to one of these: ${options}\n`;
+           } else {
+             branchRules += `  -> Respond naturally to their point as a skeptical buyer.\n`;
+           }
+        }
+        branchRules += `- If they don't say any of these, respond naturally to their point.\n`;
+      }
     }
   }
 
@@ -51,6 +79,7 @@ ${personaInfo}
 
 CONVERSATION SO FAR:
 ${pathContext}
+${branchRules}
 
 INSTRUCTIONS:
 1. Stay strictly in character as the buyer. 
@@ -69,6 +98,25 @@ async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNo
   if (!tree || !currentNodeId) {
     clientWs.send(JSON.stringify({ type: "precap_complete" }));
     return;
+  }
+
+  const cachePath = join(CACHE_DIR, `precap_${currentNodeId}.json`);
+  try {
+    const cached = await fs.readFile(cachePath, "utf-8");
+    const script = JSON.parse(cached);
+    console.log(`[Cache Hit] Loaded precap for ${currentNodeId}`);
+    clientWs.send(JSON.stringify({ type: "info", text: `Loaded TTS from local cache for node ${currentNodeId}` }));
+    for (const chunk of script) {
+      if (chunk.type === "precap_node") {
+        clientWs.send(JSON.stringify({ type: "precap_node", nodeId: chunk.nodeId }));
+      } else if (chunk.type === "precap_audio") {
+        clientWs.send(JSON.stringify({ type: "precap_audio", b64_data: chunk.b64_data }));
+      }
+    }
+    clientWs.send(JSON.stringify({ type: "precap_complete" }));
+    return;
+  } catch (e) {
+    // Cache miss, proceed to generate
   }
 
   try {
@@ -109,9 +157,12 @@ Each object must have:
     const parsed = JSON.parse(llmData.choices[0].message.content);
     const script = parsed.script || [];
 
+    const cacheData: any[] = [];
+
     for (const chunk of script) {
       // Send the node sync event
       clientWs.send(JSON.stringify({ type: "precap_node", nodeId: chunk.nodeId }));
+      cacheData.push({ type: "precap_node", nodeId: chunk.nodeId });
 
       // We simulate TTS by fetching from OpenAI TTS API
       const text = chunk.narration;
@@ -133,9 +184,18 @@ Each object must have:
         const arrayBuffer = await response.arrayBuffer();
         const b64_data = Buffer.from(arrayBuffer).toString('base64');
         clientWs.send(JSON.stringify({ type: "precap_audio", b64_data }));
+        cacheData.push({ type: "precap_audio", b64_data });
       } else {
         console.error("TTS failed:", await response.text());
       }
+    }
+
+    try {
+      await fs.mkdir(CACHE_DIR, { recursive: true });
+      await fs.writeFile(cachePath, JSON.stringify(cacheData));
+      console.log(`[Cache Write] Saved precap for ${currentNodeId}`);
+    } catch (e) {
+      console.error("Failed to write cache:", e);
     }
   } catch (e) {
     console.error("Error during precap:", e);
@@ -148,7 +208,14 @@ Each object must have:
 /**
  * Handles the WebSocket session connecting the frontend to OpenAI.
  */
-export async function handleMockSession(clientWs: WebSocket, recordingId: Id, currentNodeId: Id, includePrecap: boolean) {
+export async function handleMockSession(
+  clientWs: WebSocket, 
+  recordingId: Id, 
+  currentNodeId: Id, 
+  includePrecap: boolean,
+  maxDepth?: number,
+  targetNodeIds: string[] = []
+) {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
   if (!OPENAI_API_KEY) {
     console.error("OPENAI_API_KEY is not set.");
@@ -156,7 +223,11 @@ export async function handleMockSession(clientWs: WebSocket, recordingId: Id, cu
     return;
   }
 
-  console.log(`Starting mock session for recording ${recordingId} at node ${currentNodeId} (precap: ${includePrecap})`);
+  let currentDepth = 0;
+  let recentConversation: { role: string; text: string }[] = [];
+  let routingQueue = Promise.resolve();
+
+  console.log(`Starting mock session for recording ${recordingId} at node ${currentNodeId} (precap: ${includePrecap}, maxDepth: ${maxDepth}, targetNodeIds: ${targetNodeIds})`);
 
   if (includePrecap) {
     await handlePrecapPhase(clientWs, recordingId, currentNodeId);
@@ -182,41 +253,159 @@ export async function handleMockSession(clientWs: WebSocket, recordingId: Id, cu
       type: "session.update",
       session: {
         type: "realtime",
+        audio: {
+          input: {
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.8,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 800
+            },
+            transcription: { model: "whisper-1" }
+          }
+        },
         instructions: systemPrompt
       }
     };
     openaiWs.send(JSON.stringify(sessionUpdate));
   });
 
+  const runRouter = async (speaker: "seller" | "buyer") => {
+    const rec = getRecording(recordingId);
+    const tree = rec ? getTree(rec.treeId) : undefined;
+    if (!tree) return;
+
+    const current = tree.nodes.find(n => n.id === currentNodeId);
+    if (!current) return;
+    
+    // Only route if the current node expects this speaker
+    const expectedSpeaker = current.speaker === "buyer" ? "seller" : "buyer";
+    if (speaker !== expectedSpeaker) return;
+
+    try {
+      const result = await matchOrCreateBranch(tree, currentNodeId, recentConversation, speaker);
+      
+      let switchedNode = false;
+      if (result.created) {
+        console.log(`New node created from ${speaker} input:`, result.node.id);
+        currentNodeId = result.node.id;
+        switchedNode = true;
+        clientWs.send(JSON.stringify({ type: "mock_node_created", nodeId: currentNodeId, title: result.node.title, parentId: current.id }));
+      } else if (result.matchedNodeId !== currentNodeId) {
+        console.log(`Matched existing node (${speaker}):`, result.matchedNodeId);
+        currentNodeId = result.matchedNodeId;
+        switchedNode = true;
+        clientWs.send(JSON.stringify({ type: "mock_node_matched", nodeId: currentNodeId }));
+      } else {
+        console.log(`LLM router elected to stay at current node (${speaker}):`, currentNodeId);
+      }
+
+      if (switchedNode) {
+        recentConversation = []; // Reset context since we moved
+
+        // NEW: Update OpenAI's system prompt with the new current node's context
+        const newSystemPrompt = generateMockPrompt(recordingId, currentNodeId);
+        const sessionUpdate = {
+          type: "session.update",
+          session: {
+            type: "realtime",
+            audio: {
+              input: {
+                turn_detection: {
+                  type: "server_vad",
+                  threshold: 0.8,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 800
+                },
+                transcription: { model: "whisper-1" }
+              }
+            },
+            instructions: newSystemPrompt
+          }
+        };
+        openaiWs.send(JSON.stringify(sessionUpdate));
+
+        // Depth Tracking
+        currentDepth++;
+        let breakpointHit = false;
+        let breakpointReason = "";
+
+        if (maxDepth !== undefined && currentDepth >= maxDepth) {
+          breakpointHit = true;
+          breakpointReason = "depth";
+        } else if (targetNodeIds.includes(currentNodeId)) {
+          breakpointHit = true;
+          breakpointReason = "node";
+        }
+
+          if (breakpointHit) {
+            console.log(`Breakpoint reached. Reason: ${breakpointReason}`);
+            clientWs.send(JSON.stringify({
+              type: "mock_breakpoint_reached",
+              reason: breakpointReason,
+              nodeId: currentNodeId,
+              depth: currentDepth
+            }));
+            
+            // End the session to stop OpenAI from talking, but wait a moment to flush the send buffer
+            setTimeout(() => {
+              openaiWs.close();
+            }, 500);
+            return;
+          }
+      }
+    } catch (e) {
+      console.error("Error branching:", e);
+    }
+  };
+
   // Route messages from OpenAI -> Client
-  openaiWs.on("message", (data) => {
+  openaiWs.on("message", async (data) => {
     try {
       const event = JSON.parse(data.toString());
-      console.log("[OpenAI -> Client]", event.type);
+      if (event.type !== "response.audio.delta" && event.type !== "response.output_audio.delta") {
+         console.log("[OpenAI -> Client]", event.type);
+      }
+
+      if (event.type === "response.audio_transcript.done") {
+        const transcript = event.transcript;
+        if (transcript) {
+          routingQueue = routingQueue.then(async () => {
+            appendTranscript(recordingId, "buyer", transcript);
+            recentConversation.push({ role: "buyer", text: transcript });
+            await runRouter("buyer");
+          }).catch(console.error);
+        }
+      } else if (event.type === "response.done") {
+        // Fallback: sometimes we can get the transcript from the completed response item
+        try {
+          const item = event.response.output[0];
+          if (item && item.content && item.content[0] && item.content[0].transcript) {
+            const transcript = item.content[0].transcript;
+            routingQueue = routingQueue.then(async () => {
+              // Check if we already logged it to avoid duplicates
+              const lastLog = recentConversation[recentConversation.length - 1];
+              if (!lastLog || lastLog.text !== transcript) {
+                appendTranscript(recordingId, "buyer", transcript);
+                recentConversation.push({ role: "buyer", text: transcript });
+                await runRouter("buyer");
+                // Manually tell the frontend so it logs it
+                clientWs.send(JSON.stringify({ type: "response.audio_transcript.done", transcript }));
+              }
+            }).catch(console.error);
+          }
+        } catch (e) {}
+      }
 
       // Keep track of transcript when available
       if (event.type === "conversation.item.input_audio_transcription.completed") {
-        appendTranscript(recordingId, "seller", event.transcript);
-
-        // Try to branch the tree based on the seller's input
-        const rec = getRecording(recordingId);
-        const tree = rec ? getTree(rec.treeId) : undefined;
-        if (tree && event.transcript) {
-          try {
-            const result = matchOrCreateBranch(tree, currentNodeId, event.transcript);
-            if (result.created) {
-              console.log("New node created from seller input:", result.node.id);
-              currentNodeId = result.node.id;
-            } else {
-              console.log("Matched existing node:", result.matchedNodeId);
-              currentNodeId = result.matchedNodeId;
-            }
-          } catch (e) {
-            console.error("Error branching:", e);
+        routingQueue = routingQueue.then(async () => {
+          appendTranscript(recordingId, "seller", event.transcript);
+          if (event.transcript) {
+            recentConversation.push({ role: "seller", text: event.transcript });
+            await runRouter("seller");
           }
-        }
-      } else if (event.type === "response.audio_transcript.done") {
-        appendTranscript(recordingId, "buyer", event.transcript);
+        }).catch(console.error);
       }
 
       // Forward event to the frontend

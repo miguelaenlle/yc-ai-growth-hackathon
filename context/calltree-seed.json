@@ -58,11 +58,32 @@
           "metrics": { "confidence": 0.34, "hesitation": 0.71, "enthusiasm": 0.30 }
         },
         {
-          "id": "n_road", "parentId": "n_push", "childIds": ["n_lost"],
+          "id": "n_road", "parentId": "n_push", "childIds": ["n_lost", "n_how_soon"],
           "title": "On the roadmap", "description": "It's an upcoming feature",
           "speaker": "seller", "tMs": 31000,
           "successProbability": 0.08, "expectedValue": 3840,
           "metrics": { "confidence": 0.31, "hesitation": 0.66, "enthusiasm": 0.24 }
+        },
+        {
+          "id": "n_how_soon", "parentId": "n_road", "childIds": ["n_less_year", "n_more_year"],
+          "title": "How soon", "description": "How soon is it coming?",
+          "speaker": "buyer", "tMs": 33000,
+          "successProbability": 0.15, "expectedValue": 7200,
+          "metrics": { "confidence": 0.40, "hesitation": 0.20, "enthusiasm": 0.30 }
+        },
+        {
+          "id": "n_less_year", "parentId": "n_how_soon", "childIds": [],
+          "title": "Less than a year", "description": "It will be out in a few months",
+          "speaker": "seller", "tMs": 35000,
+          "successProbability": 0.25, "expectedValue": 12000,
+          "metrics": { "confidence": 0.60, "hesitation": 0.40, "enthusiasm": 0.35 }
+        },
+        {
+          "id": "n_more_year", "parentId": "n_how_soon", "childIds": [],
+          "title": "More than a year", "description": "It's at least a year out",
+          "speaker": "seller", "tMs": 35000,
+          "successProbability": 0.02, "expectedValue": 960,
+          "metrics": { "confidence": 0.30, "hesitation": 0.60, "enthusiasm": 0.10 }
         },
         {
           "id": "n_alt", "parentId": "n_push", "childIds": ["n_agree"],

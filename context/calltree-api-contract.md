@@ -18,7 +18,7 @@ type Id = string;
 // ---------- Persisted entities ----------
 interface Company     { id: Id; name: string; buyers: Buyer[]; }
 interface Buyer       { id: Id; name: string; title: string; }
-interface Salesperson { id: Id; name: string; title: string; }
+interface Salesperson { id: Id; name: string; }
 
 interface Call {
   id: Id;
@@ -73,7 +73,7 @@ interface AiFeedback { summary: string; strengths: string[]; weaknesses: string[
 
 // ---------- Derived / transport (not persisted) ----------
 interface CallSummary { id: Id; company: string; startedAt: string; outcome: "won"|"lost"|"open"; bestEV: number; }
-interface CallDetail  { call: Call; tree: Tree; recordings: Recording[]; company: Company; buyer: Buyer; salesperson: Salesperson; }
+interface CallDetail  { call: Call; tree: Tree; recordings: Recording[]; }
 interface TimelineCue { atMs: number; nodeId: Id; }
 interface WalkthroughBundle { audioUrl: string; timeline: TimelineCue[]; }
 
@@ -105,7 +105,7 @@ Filter calls; per call derive `outcome` (from the real recording's final node) a
 ```
 
 **2. `GET /calls/:id` → `CallDetail`**
-Load call, its tree, and all its recordings, plus the resolved `company`, `buyer`, and `salesperson` for the call (looked up by `companyId`/`buyerId`/`salespersonId`). (Body = the full seed objects for `call_convex`, `tree_convex`, `rec_real`, `rec_mock1`, plus `co_convex`, `buy_john`, `sp_jane`.)
+Load call, its tree, and all its recordings. No computation. (Body = the full seed objects for `call_convex`, `tree_convex`, `rec_real`, `rec_mock1`.)
 
 **3. `GET /trees/:id` → `Tree`**
 Return the tree file.
