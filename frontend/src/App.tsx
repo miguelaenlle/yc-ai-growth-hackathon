@@ -251,6 +251,10 @@ export default function App() {
           processPrecapQueue();
         } else if (msg.type === "info") {
           addLog(`[INFO] ${msg.text}`);
+        } else if (msg.type === "response.audio_transcript.done") {
+          addLog(`[AI BUYER] ${msg.transcript}`);
+        } else if (msg.type === "conversation.item.input_audio_transcription.completed") {
+          addLog(`[YOU] ${msg.transcript}`);
         } else if (msg.type === "response.audio.delta" || msg.type === "response.output_audio.delta") {
           playPCM16(msg.delta);
         } else if (msg.type === "error") {

@@ -252,13 +252,17 @@ export async function handleMockSession(
       type: "session.update",
       session: {
         type: "realtime",
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.8,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 800
+        audio: {
+          input: {
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.8,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 800
+            },
+            transcription: { model: "whisper-1" }
+          }
         },
-        input_audio_transcription: { model: "whisper-1" },
         instructions: systemPrompt
       }
     };
@@ -304,13 +308,17 @@ export async function handleMockSession(
           type: "session.update",
           session: {
             type: "realtime",
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.8,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 800
+            audio: {
+              input: {
+                turn_detection: {
+                  type: "server_vad",
+                  threshold: 0.8,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 800
+                },
+                transcription: { model: "whisper-1" }
+              }
             },
-            input_audio_transcription: { model: "whisper-1" },
             instructions: newSystemPrompt
           }
         };
