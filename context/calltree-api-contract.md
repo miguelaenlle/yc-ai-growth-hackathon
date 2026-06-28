@@ -91,6 +91,21 @@ interface WalkthroughBundle {
   segments?: WalkthroughSegment[];   // one clip per path node → exact, gapless sync (no timing estimate)
 }
 
+interface PersonaInfo  { id: Id; name: string; description: string; } // a buyer persona the AI can play
+interface MockSkillTag { category: string; passed: boolean; }         // category ∈ the skill taxonomy
+// Post-mock-call review for the HUMAN practice flow (POST /recordings/:id/mock-analysis).
+interface MockCallAnalysis {
+  summary: string;                   // 2-3 sentences
+  topStrength: string;
+  topWeakness: string;
+  comparisonLine: string;            // single "vs how you usually do" line, built in code from baseline stats
+  outcome: "won"|"lost"|"open";      // derived from the node the practice ended on
+  skillTags: MockSkillTag[];         // only the skills that actually came up
+  salespersonName: string;
+}
+// Fixed skill taxonomy the analysis grades against:
+//   "discovery" | "objection-handling" | "pricing" | "closing" | "rapport"
+
 type LiveEvent =
   | { type: "transcript"; segment: TranscriptSegment }
   | { type: "move";       step: TraversalStep; node: TreeNode }
@@ -106,6 +121,7 @@ interface MockTurnReq       { recordingId: Id; role: "buyer"|"seller"|"both"; cu
 interface NotesReq          { window: TranscriptSegment[]; }
 interface TtsReq            { text: string; voiceId: string; }
 interface CreateCallReq     { companyId: Id; salespersonId: Id; buyerId: Id; startedAt: string; audioPath?: string; }
+interface MockAnalysisReq   { personaId: Id; } // which persona the call was run against (stats are sliced by it)
 ```
 
 ## 3. Endpoints
@@ -126,6 +142,12 @@ Return the tree file.
 
 **4. `GET /recordings/:id` → `Recording`**
 Return the recording file.
+
+**4b. `GET /personas` → `PersonaInfo[]`**
+The buyer personas the AI can play, for the practice-setup picker. Single source of truth (backend `personas.ts`); the first entry (Practice Polly) is the default.
+```json
+[ { "id": "buy_polly", "name": "Practice Polly", "description": "Incredibly agreeable and optimistic…" } ]
+```
 
 ### B · Recording lifecycle
 
@@ -161,6 +183,23 @@ Build the review from transcript + node metrics (LLM). Independently scan the pa
     { "nodeId": "n_push", "reason": "Confidence dropped and hesitation spiked when the objection landed", "drill": "Acknowledge the gap, then pivot to value", "metric": "hesitation", "score": 0.71 },
     { "nodeId": "n_road", "reason": "Answered the gap with a roadmap promise", "drill": "Reframe to the SQL-connector workaround", "metric": "confidence", "score": 0.31 }
   ]
+}
+```
+
+**8b. `POST /recordings/:id/mock-analysis` (`MockAnalysisReq`) → `MockCallAnalysis`**
+Post-call review for the HUMAN practice flow only (not the AI watch walkthrough). Reads the per-session transcript (`recording.transcript`, reset at the start of each live mock) plus the rep's BASELINE stats (`salesperson-stats.json`); `salespersonId` is derived from the recording's call. An LLM (gpt-4o-mini, `json_object`) grades the call against the skill taxonomy and returns `summary`/`topStrength`/`topWeakness`/`skillTags`/`nodeFails`. The `comparisonLine` is then built deterministically in code from the BASELINE stats + this call's `skillTags`, and the stats are updated on disk (totalCalls, wins, per-skill, per-persona keyed by `personaId`, per-node). `outcome` is derived from the node the practice ended on (`getOutcome`, default `"open"`). Robust: a missing `OPENAI_API_KEY` or a failed call returns a graceful fallback analysis rather than erroring.
+```json
+// req
+{ "personaId": "buy_steve" }
+// res
+{
+  "summary": "You opened well and surfaced pain, but the pricing pushback knocked you off balance.",
+  "topStrength": "Strong, specific discovery questions",
+  "topWeakness": "Conceded on price instead of reframing to value",
+  "comparisonLine": "Objection-handling slipped again — still your weakest skill at 56% miss.",
+  "outcome": "lost",
+  "skillTags": [ { "category": "discovery", "passed": true }, { "category": "objection-handling", "passed": false } ],
+  "salespersonName": "Jane Doe"
 }
 ```
 
@@ -205,8 +244,8 @@ Add a node **only when the utterance is significantly different from existing de
 { "node": { "id": "n_looker", "parentId": "n_push", "childIds": [], "title": "Looker ask", "description": "What about Looker instead?", "speaker": "buyer", "tMs": 49000, "successProbability": 0.40, "expectedValue": 19200, "metrics": { "confidence": 0, "hesitation": 0, "enthusiasm": 0 } } }
 ```
 
-**14. `WS /mock/session/:recordingId?currentNodeId=...&includePrecap=true`**
-WebSocket endpoint connecting the frontend to the backend for the mock practice session.
+**14. `WS /mock/session/:recordingId?currentNodeId=...&includePrecap=true&personaId=buy_polly`**
+WebSocket endpoint connecting the frontend to the backend for the mock practice session. `personaId` (optional, default `buy_polly`) selects which buyer persona the AI plays — it steers the realtime buyer prompt and is echoed back to the analysis endpoint so stats can be sliced by persona.
 The session has two phases:
 1. **Precap (Optional)**: If `includePrecap=true`, the backend streams an audio intro (context of what happened so far) down the WebSocket. It sends `{ "type": "precap_node", "nodeId": "..." }` events right before sending the corresponding `{ "type": "precap_audio", "b64_data": "..." }` chunks, allowing the FE to animate the tree in sync. When finished, it sends `{ "type": "precap_complete" }`.
 2. **Interactive Mock**: The backend connects to the OpenAI Realtime API. It proxies bidirectional audio and events (like `response.audio.delta` and `input_audio_buffer.append`). The transcript and tree progression are tracked in real-time.
@@ -239,10 +278,12 @@ data: {"type":"notes","notes":{"commitments":[],"objections":["No Tableau integr
 | 2 | GET | `/calls/:id` | — | `CallDetail` |
 | 3 | GET | `/trees/:id` | — | `Tree` |
 | 4 | GET | `/recordings/:id` | — | `Recording` |
+| 4b | GET | `/personas` | — | `PersonaInfo[]` |
 | 5 | POST | `/calls` | `CreateCallReq` | `{callId,treeId,recordingId}` |
 | 6 | POST | `/recordings` | `StartRecordingReq` | `{recordingId}` |
 | 7 | PATCH | `/recordings/:id` | `AppendReq` | `{ok,currentNodeId}` |
 | 8 | POST | `/recordings/:id/feedback` | — | `AiFeedback` |
+| 8b | POST | `/recordings/:id/mock-analysis` | `MockAnalysisReq` | `MockCallAnalysis` |
 | 9 | GET | `/recordings/:id/walkthrough` | `?kind` | `WalkthroughBundle` |
 | 10 | GET | `/stream/:recordingId` | — | SSE `LiveEvent` |
 | 11 | POST | `/transcribe` | multipart | `{segments}` |
