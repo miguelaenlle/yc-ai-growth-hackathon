@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+build/
+
+# logs
+*.log
+npm-debug.log*
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# generated audio (keep the dir, not the artifacts)
+backend/public/data/audio/*
+!backend/public/data/audio/.gitkeep
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/

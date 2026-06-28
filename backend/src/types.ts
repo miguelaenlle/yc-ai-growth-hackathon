@@ -1,0 +1,187 @@
+// CallTree types — transcribed verbatim from calltree-api-contract.md §2.
+// Keep this file in sync with the contract; it is the single source of truth
+// for the shapes the backend serves.
+
+export type Id = string;
+
+// ---------- Persisted entities ----------
+export interface Company {
+  id: Id;
+  name: string;
+  buyers: Buyer[];
+}
+export interface Buyer {
+  id: Id;
+  name: string;
+  title: string;
+}
+export interface Salesperson {
+  id: Id;
+  name: string;
+}
+
+export interface Call {
+  id: Id;
+  companyId: Id;
+  salespersonId: Id;
+  buyerId: Id;
+  startedAt: string; // ISO 8601
+  treeId: Id;
+  recordingIds: Id[];
+}
+
+export interface Tree {
+  id: Id;
+  callId: Id;
+  rootNodeId: Id;
+  nodes: TreeNode[];
+}
+
+export interface TreeNode {
+  id: Id;
+  parentId: Id | null;
+  childIds: Id[];
+  title: string; // "Pushback"
+  description: string; // "You don't have Tableau integration"
+  speaker: "seller" | "buyer";
+  tMs: number; // offset into the call this moment occurred
+  successProbability: number; // 0..1   → green↔red spectrum
+  expectedValue: number; // currency
+  metrics: SignalMetrics;
+}
+
+export interface SignalMetrics {
+  confidence: number;
+  hesitation: number;
+  enthusiasm: number;
+} // each 0..1
+
+export interface Recording {
+  id: Id;
+  callId: Id;
+  treeId: Id;
+  isReal: boolean; // true = actual call; false = a mock
+  isActive: boolean; // currently in progress (live)
+  startNodeId: Id | null; // mock: where practice begins (null = root)
+  stopNodeId: Id | null; // mock: breakpoint to stop at
+  audioPath: string;
+  lengthMs: number;
+  transcript: TranscriptSegment[];
+  traversal: Traversal;
+  aiNotes: AiNotes | null; // live intel
+  aiFeedback: AiFeedback | null; // post-call review
+}
+
+export interface TranscriptSegment {
+  index: number;
+  speaker: "seller" | "buyer";
+  text: string;
+  tStartMs: number;
+  tEndMs: number;
+}
+export interface Traversal {
+  initialNodeId: Id;
+  finalNodeId: Id;
+  steps: TraversalStep[];
+}
+export interface TraversalStep {
+  transcriptIndex: number;
+  fromNodeId: Id;
+  toNodeId: Id;
+  tMs: number;
+}
+
+export interface AiNotes {
+  commitments: string[];
+  objections: string[];
+  facts: string[];
+  suggestions: string[];
+}
+export interface PracticeTarget {
+  nodeId: Id;
+  reason: string;
+  drill: string;
+  metric: keyof SignalMetrics;
+  score: number;
+}
+export interface AiFeedback {
+  summary: string;
+  strengths: string[];
+  weaknesses: string[];
+  practiceTargets: PracticeTarget[];
+}
+
+// ---------- Derived / transport (not persisted) ----------
+export interface CallSummary {
+  id: Id;
+  company: string;
+  startedAt: string;
+  outcome: "won" | "lost" | "open";
+  bestEV: number;
+}
+export interface CallDetail {
+  call: Call;
+  tree: Tree;
+  recordings: Recording[];
+}
+export interface TimelineCue {
+  atMs: number;
+  nodeId: Id;
+}
+export interface WalkthroughBundle {
+  audioUrl: string;
+  timeline: TimelineCue[];
+}
+
+export type LiveEvent =
+  | { type: "transcript"; segment: TranscriptSegment }
+  | { type: "move"; step: TraversalStep; node: TreeNode }
+  | { type: "branch"; node: TreeNode }
+  | { type: "metrics"; nodeId: Id; metrics: SignalMetrics }
+  | { type: "notes"; notes: AiNotes };
+
+// ---------- Request bodies ----------
+export interface StartRecordingReq {
+  callId: Id;
+  isReal: boolean;
+  startNodeId?: Id;
+  stopNodeId?: Id;
+}
+export interface AppendReq {
+  segments: TranscriptSegment[];
+  steps?: TraversalStep[];
+}
+export interface BranchReq {
+  recordingId: Id;
+  currentNodeId: Id;
+  utterance: string;
+}
+export interface MockTurnReq {
+  recordingId: Id;
+  role: "buyer" | "seller" | "both";
+  currentNodeId: Id;
+}
+export interface NotesReq {
+  window: TranscriptSegment[];
+}
+export interface TtsReq {
+  text: string;
+  voiceId: string;
+}
+export interface CreateCallReq {
+  companyId: Id;
+  salespersonId: Id;
+  buyerId: Id;
+  startedAt: string;
+  audioPath?: string;
+}
+
+// Shape of the seed JSON store.
+export interface SeedStore {
+  _meta: { note: string; dealValue: number };
+  companies: Company[];
+  salespeople: Salesperson[];
+  calls: Call[];
+  trees: Record<Id, Tree>;
+  recordings: Record<Id, Recording>;
+}
