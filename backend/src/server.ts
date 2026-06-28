@@ -2,10 +2,13 @@
 //
 // Phase 1 (A) — read endpoints serve real seed data.
 // Phase 2 (B) — recording lifecycle endpoints are fully implemented.
-// Phase 3+ (C) — realtime/agent endpoints remain contract-shaped stubs.
+// Phase 3 (C) — SSE live stream + signal engine wired; agent/notes keyword-scanned.
+// Phase 5+    — POST /transcribe and POST /tts remain stubs.
 
 import cors from "cors";
 import express, { type Request, type Response } from "express";
+import expressWs from "express-ws";
+import { handleMockSession } from "./mock.js";
 import {
   getCall,
   getRecording,
@@ -21,11 +24,15 @@ import {
 } from "./store.js";
 import {
   buildWalkthroughTimeline,
+  getNodeById,
   getWeakNodes,
-  insertBranchNode,
   matchOrCreateBranch,
   routeTranscriptToNode,
+  updateNodeMetrics,
 } from "./tree-ops.js";
+import { computeMetrics } from "./signal-engine.js";
+import { createAudioAnalyzer } from "./audio/index.js";
+import type { AudioScoreByIndex } from "./audio/types.js";
 import type {
   AiFeedback,
   AiNotes,
@@ -33,6 +40,7 @@ import type {
   CallDetail,
   CallSummary,
   CreateCallReq,
+  LiveEvent,
   MockTurnReq,
   PracticeTarget,
   Recording,
@@ -42,8 +50,8 @@ import type {
   WalkthroughBundle,
 } from "./types.js";
 
-const app = express();
-const PORT = 3001;
+const { app } = expressWs(express());
+const PORT = Number(process.env.PORT) || 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -51,11 +59,33 @@ app.use(express.json());
 // Serve generated/seed audio from /data/audio (referenced by audioPath/audioUrl).
 app.use("/data", express.static(new URL("../public/data", import.meta.url).pathname));
 
+// Audio analyzer — created once at startup. AUDIO_ANALYZER env var selects
+// which implementation is used (local | none | custom). Falls back gracefully
+// to transcript-only scoring if analyze() throws.
+const audioAnalyzer = createAudioAnalyzer();
+
 const fail = (res: Response, status: number, code: string, message: string) =>
   res.status(status).json({ error: { code, message } });
 
 const notFound = (res: Response, message: string) =>
   fail(res, 404, "not_found", message);
+
+// ---------------------------------------------------------------------------
+// SSE connection registry — Phase 3
+// Maps recordingId → set of active SSE Response objects.
+// emitEvent() fans out a LiveEvent to all connected clients for a recording.
+// ---------------------------------------------------------------------------
+
+const sseClients = new Map<string, Set<Response>>();
+
+function emitEvent(recordingId: string, event: LiveEvent): void {
+  const clients = sseClients.get(recordingId);
+  if (!clients || clients.size === 0) return;
+  const payload = `data: ${JSON.stringify(event)}\n\n`;
+  for (const client of clients) {
+    client.write(payload);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // A · Browse & read  (real seed data)
@@ -122,7 +152,6 @@ app.post("/calls", (req: Request<{}, {}, CreateCallReq>, res: Response) => {
   const recordingId = newId("rec");
   const rootNodeId = newId("n");
 
-  // Create a minimal root TreeNode
   const rootNode: TreeNode = {
     id: rootNodeId,
     parentId: null,
@@ -136,12 +165,7 @@ app.post("/calls", (req: Request<{}, {}, CreateCallReq>, res: Response) => {
     metrics: { confidence: 0.5, hesitation: 0.3, enthusiasm: 0.5 },
   };
 
-  const tree: Tree = {
-    id: treeId,
-    callId,
-    rootNodeId,
-    nodes: [rootNode],
-  };
+  const tree: Tree = { id: treeId, callId, rootNodeId, nodes: [rootNode] };
 
   const call: Call = {
     id: callId,
@@ -164,11 +188,7 @@ app.post("/calls", (req: Request<{}, {}, CreateCallReq>, res: Response) => {
     audioPath: audioPath ?? "",
     lengthMs: 0,
     transcript: [],
-    traversal: {
-      initialNodeId: rootNodeId,
-      finalNodeId: rootNodeId,
-      steps: [],
-    },
+    traversal: { initialNodeId: rootNodeId, finalNodeId: rootNodeId, steps: [] },
     aiNotes: null,
     aiFeedback: null,
   };
@@ -193,8 +213,8 @@ app.post("/recordings", (req: Request, res: Response) => {
   if (!tree) return notFound(res, `tree ${call.treeId} not found`);
 
   const initialNodeId: string = startNodeId ?? tree.rootNodeId;
-
   const recordingId = newId("rec");
+
   const rec: Recording = {
     id: recordingId,
     callId,
@@ -206,11 +226,7 @@ app.post("/recordings", (req: Request, res: Response) => {
     audioPath: "",
     lengthMs: 0,
     transcript: [],
-    traversal: {
-      initialNodeId,
-      finalNodeId: initialNodeId,
-      steps: [],
-    },
+    traversal: { initialNodeId, finalNodeId: initialNodeId, steps: [] },
     aiNotes: null,
     aiFeedback: null,
   };
@@ -223,7 +239,7 @@ app.post("/recordings", (req: Request, res: Response) => {
 });
 
 // 7. PATCH /recordings/:id (AppendReq) → 202 { ok, currentNodeId }
-app.patch("/recordings/:id", (req: Request, res: Response) => {
+app.patch("/recordings/:id", async (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
 
@@ -235,18 +251,40 @@ app.patch("/recordings/:id", (req: Request, res: Response) => {
   const tree = getTree(rec.treeId);
   if (!tree) return notFound(res, `tree ${rec.treeId} not found`);
 
-  // Append transcript segments
-  rec.transcript.push(...segments);
+  // Run audio analyzer once per batch before the segment loop.
+  // On failure (missing file, Python crash, timeout) we warn and fall back to
+  // transcript-only scoring — every audioScores.get() will return undefined.
+  let audioScores: AudioScoreByIndex = new Map();
+  if (rec.audioPath) {
+    try {
+      audioScores = await audioAnalyzer.analyze({ audioPath: rec.audioPath, segments });
+    } catch (err) {
+      console.warn("[audio] analyzer failed; using transcript-only scoring", err);
+    }
+  }
+
+  // Append segments and emit a transcript event for each one
+  for (const seg of segments) {
+    rec.transcript.push(seg);
+    emitEvent(rec.id, { type: "transcript", segment: seg });
+  }
 
   if (Array.isArray(steps) && steps.length > 0) {
     // Caller supplied explicit traversal steps — use them directly
-    rec.traversal.steps.push(...steps);
+    for (const step of steps) {
+      rec.traversal.steps.push(step);
+      const toNode = getNodeById(tree, step.toNodeId);
+      if (toNode) {
+        emitEvent(rec.id, { type: "move", step, node: toNode });
+      }
+    }
     rec.traversal.finalNodeId = steps[steps.length - 1].toNodeId;
   } else {
-    // Run the tree engine to derive traversal steps from new segments
+    // Run the tree engine to derive traversal steps from each segment
     let currentNodeId = rec.traversal.finalNodeId;
     for (const seg of segments) {
       const result = routeTranscriptToNode(tree, currentNodeId, seg);
+
       if (result.matched) {
         const step: TraversalStep = {
           transcriptIndex: seg.index,
@@ -256,6 +294,22 @@ app.patch("/recordings/:id", (req: Request, res: Response) => {
         };
         rec.traversal.steps.push(step);
         currentNodeId = result.toNodeId;
+
+        const toNode = getNodeById(tree, currentNodeId);
+        if (toNode) {
+          emitEvent(rec.id, { type: "move", step, node: toNode });
+        }
+      }
+
+      // Run the signal engine on the active node and emit metrics.
+      // audioScore is undefined when the audio analyzer returned no entry for
+      // this segment index — computeMetrics falls back to keyword-only mode.
+      const activeNode = getNodeById(tree, currentNodeId);
+      if (activeNode) {
+        const audioScore = audioScores.get(seg.index);
+        const newMetrics = computeMetrics(seg, activeNode.metrics, audioScore);
+        updateNodeMetrics(tree, currentNodeId, newMetrics);
+        emitEvent(rec.id, { type: "metrics", nodeId: currentNodeId, metrics: newMetrics });
       }
     }
     rec.traversal.finalNodeId = currentNodeId;
@@ -265,6 +319,7 @@ app.patch("/recordings/:id", (req: Request, res: Response) => {
   rec.lengthMs = segments[segments.length - 1].tEndMs ?? rec.lengthMs;
 
   putRecording(rec);
+  putTree(tree); // persist updated node metrics
   persist();
 
   res.status(202).json({ ok: true, currentNodeId: rec.traversal.finalNodeId });
@@ -275,15 +330,11 @@ app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
 
-  // Return cached feedback immediately if it already exists (covers rec_real from seed)
-  if (rec.aiFeedback) {
-    return res.json(rec.aiFeedback);
-  }
+  if (rec.aiFeedback) return res.json(rec.aiFeedback);
 
   const tree = getTree(rec.treeId);
   if (!tree) return notFound(res, `tree ${rec.treeId} not found`);
 
-  // Generate deterministic feedback from weak nodes
   const weakNodes = getWeakNodes(tree, { limit: 3 });
 
   const practiceTargets: PracticeTarget[] = weakNodes.map((wn) => ({
@@ -321,43 +372,99 @@ app.get("/recordings/:id/walkthrough", (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// C · Realtime & agents  (contract-shaped stubs — Phase 3+)
+// C · Realtime & agents  — Phase 3 live; Phase 5 stubs remain
 // ---------------------------------------------------------------------------
 
 // 10. GET /stream/:recordingId (SSE) → LiveEvent stream
 app.get("/stream/:recordingId", (req: Request, res: Response) => {
+  const { recordingId } = req.params;
+
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
   });
   res.write(": connected\n\n");
-  // TODO(real): drive move/branch/metrics/notes/transcript events from the
-  // Tree + Signal engines.
+
+  // Register this client in the SSE registry
+  if (!sseClients.has(recordingId)) sseClients.set(recordingId, new Set());
+  sseClients.get(recordingId)!.add(res);
+
   const ping = setInterval(() => res.write(": ping\n\n"), 15000);
+
   req.on("close", () => {
     clearInterval(ping);
+    sseClients.get(recordingId)?.delete(res);
+    // Clean up the map entry if no clients remain
+    if (sseClients.get(recordingId)?.size === 0) sseClients.delete(recordingId);
     res.end();
   });
 });
 
 // 11. POST /transcribe (multipart) → { segments }
 app.post("/transcribe", (_req: Request, res: Response) => {
-  // TODO(real): forward audio to Whisper, offset timestamps by tStartMs,
+  // TODO(phase5): forward audio to Whisper, offset timestamps by tStartMs,
   // continue index from the recording's transcript length.
+  // When implemented, pass prosody data as AudioScore to computeMetrics().
   res.json({ segments: [] });
 });
 
 // 12. POST /agent/notes (NotesReq) → AiNotes
-app.post("/agent/notes", (_req: Request, res: Response) => {
-  // TODO(real): LLM extracts commitments/objections/facts/suggestions from the
-  // window; merge into recording.aiNotes; emit a notes event.
-  const notes: AiNotes = {
-    commitments: [],
-    objections: ["No Tableau integration"],
-    facts: ["Analytics team standardized on Tableau"],
-    suggestions: ["Offer SQL connectors as a bridge"],
-  };
+app.post("/agent/notes", (req: Request, res: Response) => {
+  const { window: windowSegments, recordingId } = req.body ?? {};
+
+  // Scan the transcript window for known keywords
+  const text = Array.isArray(windowSegments)
+    ? windowSegments.map((s: { text: string }) => s.text ?? "").join(" ").toLowerCase()
+    : "";
+
+  const commitments: string[] = [];
+  const objections: string[] = [];
+  const facts: string[] = [];
+  const suggestions: string[] = [];
+
+  if (text.includes("tableau") || text.includes("integration")) {
+    objections.push("No Tableau integration");
+  }
+  if (text.includes("roadmap")) {
+    objections.push("Feature not on current roadmap");
+  }
+  if (text.includes("sql") || text.includes("connector")) {
+    suggestions.push("Offer SQL connectors as a bridge — no migration required");
+  }
+  if (text.includes("demo") || text.includes("calendar")) {
+    commitments.push("Demo / calendar follow-up");
+  }
+  if (text.includes("deck") || (text.includes("send") && text.includes("deck"))) {
+    facts.push("Buyer requested materials — deal may be cooling");
+  }
+  if (text.includes("price") || text.includes("budget")) {
+    facts.push("Budget constraint raised");
+  }
+  if (text.includes("analytics") || text.includes("standardized")) {
+    facts.push("Analytics team has existing tooling standardized");
+  }
+
+  const notes: AiNotes = { commitments, objections, facts, suggestions };
+
+  // Merge into recording.aiNotes and emit a notes SSE event if recordingId given
+  if (typeof recordingId === "string") {
+    const rec = getRecording(recordingId);
+    if (rec) {
+      rec.aiNotes = rec.aiNotes
+        ? {
+            commitments: [...new Set([...rec.aiNotes.commitments, ...commitments])],
+            objections: [...new Set([...rec.aiNotes.objections, ...objections])],
+            facts: [...new Set([...rec.aiNotes.facts, ...facts])],
+            suggestions: [...new Set([...rec.aiNotes.suggestions, ...suggestions])],
+          }
+        : notes;
+      putRecording(rec);
+      persist();
+      emitEvent(recordingId, { type: "notes", notes: rec.aiNotes });
+    }
+  }
+
   res.json(notes);
 });
 
@@ -378,6 +485,10 @@ app.post("/agent/branch", (req: Request, res: Response) => {
   if (decision.created) {
     putTree(tree);
     persist();
+    // Emit a branch SSE event to all connected clients for this recording
+    if (typeof recordingId === "string") {
+      emitEvent(recordingId, { type: "branch", node: decision.node });
+    }
     res.json({ node: decision.node });
   } else {
     res.json({ node: null, matchedNodeId: decision.matchedNodeId });
@@ -390,7 +501,6 @@ app.post("/mock/turn", (req: Request<{}, {}, MockTurnReq>, res: Response) => {
 
   const lines: { speaker: "buyer" | "seller"; text: string }[] = [];
 
-  // Node-aware responses for the Tableau practice scenario
   if (currentNodeId === "n_push") {
     if (role === "buyer" || role === "both") {
       lines.push({
@@ -423,7 +533,6 @@ app.post("/mock/turn", (req: Request<{}, {}, MockTurnReq>, res: Response) => {
       });
     }
   } else {
-    // Generic fallback
     lines.push({
       speaker: role === "seller" ? "seller" : "buyer",
       text: role === "seller"
@@ -441,9 +550,27 @@ app.post("/tts", (req: Request, res: Response) => {
   if (typeof text !== "string" || typeof voiceId !== "string") {
     return fail(res, 400, "bad_input", "text and voiceId required");
   }
-  // TODO(real): proxy to ElevenLabs (key server-side), save under /data/audio,
+  // TODO(phase5): proxy to ElevenLabs (key server-side), save under /data/audio,
   // cache by hash(text+voiceId).
   res.json({ audioUrl: "/data/audio/tts_stub.mp3" });
+});
+
+// ---------------------------------------------------------------------------
+// WS /mock/session/:recordingId — OpenAI Realtime API relay
+// Bidirectional WebSocket: frontend sends mic audio up; backend relays to
+// OpenAI Realtime API and forwards AI speech + transcripts back down.
+// Requires OPENAI_API_KEY in the environment.
+// ---------------------------------------------------------------------------
+
+app.ws("/mock/session/:recordingId", (ws, req) => {
+  const { recordingId } = req.params;
+  const currentNodeId = req.query["currentNodeId"] as string;
+  const includePrecap = req.query["includePrecap"] === "true";
+  if (!recordingId || !currentNodeId) {
+    ws.close(1008, "recordingId and currentNodeId required");
+    return;
+  }
+  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap);
 });
 
 // ---------------------------------------------------------------------------
@@ -452,7 +579,7 @@ app.get("/", (_req: Request, res: Response) => {
   res.json({
     service: "calltree-backend",
     status: "ok",
-    phase: "Phase 2 — recording lifecycle live",
+    phase: "Phase 3 — SSE live stream + signal engine + WebSocket Realtime relay",
   });
 });
 
