@@ -143,3 +143,27 @@ export interface CallDetail {
   tree: Tree;
   recordings: Recording[];
 }
+
+/** GET /personas → PersonaInfo[] — the buyer personas the AI can play. */
+export interface PersonaInfo {
+  id: Id;
+  name: string;
+  description: string;
+}
+
+/** A skill verdict for a single mock call. */
+export interface MockSkillTag {
+  category: string;
+  passed: boolean;
+}
+
+/** POST /recordings/:id/mock-analysis → MockCallAnalysis (post-call popup). */
+export interface MockCallAnalysis {
+  summary: string;
+  topStrength: string;
+  topWeakness: string;
+  comparisonLine: string;
+  outcome: Outcome;
+  skillTags: MockSkillTag[];
+  salespersonName: string;
+}

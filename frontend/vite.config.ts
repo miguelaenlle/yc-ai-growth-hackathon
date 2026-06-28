@@ -11,6 +11,7 @@ export default defineConfig({
       '/calls': 'http://localhost:3001',
       '/trees': 'http://localhost:3001',
       '/recordings': 'http://localhost:3001',
+      '/personas': 'http://localhost:3001',
       '/stream': 'http://localhost:3001',
       '/transcribe': 'http://localhost:3001',
       '/agent': 'http://localhost:3001',

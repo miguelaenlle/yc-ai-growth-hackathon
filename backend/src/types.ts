@@ -160,6 +160,30 @@ export interface WalkthroughBundle {
   segments?: WalkthroughSegment[]; // one clip per path node → exact, gapless sync
 }
 
+/** One persona the AI buyer can play (GET /personas). */
+export interface PersonaInfo {
+  id: Id;
+  name: string;
+  description: string;
+}
+
+/** A skill verdict for a single mock call, from the analysis LLM. */
+export interface MockSkillTag {
+  category: string;
+  passed: boolean;
+}
+
+/** POST /recordings/:id/mock-analysis result — drives the post-call popup. */
+export interface MockCallAnalysis {
+  summary: string; // 2-3 sentences
+  topStrength: string;
+  topWeakness: string;
+  comparisonLine: string; // single "vs how you usually do" line, built in code
+  outcome: "won" | "lost" | "open";
+  skillTags: MockSkillTag[]; // only skills that actually came up
+  salespersonName: string;
+}
+
 export type LiveEvent =
   | { type: "transcript"; segment: TranscriptSegment }
   | { type: "move"; step: TraversalStep; node: TreeNode }
@@ -201,6 +225,9 @@ export interface CreateCallReq {
   buyerId: Id;
   startedAt: string;
   audioPath?: string;
+}
+export interface MockAnalysisReq {
+  personaId: Id;
 }
 
 // Shape of the seed JSON store.
