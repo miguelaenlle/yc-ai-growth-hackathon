@@ -23,6 +23,7 @@ import { CallNode } from "../components/tree/CallNode";
 import { NodePreview } from "../components/tree/NodePreview";
 import { TreeMiniMap } from "../components/tree/TreeMiniMap";
 import { OutcomeBadge } from "../components/OutcomeBadge";
+import { CallTabs } from "../components/CallTabs";
 import { Logo } from "../components/Logo";
 import { SUMMARIZE_START_NODE_ID } from "../components/summarize/summarize_constants";
 import { useSummarizePlayback } from "../components/summarize/useSummarizePlayback";
@@ -67,6 +68,8 @@ function BackArrow() {
 }
 
 interface SidebarProps {
+  id: string;
+  summary?: CallSummary;
   company: string;
   startedAt: string;
   outcome: Outcome;
@@ -76,7 +79,7 @@ interface SidebarProps {
   sellerTitle: string;
 }
 
-function Sidebar({ company, startedAt, outcome, buyerName, buyerTitle, sellerName, sellerTitle }: SidebarProps) {
+function Sidebar({ id, summary, company, startedAt, outcome, buyerName, buyerTitle, sellerName, sellerTitle }: SidebarProps) {
   const navigate = useNavigate();
   return (
     <aside className="flex w-[300px] shrink-0 flex-col gap-6 border-r border-border bg-bg px-6 py-6">
@@ -95,15 +98,7 @@ function Sidebar({ company, startedAt, outcome, buyerName, buyerTitle, sellerNam
         </h1>
       </div>
 
-      {/* tabs (visual only) */}
-      <div className="flex items-center gap-5 border-b border-border text-sm">
-        <span className="-mb-px border-b-2 border-accent pb-2 font-medium text-text">
-          CallTree
-        </span>
-        <span className="-mb-px border-b-2 border-transparent pb-2 text-text-faint">
-          Runs
-        </span>
-      </div>
+      <CallTabs id={id} state={summary ? { summary } : undefined} />
 
       <div className="space-y-4">
         <div>
@@ -406,6 +401,8 @@ export function CallReviewPage() {
   return (
     <div className="flex h-screen bg-bg text-text">
       <Sidebar
+        id={id!}
+        summary={summary}
         company={company}
         startedAt={detail.call.startedAt}
         outcome={outcome}
