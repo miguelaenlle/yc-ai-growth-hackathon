@@ -51,39 +51,18 @@
           "metrics": { "confidence": 0.68, "hesitation": 0.22, "enthusiasm": 0.58 }
         },
         {
-          "id": "n_push", "parentId": "n_disc", "childIds": ["n_road", "n_alt", "n_cust", "n_looker", "n_sql"],
+          "id": "n_push", "parentId": "n_disc", "childIds": ["n_road", "n_alt", "n_cust"],
           "title": "Pushback", "description": "You don't have Tableau integration",
           "speaker": "buyer", "tMs": 23000,
           "successProbability": 0.45, "expectedValue": 21600,
           "metrics": { "confidence": 0.34, "hesitation": 0.71, "enthusiasm": 0.30 }
         },
         {
-          "id": "n_road", "parentId": "n_push", "childIds": ["n_lost", "n_how_soon"],
+          "id": "n_road", "parentId": "n_push", "childIds": ["n_lost"],
           "title": "On the roadmap", "description": "It's an upcoming feature",
           "speaker": "seller", "tMs": 31000,
           "successProbability": 0.08, "expectedValue": 3840,
           "metrics": { "confidence": 0.31, "hesitation": 0.66, "enthusiasm": 0.24 }
-        },
-        {
-          "id": "n_how_soon", "parentId": "n_road", "childIds": ["n_less_year", "n_more_year"],
-          "title": "How soon", "description": "How soon is it coming?",
-          "speaker": "buyer", "tMs": 33000,
-          "successProbability": 0.15, "expectedValue": 7200,
-          "metrics": { "confidence": 0.40, "hesitation": 0.20, "enthusiasm": 0.30 }
-        },
-        {
-          "id": "n_less_year", "parentId": "n_how_soon", "childIds": [],
-          "title": "Less than a year", "description": "It will be out in a few months",
-          "speaker": "seller", "tMs": 35000,
-          "successProbability": 0.25, "expectedValue": 12000,
-          "metrics": { "confidence": 0.60, "hesitation": 0.40, "enthusiasm": 0.35 }
-        },
-        {
-          "id": "n_more_year", "parentId": "n_how_soon", "childIds": [],
-          "title": "More than a year", "description": "It's at least a year out",
-          "speaker": "seller", "tMs": 35000,
-          "successProbability": 0.02, "expectedValue": 960,
-          "metrics": { "confidence": 0.30, "hesitation": 0.60, "enthusiasm": 0.10 }
         },
         {
           "id": "n_alt", "parentId": "n_push", "childIds": ["n_agree"],
@@ -98,20 +77,6 @@
           "speaker": "seller", "tMs": 0,
           "successProbability": 0.50, "expectedValue": 24000,
           "metrics": { "confidence": 0.55, "hesitation": 0.40, "enthusiasm": 0.45 }
-        },
-        {
-          "id": "n_looker", "parentId": "n_push", "childIds": [],
-          "title": "Looker Ask", "description": "What about a Looker integration instead?",
-          "speaker": "seller", "tMs": 35000,
-          "successProbability": 0.40, "expectedValue": 19200,
-          "metrics": { "confidence": 0.60, "hesitation": 0.10, "enthusiasm": 0.70 }
-        },
-        {
-          "id": "n_sql", "parentId": "n_push", "childIds": [],
-          "title": "SQL Bridge", "description": "Could we offer SQL connectors as a bridge to Tableau?",
-          "speaker": "seller", "tMs": 35000,
-          "successProbability": 0.42, "expectedValue": 20160,
-          "metrics": { "confidence": 0.55, "hesitation": 0.15, "enthusiasm": 0.65 }
         },
         {
           "id": "n_lost", "parentId": "n_road", "childIds": [],

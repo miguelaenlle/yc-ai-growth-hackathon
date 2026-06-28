@@ -1,9 +1,6 @@
-// tree-ops.ts — Schema contract for all Tree operations.
-// Function bodies are stubs; implementations come later.
-// Imports from ../types cover all contract shapes.
-// Imports from ./tree cover the shared similarity helpers and BRANCH_THRESHOLD.
+// tree-ops.ts — All Tree operation implementations.
 
-import { DEAL_VALUE, expectedValue } from "./store.js";
+import { DEAL_VALUE, newId } from "./store.js";
 import type {
   Id,
   SignalMetrics,
@@ -13,7 +10,6 @@ import type {
   Tree,
   TreeNode,
 } from "./types.js";
-import OpenAI from "openai";
 
 /** Minimum Jaccard similarity score required to match an existing branch node. */
 export const BRANCH_THRESHOLD = 0.8;
@@ -122,11 +118,9 @@ export type BranchDecision =
 /**
  * Look up a single node in `tree` by `nodeId`.
  * Returns `undefined` when the node does not exist.
- * (Wraps store.getNode for symmetry; keeps tree-ops self-contained.)
  */
 export function getNodeById(tree: Tree, nodeId: Id): TreeNode | undefined {
-  return tree.nodes.find(n => n.id === nodeId);
-
+  return tree.nodes.find((n) => n.id === nodeId);
 }
 
 /**
@@ -135,15 +129,19 @@ export function getNodeById(tree: Tree, nodeId: Id): TreeNode | undefined {
  * Returns `[]` when `nodeId` does not exist in the tree.
  */
 export function getPathToNode(tree: Tree, nodeId: Id): TreeNode[] {
+  const target = getNodeById(tree, nodeId);
+  if (!target) return [];
+
   const path: TreeNode[] = [];
-  let current = getNodeById(tree, nodeId);
+  let current: TreeNode | undefined = target;
+
   while (current) {
     path.unshift(current);
-    if (!current.parentId) break;
+    if (current.parentId === null) break;
     current = getNodeById(tree, current.parentId);
   }
-  return path;
 
+  return path;
 }
 
 /**
@@ -153,8 +151,9 @@ export function getPathToNode(tree: Tree, nodeId: Id): TreeNode[] {
 export function getNodeChildren(tree: Tree, nodeId: Id): TreeNode[] {
   const node = getNodeById(tree, nodeId);
   if (!node) return [];
-  return node.childIds.map(id => getNodeById(tree, id)).filter((n): n is TreeNode => !!n);
-
+  return node.childIds
+    .map((id) => getNodeById(tree, id))
+    .filter((n): n is TreeNode => n !== undefined);
 }
 
 /**
@@ -163,9 +162,8 @@ export function getNodeChildren(tree: Tree, nodeId: Id): TreeNode[] {
  */
 export function getNodeParent(tree: Tree, nodeId: Id): TreeNode | null {
   const node = getNodeById(tree, nodeId);
-  if (!node || !node.parentId) return null;
+  if (!node || node.parentId === null) return null;
   return getNodeById(tree, node.parentId) ?? null;
-
 }
 
 /**
@@ -173,8 +171,23 @@ export function getNodeParent(tree: Tree, nodeId: Id): TreeNode | null {
  * pre-order). Returns `[]` when `nodeId` does not exist.
  */
 export function getSubtree(tree: Tree, nodeId: Id): TreeNode[] {
-  return []; // Not needed for test
+  const root = getNodeById(tree, nodeId);
+  if (!root) return [];
 
+  const result: TreeNode[] = [];
+  const stack: TreeNode[] = [root];
+
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    result.push(node);
+    // Push children in reverse so left-most child is processed first
+    for (let i = node.childIds.length - 1; i >= 0; i--) {
+      const child = getNodeById(tree, node.childIds[i]);
+      if (child) stack.push(child);
+    }
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -187,28 +200,25 @@ export function getSubtree(tree: Tree, nodeId: Id): TreeNode[] {
  */
 export function getDecisionSummary(tree: Tree, nodeId: Id): DecisionSummary {
   const path = getPathToNode(tree, nodeId);
-  if (path.length === 0) {
-    return {
-      path: [],
-      totalNodes: 0,
-      evProgression: [],
-      finalEV: 0,
-      peakEV: 0,
-      turnCount: { seller: 0, buyer: 0 }
-    };
-  }
-  const evProgression = path.map(n => n.expectedValue);
-  const seller = path.filter(n => n.speaker === "seller").length;
-  const buyer = path.filter(n => n.speaker === "buyer").length;
+  const evProgression = path.map((n) => n.expectedValue);
+  const finalEV = evProgression[evProgression.length - 1] ?? 0;
+  const peakEV = evProgression.length > 0 ? Math.max(...evProgression) : 0;
+  const turnCount = path.reduce(
+    (acc, n) => {
+      acc[n.speaker]++;
+      return acc;
+    },
+    { seller: 0, buyer: 0 },
+  );
+
   return {
     path,
     totalNodes: path.length,
     evProgression,
-    finalEV: evProgression[evProgression.length - 1],
-    peakEV: Math.max(...evProgression),
-    turnCount: { seller, buyer }
+    finalEV,
+    peakEV,
+    turnCount,
   };
-
 }
 
 /**
@@ -216,7 +226,8 @@ export function getDecisionSummary(tree: Tree, nodeId: Id): DecisionSummary {
  * Used by `GET /calls` to populate `CallSummary.bestEV`.
  */
 export function getBestEV(tree: Tree): number {
-  throw new Error("not implemented");
+  if (tree.nodes.length === 0) return 0;
+  return Math.max(0, ...tree.nodes.map((n) => n.expectedValue));
 }
 
 /**
@@ -231,7 +242,11 @@ export function getOutcome(
   tree: Tree,
   finalNodeId: Id
 ): "won" | "lost" | "open" {
-  throw new Error("not implemented");
+  const node = getNodeById(tree, finalNodeId);
+  if (!node) return "open";
+  if (node.successProbability >= 0.8) return "won";
+  if (node.successProbability <= 0.1) return "lost";
+  return "open";
 }
 
 /**
@@ -247,7 +262,39 @@ export function getWeakNodes(
   tree: Tree,
   opts?: { metric?: keyof SignalMetrics; limit?: number }
 ): WeakNode[] {
-  throw new Error("not implemented");
+  const scored: WeakNode[] = tree.nodes.map((node) => {
+    const { confidence, hesitation, enthusiasm } = node.metrics;
+
+    let worstMetric: keyof SignalMetrics;
+    let score: number;
+
+    if (opts?.metric) {
+      worstMetric = opts.metric;
+      score = opts.metric === "hesitation" ? hesitation : node.metrics[opts.metric];
+    } else {
+      // Composite: higher = worse. Hesitation hurts, low confidence/enthusiasm hurt.
+      const compositeScore = hesitation - confidence - enthusiasm;
+      // Identify which single metric is contributing most to weakness
+      const hesitationPenalty = hesitation;
+      const confidencePenalty = 1 - confidence;
+      const enthusiasmPenalty = 1 - enthusiasm;
+      if (hesitationPenalty >= confidencePenalty && hesitationPenalty >= enthusiasmPenalty) {
+        worstMetric = "hesitation";
+      } else if (confidencePenalty >= enthusiasmPenalty) {
+        worstMetric = "confidence";
+      } else {
+        worstMetric = "enthusiasm";
+      }
+      score = compositeScore;
+    }
+
+    return { node, worstMetric, score };
+  });
+
+  // Sort descending by score (higher composite score = weaker node)
+  scored.sort((a, b) => b.score - a.score);
+
+  return opts?.limit ? scored.slice(0, opts.limit) : scored;
 }
 
 /**
@@ -266,7 +313,31 @@ export function getDivergencePoint(
   pathA: Id[],
   pathB: Id[]
 ): { nodeId: Id; indexInA: number; indexInB: number } | null {
-  throw new Error("not implemented");
+  if (pathA.length === 0 || pathB.length === 0) return null;
+
+  const minLen = Math.min(pathA.length, pathB.length);
+  let lastCommonIndex = -1;
+
+  for (let i = 0; i < minLen; i++) {
+    if (pathA[i] === pathB[i]) {
+      lastCommonIndex = i;
+    } else {
+      break;
+    }
+  }
+
+  // No divergence found (identical prefix up to the shorter path)
+  if (lastCommonIndex === -1) return null;
+  // The paths never diverge (one is a prefix of the other or identical)
+  if (lastCommonIndex === minLen - 1 && pathA[minLen] === pathB[minLen]) return null;
+  // If both paths are identical up to minLen and one is longer, that's a prefix — no fork
+  if (pathA[lastCommonIndex + 1] === undefined || pathB[lastCommonIndex + 1] === undefined) return null;
+
+  return {
+    nodeId: pathA[lastCommonIndex],
+    indexInA: lastCommonIndex,
+    indexInB: lastCommonIndex,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -277,13 +348,6 @@ export function getDivergencePoint(
  * Create a new `TreeNode` as a child of `parentNodeId`, wire it into
  * `parent.childIds`, and return the created node.
  *
- * The function:
- *   - Generates a unique `id` (opaque string prefixed "n_").
- *   - Sets `parentId = parentNodeId`.
- *   - Sets `childIds = []`.
- *   - Computes `expectedValue = round(data.successProbability * DEAL_VALUE)`.
- *   - Seeds `metrics` with neutral values (0.5 / 0.3 / 0.5).
- *
  * Throws when `parentNodeId` does not exist in `tree`.
  * The caller is responsible for calling `putTree` / `persist` afterwards.
  */
@@ -292,8 +356,12 @@ export function insertBranchNode(
   parentNodeId: Id,
   data: NewNodeData
 ): TreeNode {
+  const parent = getNodeById(tree, parentNodeId);
+  if (!parent) throw new Error(`insertBranchNode: parent node ${parentNodeId} not found`);
+
+  const id = newId("n");
   const node: TreeNode = {
-    id: "n_" + Math.random().toString(36).substring(2, 9),
+    id,
     parentId: parentNodeId,
     childIds: [],
     title: data.title,
@@ -301,14 +369,14 @@ export function insertBranchNode(
     speaker: data.speaker,
     tMs: data.tMs,
     successProbability: data.successProbability,
-    expectedValue: expectedValue(data.successProbability),
-    metrics: { confidence: 0.5, hesitation: 0.3, enthusiasm: 0.5 }
+    expectedValue: Math.round(data.successProbability * DEAL_VALUE),
+    metrics: { confidence: 0.5, hesitation: 0.3, enthusiasm: 0.5 },
   };
-  tree.nodes.push(node);
-  const parent = getNodeById(tree, parentNodeId);
-  if (parent) parent.childIds.push(node.id);
-  return node;
 
+  tree.nodes.push(node);
+  parent.childIds.push(id);
+
+  return node;
 }
 
 /**
@@ -322,7 +390,10 @@ export function updateNodeMetrics(
   nodeId: Id,
   metrics: SignalMetrics
 ): TreeNode {
-  throw new Error("not implemented");
+  const node = getNodeById(tree, nodeId);
+  if (!node) throw new Error(`updateNodeMetrics: node ${nodeId} not found`);
+  node.metrics = { ...metrics };
+  return node;
 }
 
 // ---------------------------------------------------------------------------
@@ -331,99 +402,73 @@ export function updateNodeMetrics(
 
 /**
  * Given a transcript segment, decide whether the conversation moved from
- * `currentNodeId` to one of its children (or near siblings).
+ * `currentNodeId` to one of its children.
  *
- * Uses Jaccard similarity as a cheap stand-in for embedding/LLM scoring
- * (swap in a real scorer by replacing the call to `bestMatch`).
+ * Uses Jaccard similarity as a cheap stand-in for embedding/LLM scoring.
  * A match is confirmed when `score >= BRANCH_THRESHOLD` (0.8).
- *
- * Supersedes `deriveStep` in tree.ts — same logic, richer return type.
  */
 export function routeTranscriptToNode(
   tree: Tree,
   currentNodeId: Id,
   segment: TranscriptSegment
 ): RouteResult {
-  throw new Error("not implemented");
+  const match = bestMatch(tree, currentNodeId, segment.text);
+
+  if (!match) {
+    return { toNodeId: currentNodeId, matched: false, score: 0, matchedNodeId: null };
+  }
+
+  if (match.score >= BRANCH_THRESHOLD) {
+    return {
+      toNodeId: match.nodeId,
+      matched: true,
+      score: match.score,
+      matchedNodeId: match.nodeId,
+    };
+  }
+
+  return {
+    toNodeId: currentNodeId,
+    matched: false,
+    score: match.score,
+    matchedNodeId: match.nodeId,
+  };
 }
 
 /**
- * Given a free-form utterance and recent conversation, use gpt-4o-mini to decide
- * whether it maps to an existing child node, represents a completely new fork,
- * or is just conversational filler (staying on the current node).
+ * Given a free-form utterance at `currentNodeId`, decide whether it maps to
+ * an existing child node or represents a genuinely new conversational fork.
+ *
+ * - score >= BRANCH_THRESHOLD → existing match; returns `{ created: false, matchedNodeId, score }`.
+ * - score <  BRANCH_THRESHOLD → new fork; calls `insertBranchNode` and returns
+ *   `{ created: true, node }`.
+ *
+ * Backs the `/agent/branch` endpoint.
  */
-export async function matchOrCreateBranch(
+export function matchOrCreateBranch(
   tree: Tree,
   currentNodeId: Id,
-  recentConversation: { role: string; text: string }[],
-  speakerToMatch: "buyer" | "seller" = "seller"
-): Promise<BranchDecision> {
-  const current = tree.nodes.find((n) => n.id === currentNodeId);
-  if (!current) throw new Error("Current node not found");
+  utterance: string
+): BranchDecision {
+  const match = bestMatch(tree, currentNodeId, utterance);
 
-  const childNodes = current.childIds
-    .map((id) => tree.nodes.find((n) => n.id === id))
-    .filter((n): n is TreeNode => !!n);
-
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  const conversationText = recentConversation
-    .map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`)
-    .join("\n");
-
-  const systemPrompt = `You are a semantic conversational router tracking a sales call between a SELLER and a BUYER. 
-We are currently at a specific node in a decision tree. The next expected speaker is the ${speakerToMatch.toUpperCase()}.
-Available child branches representing the ${speakerToMatch.toUpperCase()}'s possible responses:
-${childNodes.length > 0 ? childNodes.map((n) => `- ID: ${n.id} | Title: ${n.title} | Desc: ${n.description}`).join("\n") : "(None)"}
-
-Here is the recent conversation transcript since the last node switch.
-Determine the next action based on the ${speakerToMatch.toUpperCase()}'s intent in the recent transcript.
-- "match": The intent closely aligns with one of the available child branches.
-- "stay": They are using conversational filler (e.g. "uh huh", "okay", "go on", "right"), confirming, or continuing the current thought without branching.
-- "new": They are proposing a completely new direction that does not match any child branch.
-
-Return JSON ONLY:
-{
-  "action": "match" | "stay" | "new",
-  "nodeId": "id of the matched node, or null",
-  "newTitle": "2-4 word title if new, else null",
-  "newDescription": "1-2 sentence description if new, else null"
-}`;
-
-  try {
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: conversationText }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.1,
-    });
-
-    const outText = res.choices[0].message.content || "{}";
-    const out = JSON.parse(outText);
-
-    if (out.action === "match" && out.nodeId) {
-      return { created: false, matchedNodeId: out.nodeId, score: 1.0 };
-    } else if (out.action === "new") {
-      const newNode = insertBranchNode(tree, currentNodeId, {
-        title: out.newTitle || "New Branch",
-        description: out.newDescription || "No description provided",
-        speaker: speakerToMatch,
-        tMs: 0,
-        successProbability: 0.5
-      });
-      return { created: true, node: newNode };
-    } else {
-      return { created: false, matchedNodeId: currentNodeId, score: 1.0 };
-    }
-  } catch (e) {
-    console.error("\n[Router Error] LLM returned nonsense JSON or failed. Staying at current node.");
-    console.error(e);
-    console.error("--------------------------------------------------\n");
-    return { created: false, matchedNodeId: currentNodeId, score: 1.0 };
+  if (match && match.score >= BRANCH_THRESHOLD) {
+    return { created: false, matchedNodeId: match.nodeId, score: match.score };
   }
+
+  // Derive a minimal NewNodeData from the utterance text
+  const current = getNodeById(tree, currentNodeId);
+  const newNodeData: NewNodeData = {
+    title: utterance.slice(0, 60),
+    description: utterance,
+    // New branch speaker is the opposite of the current node's speaker
+    speaker: current?.speaker === "seller" ? "buyer" : "seller",
+    tMs: 0,
+    successProbability: 0.5,
+  };
+
+  const node = insertBranchNode(tree, currentNodeId, newNodeData);
+  return { created: true, node };
 }
 
 // ---------------------------------------------------------------------------
@@ -438,5 +483,5 @@ Return JSON ONLY:
  * Used by `GET /recordings/:id/walkthrough` to build `WalkthroughBundle.timeline`.
  */
 export function buildWalkthroughTimeline(traversal: Traversal): TimelineCue[] {
-  throw new Error("not implemented");
+  return traversal.steps.map((s) => ({ atMs: s.tMs, nodeId: s.toNodeId }));
 }
