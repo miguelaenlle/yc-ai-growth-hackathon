@@ -3,9 +3,16 @@ import { getDecisionSummary, matchOrCreateBranch } from "./tree-ops.js";
 import { getRecording, getTree, store } from "./store.js";
 import type { Id, Recording, Tree, TranscriptSegment } from "./types.js";
 
+import { promises as fs } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 // Ensure the API key is loaded
 import dotenv from "dotenv";
 dotenv.config();
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CACHE_DIR = join(__dirname, "data", "cache");
 
 import { getPersonaInfo } from "./personas.js";
 
@@ -30,12 +37,32 @@ function generateMockPrompt(recordingId: Id, currentNodeId: Id): string {
   const personaInfo = getPersonaInfo("skeptical_steve");
 
   let pathContext = "No prior context.";
+  let branchRules = "";
   if (tree && currentNodeId) {
     try {
       const summary = getDecisionSummary(tree, currentNodeId);
       pathContext = summary.path.map(n => `[${n.speaker.toUpperCase()}]: ${n.description}`).join("\n");
     } catch (e) {
       console.warn("Could not get decision summary, using fallback");
+    }
+
+    const current = tree.nodes.find(n => n.id === currentNodeId);
+    if (current) {
+      const children = current.childIds.map(id => tree.nodes.find(n => n.id === id)).filter(Boolean) as any[];
+      if (children.length > 0) {
+        branchRules = "\nEXPECTED NEXT STEPS (Use these as a guide for how to evaluate the seller's response and what to say next):\n";
+        for (const child of children) {
+           branchRules += `- If the seller's response maps to "${child.title}" (${child.description}):\n`;
+           const grandchildren = child.childIds.map((id: Id) => tree.nodes.find(n => n.id === id)).filter(Boolean) as any[];
+           const buyerResponses = grandchildren.filter(n => n.speaker === "buyer");
+           if (buyerResponses.length > 0) {
+             branchRules += `  -> You MUST respond with something similar to: "${buyerResponses[0].description}"\n`;
+           } else {
+             branchRules += `  -> Respond naturally to their point as a skeptical buyer.\n`;
+           }
+        }
+        branchRules += `- If they don't say any of these, respond naturally to their point.\n`;
+      }
     }
   }
 
@@ -51,6 +78,7 @@ ${personaInfo}
 
 CONVERSATION SO FAR:
 ${pathContext}
+${branchRules}
 
 INSTRUCTIONS:
 1. Stay strictly in character as the buyer. 
@@ -69,6 +97,24 @@ async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNo
   if (!tree || !currentNodeId) {
     clientWs.send(JSON.stringify({ type: "precap_complete" }));
     return;
+  }
+
+  const cachePath = join(CACHE_DIR, `precap_${currentNodeId}.json`);
+  try {
+    const cached = await fs.readFile(cachePath, "utf-8");
+    const script = JSON.parse(cached);
+    console.log(`[Cache Hit] Loaded precap for ${currentNodeId}`);
+    for (const chunk of script) {
+      if (chunk.type === "precap_node") {
+        clientWs.send(JSON.stringify({ type: "precap_node", nodeId: chunk.nodeId }));
+      } else if (chunk.type === "precap_audio") {
+        clientWs.send(JSON.stringify({ type: "precap_audio", b64_data: chunk.b64_data }));
+      }
+    }
+    clientWs.send(JSON.stringify({ type: "precap_complete" }));
+    return;
+  } catch (e) {
+    // Cache miss, proceed to generate
   }
 
   try {
@@ -109,9 +155,12 @@ Each object must have:
     const parsed = JSON.parse(llmData.choices[0].message.content);
     const script = parsed.script || [];
 
+    const cacheData: any[] = [];
+
     for (const chunk of script) {
       // Send the node sync event
       clientWs.send(JSON.stringify({ type: "precap_node", nodeId: chunk.nodeId }));
+      cacheData.push({ type: "precap_node", nodeId: chunk.nodeId });
 
       // We simulate TTS by fetching from OpenAI TTS API
       const text = chunk.narration;
@@ -133,9 +182,18 @@ Each object must have:
         const arrayBuffer = await response.arrayBuffer();
         const b64_data = Buffer.from(arrayBuffer).toString('base64');
         clientWs.send(JSON.stringify({ type: "precap_audio", b64_data }));
+        cacheData.push({ type: "precap_audio", b64_data });
       } else {
         console.error("TTS failed:", await response.text());
       }
+    }
+
+    try {
+      await fs.mkdir(CACHE_DIR, { recursive: true });
+      await fs.writeFile(cachePath, JSON.stringify(cacheData));
+      console.log(`[Cache Write] Saved precap for ${currentNodeId}`);
+    } catch (e) {
+      console.error("Failed to write cache:", e);
     }
   } catch (e) {
     console.error("Error during precap:", e);
@@ -250,6 +308,23 @@ export async function handleMockSession(
 
             if (switchedNode) {
               recentConversation = []; // Reset context since we moved
+
+              // NEW: Update OpenAI's system prompt with the new current node's context
+              const newSystemPrompt = generateMockPrompt(recordingId, currentNodeId);
+              const sessionUpdate = {
+                type: "session.update",
+                session: {
+                  type: "realtime",
+                  turn_detection: {
+                    type: "server_vad",
+                    threshold: 0.8,
+                    prefix_padding_ms: 300,
+                    silence_duration_ms: 800
+                  },
+                  instructions: newSystemPrompt
+                }
+              };
+              openaiWs.send(JSON.stringify(sessionUpdate));
 
               // Depth Tracking
               currentDepth++;

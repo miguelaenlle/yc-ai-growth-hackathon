@@ -65,9 +65,23 @@ const treeCss = `
   }
 `;
 
-const TreeNodeView = ({ node, allNodes, currentNodeId }: { node: any, allNodes: any[], currentNodeId: string }) => {
+const TreeNodeView = ({ 
+  node, 
+  allNodes, 
+  currentNodeId, 
+  targetNodeIds,
+  maxDepthNodeIds
+}: { 
+  node: any, 
+  allNodes: any[], 
+  currentNodeId: string,
+  targetNodeIds: string[],
+  maxDepthNodeIds: string[]
+}) => {
   const children = allNodes.filter((n: any) => n.parentId === node.id);
   const isCurrent = node.id === currentNodeId;
+  const isBreakpoint = targetNodeIds.includes(node.id);
+  const isMaxDepth = maxDepthNodeIds.includes(node.id);
   
   return (
     <li>
@@ -82,13 +96,39 @@ const TreeNodeView = ({ node, allNodes, currentNodeId }: { node: any, allNodes: 
         zIndex: 2,
         boxShadow: isCurrent ? '0 4px 6px -1px rgba(37, 99, 235, 0.4)' : '0 1px 3px rgba(0,0,0,0.1)'
       }}>
+        {isBreakpoint && (
+          <div style={{
+            position: 'absolute', top: -6, right: -6, width: 14, height: 14, 
+            borderRadius: '50%', background: '#ef4444', border: '2px solid white',
+            boxShadow: '0 0 0 2px #ef4444', zIndex: 10
+          }} title="Breakpoint" />
+        )}
         <div style={{ fontWeight: 'bold' }}>{node.title}</div>
         <div style={{ fontSize: '0.75em', color: isCurrent ? '#bfdbfe' : '#6b7280' }}>{node.id}</div>
       </div>
+      
+      {isMaxDepth && (
+        <div style={{
+          position: 'absolute',
+          bottom: -10,
+          left: '-50%',
+          right: '-50%',
+          borderBottom: '2px dashed #ef4444',
+          zIndex: 0
+        }} title="Depth Limit Breakpoint" />
+      )}
+
       {children.length > 0 && (
         <ul>
           {children.map((child: any) => (
-            <TreeNodeView key={child.id} node={child} allNodes={allNodes} currentNodeId={currentNodeId} />
+            <TreeNodeView 
+              key={child.id} 
+              node={child} 
+              allNodes={allNodes} 
+              currentNodeId={currentNodeId}
+              targetNodeIds={targetNodeIds}
+              maxDepthNodeIds={maxDepthNodeIds}
+            />
           ))}
         </ul>
       )}
@@ -107,12 +147,43 @@ export default function App() {
   const [breakpoint, setBreakpoint] = useState<{ reached: boolean, reason: string }>({ reached: false, reason: "" });
   const [treeNodes, setTreeNodes] = useState<any[]>([]);
   const [currentNodeId, setCurrentNodeId] = useState<string>("n_push");
+  const [zoom, setZoom] = useState<number>(0.6); // Default zoom level so it fits
+
+  const targetNodesConfig = "n_less_year,n_more_year";
+  const startNodeConfig = "n_push";
+  const maxDepthConfig = 4;
+
+  const [maxDepthNodeIds, setMaxDepthNodeIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetch("http://localhost:3001/trees/tree_convex")
       .then(res => res.json())
       .then(data => {
-        if (data && data.nodes) setTreeNodes(data.nodes);
+        if (data && data.nodes) {
+          setTreeNodes(data.nodes);
+          
+          // Calculate max depth nodes
+          const depthMap = new Map<string, number>();
+          const queue = [{ id: startNodeConfig, depth: 0 }];
+          const maxDepthIds: string[] = [];
+          
+          while (queue.length > 0) {
+            const { id, depth } = queue.shift()!;
+            depthMap.set(id, depth);
+            if (depth === maxDepthConfig) {
+              maxDepthIds.push(id);
+            }
+            if (depth < maxDepthConfig) {
+              const node = data.nodes.find((n: any) => n.id === id);
+              if (node && node.childIds) {
+                for (const childId of node.childIds) {
+                  queue.push({ id: childId, depth: depth + 1 });
+                }
+              }
+            }
+          }
+          setMaxDepthNodeIds(maxDepthIds);
+        }
       })
       .catch(err => console.error("Failed to fetch tree:", err));
   }, []);
@@ -144,8 +215,7 @@ export default function App() {
     }
 
     addLog("Connecting to WebSocket...");
-    const targetNodes = "n_less_year,n_more_year";
-    const wsUrl = `ws://localhost:3001/mock/session/rec_mock1?currentNodeId=n_push&includePrecap=true&maxDepth=4&targetNodeIds=${targetNodes}`;
+    const wsUrl = `ws://localhost:3001/mock/session/rec_mock1?currentNodeId=${startNodeConfig}&includePrecap=true&maxDepth=${maxDepthConfig}&targetNodeIds=${targetNodesConfig}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -373,15 +443,30 @@ export default function App() {
         </div>
 
         {/* Tree Visualization */}
-        <div style={{ flex: 1, height: '400px', overflowY: 'scroll', background: '#fff', border: '1px solid #ccc', padding: 10, borderRadius: 4 }}>
-          <style dangerouslySetInnerHTML={{ __html: treeCss }} />
-          <h3 style={{ marginTop: 0 }}>Conversation Tree</h3>
-          <div style={{ paddingLeft: '10px' }}>
-            <ul className="tree-lines">
-              {treeNodes.filter(n => !n.parentId).map(rootNode => (
-                 <TreeNodeView key={rootNode.id} node={rootNode} allNodes={treeNodes} currentNodeId={currentNodeId} />
-              ))}
-            </ul>
+        <div style={{ flex: 1, height: '600px', display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #ccc', borderRadius: 4 }}>
+          <div style={{ padding: '10px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0 }}>Conversation Tree</h3>
+            <div>
+              <button onClick={() => setZoom(z => z - 0.1)} style={{ marginRight: 5 }}>Zoom Out</button>
+              <button onClick={() => setZoom(z => z + 0.1)}>Zoom In</button>
+            </div>
+          </div>
+          <div style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '20px' }}>
+            <style dangerouslySetInnerHTML={{ __html: treeCss }} />
+            <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.2s' }}>
+              <ul className="tree-lines">
+                {treeNodes.filter(n => !n.parentId).map(rootNode => (
+                   <TreeNodeView 
+                     key={rootNode.id} 
+                     node={rootNode} 
+                     allNodes={treeNodes} 
+                     currentNodeId={currentNodeId} 
+                     targetNodeIds={targetNodesConfig.split(",")}
+                     maxDepthNodeIds={maxDepthNodeIds}
+                   />
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
