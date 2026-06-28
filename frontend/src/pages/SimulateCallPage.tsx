@@ -169,12 +169,32 @@ export function SimulateCallPage() {
     navigate(-1);
   };
 
+  // Hand the call to the AI from wherever the conversation currently is — it
+  // takes over and plays out the optimal path from this node.
+  const aiTakeOver = () => {
+    const fromNode = session.activeNodeId ?? startNodeId;
+    session.stop();
+    navigate(`/call/${id}/watch?from=${fromNode}`, {
+      state: { buyerName, company: navState?.company },
+    });
+  };
+
   return (
     <div className="flex h-screen flex-col bg-bg text-text">
       {/* Top bar — timer left, controls right */}
       <header className="flex shrink-0 items-center justify-between border-b border-border bg-surface px-8 py-5">
         <span className="font-mono text-2xl tabular-nums text-text">{mmss(seconds)}</span>
         <div className="flex items-center gap-3">
+          <button
+            onClick={aiTakeOver}
+            disabled={!live && !ready}
+            className="flex items-center gap-1.5 rounded-md border border-accent/60 bg-accent-quiet px-4 py-2 text-sm font-medium text-accent transition-all duration-150 hover:bg-accent/20 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 3L13.6 8.4L19 10L13.6 11.6L12 17L10.4 11.6L5 10L10.4 8.4L12 3Z" />
+            </svg>
+            Let AI take over
+          </button>
           <button
             onClick={() => session.setMuted(!session.muted)}
             disabled={!live}
@@ -232,12 +252,26 @@ export function SimulateCallPage() {
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-bg/60 backdrop-blur-md">
               <p className="text-lg font-semibold text-text">Conversation ended</p>
               <p className="text-sm text-text-muted">{endReasonText}</p>
-              <button
-                onClick={() => navigate(-1)}
-                className="mt-3 rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
-              >
-                Back to review
-              </button>
+              <div className="mt-3 flex items-center gap-3">
+                {startNodeId && (
+                  <button
+                    onClick={() =>
+                      navigate(`/call/${id}/watch?from=${startNodeId}`, {
+                        state: { buyerName, company: navState?.company },
+                      })
+                    }
+                    className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+                  >
+                    See how the AI would've done it
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate(-1)}
+                  className="rounded-md border border-border px-4 py-2 text-sm text-text-muted transition-colors hover:border-border-strong hover:text-text"
+                >
+                  Back to review
+                </button>
+              </div>
             </div>
           )}
 

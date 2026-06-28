@@ -164,17 +164,34 @@ function CallNodeImpl({ data }: NodeProps) {
           </div>
         )}
 
-        {d.focused === true && typeof d.onSimulate === "function" && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              (d.onSimulate as () => void)();
-            }}
-            className="absolute left-1/2 top-full mt-3 -translate-x-1/2 whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
-          >
-            Simulate from here
-          </button>
-        )}
+        {d.focused === true &&
+          (typeof d.onSimulate === "function" || typeof d.onWatch === "function") && (
+            <div className="absolute left-1/2 top-full mt-3 flex -translate-x-1/2 flex-col items-center gap-2">
+              {typeof d.onSimulate === "function" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    (d.onSimulate as () => void)();
+                  }}
+                  className="whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+                >
+                  Simulate from here
+                </button>
+              )}
+              {typeof d.onWatch === "function" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    (d.onWatch as () => void)();
+                  }}
+                  className="flex items-center gap-1.5 whitespace-nowrap rounded-md border border-accent/60 bg-accent-quiet px-3 py-1.5 text-xs font-medium text-accent shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-all duration-150 hover:bg-accent/20 active:scale-[0.98]"
+                >
+                  <Sparkle />
+                  Watch the AI ace it
+                </button>
+              )}
+            </div>
+          )}
       </div>
 
       <Handle type="source" position={Position.Right} style={handleStyle} />

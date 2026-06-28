@@ -145,23 +145,32 @@ interface FlowProps {
   onPlaybackEnd: () => void;
   /** Start a simulation from a (UI) tree node id. */
   onSimulateNode: (uiNodeId: string) => void;
+  /** Watch the AI ace the path from a (UI) tree node id. */
+  onWatchNode: (uiNodeId: string) => void;
 }
 
-function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode }: FlowProps) {
+function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode, onWatchNode }: FlowProps) {
   const isSummarizePlaying = summarizeStatus === "playing";
 
-  // Inject a per-node "simulate from here" action onto the simulatable nodes.
-  // CallNode renders it only on the focused node, so the action is scoped to
-  // whatever node is selected. The augmented copy is what the animation repacks
-  // each frame, so onSimulate survives playback.
+  // Inject per-node "simulate" + "watch AI" actions onto the simulatable nodes.
+  // CallNode renders them only on the focused node, so they're scoped to whatever
+  // node is selected. The augmented copy is what the animation repacks each
+  // frame, so the actions survive playback.
   const baseNodes = useMemo(
     () =>
       initialNodes.map((n) =>
         isSimulatableUiNode(n.id)
-          ? { ...n, data: { ...n.data, onSimulate: () => onSimulateNode(n.id) } }
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                onSimulate: () => onSimulateNode(n.id),
+                onWatch: () => onWatchNode(n.id),
+              },
+            }
           : n,
       ),
-    [onSimulateNode],
+    [onSimulateNode, onWatchNode],
   );
 
   const [selectedId, setSelectedId] = useState(SUMMARIZE_START_NODE_ID);
@@ -384,6 +393,17 @@ export function CallReviewPage() {
     [id, navigate, buyer.name, company],
   );
 
+  // Watch the AI ace the path from a tree node (same UI→backend node mapping).
+  const handleWatchNode = useCallback(
+    (uiNodeId: string) => {
+      const backendId = toBackendNodeId(uiNodeId);
+      navigate(`/call/${id}/watch?from=${backendId}`, {
+        state: { buyerName: buyer.name, company },
+      });
+    },
+    [id, navigate, buyer.name, company],
+  );
+
   if (isLoading) {
     return <StateScreen>Loading call…</StateScreen>;
   }
@@ -419,6 +439,7 @@ export function CallReviewPage() {
             onSummarize={handleSummarize}
             onPlaybackEnd={handlePlaybackEnd}
             onSimulateNode={handleSimulateNode}
+            onWatchNode={handleWatchNode}
           />
         </ReactFlowProvider>
       </div>
