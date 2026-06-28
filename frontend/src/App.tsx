@@ -244,20 +244,17 @@ export default function App() {
           addLog(`[TREE] Moved to existing node: ${msg.nodeId}`);
         } else if (msg.type === "mock_node_created") {
           setCurrentNodeId(msg.nodeId);
-          setTreeNodes(prev => [...prev, { id: msg.nodeId, title: msg.title, description: "New branch created by LLM" }]);
+          setTreeNodes(prev => [...prev, { id: msg.nodeId, title: msg.title, description: "New branch created by LLM", parentId: msg.parentId }]);
           addLog(`[TREE] Created and moved to new node: ${msg.nodeId} (${msg.title})`);
         } else if (msg.type === "precap_complete") {
           precapQueueRef.current.push({ type: "complete" });
           processPrecapQueue();
+        } else if (msg.type === "info") {
+          addLog(`[INFO] ${msg.text}`);
         } else if (msg.type === "response.audio.delta" || msg.type === "response.output_audio.delta") {
           playPCM16(msg.delta);
         } else if (msg.type === "error") {
           addLog(`[ERROR] ${JSON.stringify(msg.error)}`);
-        } else {
-          // Log other generic OpenAI realtime events but ignore the spammy audio ones
-          if (!["response.audio.delta", "response.output_audio.delta", "input_audio_buffer.append"].includes(msg.type)) {
-            addLog(`[EVENT] ${msg.type}`);
-          }
         }
       } catch (err) {
         addLog("Error parsing WS message");

@@ -355,7 +355,8 @@ export function routeTranscriptToNode(
 export async function matchOrCreateBranch(
   tree: Tree,
   currentNodeId: Id,
-  recentConversation: { role: string; text: string }[]
+  recentConversation: { role: string; text: string }[],
+  speakerToMatch: "buyer" | "seller" = "seller"
 ): Promise<BranchDecision> {
   const current = tree.nodes.find((n) => n.id === currentNodeId);
   if (!current) throw new Error("Current node not found");
@@ -370,16 +371,16 @@ export async function matchOrCreateBranch(
     .map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`)
     .join("\n");
 
-  const systemPrompt = `You are a semantic conversational router. 
-The user (SELLER) is speaking to a prospect (BUYER). We are at a specific node in a decision tree.
-Available child branches from here:
+  const systemPrompt = `You are a semantic conversational router tracking a sales call between a SELLER and a BUYER. 
+We are currently at a specific node in a decision tree. The next expected speaker is the ${speakerToMatch.toUpperCase()}.
+Available child branches representing the ${speakerToMatch.toUpperCase()}'s possible responses:
 ${childNodes.length > 0 ? childNodes.map((n) => `- ID: ${n.id} | Title: ${n.title} | Desc: ${n.description}`).join("\n") : "(None)"}
 
 Here is the recent conversation transcript since the last node switch.
-Determine the next action based on the seller's intent.
-- "match": The seller's intent closely aligns with one of the available child branches.
-- "stay": The seller is using conversational filler (e.g. "uh huh", "okay", "go on", "right"), confirming, or continuing the current thought without branching.
-- "new": The seller is proposing a completely new direction that does not match any child branch.
+Determine the next action based on the ${speakerToMatch.toUpperCase()}'s intent in the recent transcript.
+- "match": The intent closely aligns with one of the available child branches.
+- "stay": They are using conversational filler (e.g. "uh huh", "okay", "go on", "right"), confirming, or continuing the current thought without branching.
+- "new": They are proposing a completely new direction that does not match any child branch.
 
 Return JSON ONLY:
 {
@@ -409,7 +410,7 @@ Return JSON ONLY:
       const newNode = insertBranchNode(tree, currentNodeId, {
         title: out.newTitle || "New Branch",
         description: out.newDescription || "No description provided",
-        speaker: "seller",
+        speaker: speakerToMatch,
         tMs: 0,
         successProbability: 0.5
       });

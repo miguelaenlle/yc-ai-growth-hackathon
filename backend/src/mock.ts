@@ -56,7 +56,8 @@ function generateMockPrompt(recordingId: Id, currentNodeId: Id): string {
            const grandchildren = child.childIds.map((id: Id) => tree.nodes.find(n => n.id === id)).filter(Boolean) as any[];
            const buyerResponses = grandchildren.filter(n => n.speaker === "buyer");
            if (buyerResponses.length > 0) {
-             branchRules += `  -> You MUST respond with something similar to: "${buyerResponses[0].description}"\n`;
+             const options = buyerResponses.map(r => `"${r.description}"`).join(" OR ");
+             branchRules += `  -> You MUST respond with something similar to one of these: ${options}\n`;
            } else {
              branchRules += `  -> Respond naturally to their point as a skeptical buyer.\n`;
            }
@@ -104,6 +105,7 @@ async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNo
     const cached = await fs.readFile(cachePath, "utf-8");
     const script = JSON.parse(cached);
     console.log(`[Cache Hit] Loaded precap for ${currentNodeId}`);
+    clientWs.send(JSON.stringify({ type: "info", text: `Loaded TTS from local cache for node ${currentNodeId}` }));
     for (const chunk of script) {
       if (chunk.type === "precap_node") {
         clientWs.send(JSON.stringify({ type: "precap_node", nodeId: chunk.nodeId }));
@@ -256,11 +258,95 @@ export async function handleMockSession(
           prefix_padding_ms: 300,
           silence_duration_ms: 800
         },
+        input_audio_transcription: { model: "whisper-1" },
         instructions: systemPrompt
       }
     };
     openaiWs.send(JSON.stringify(sessionUpdate));
   });
+
+  const runRouter = async (speaker: "seller" | "buyer") => {
+    const rec = getRecording(recordingId);
+    const tree = rec ? getTree(rec.treeId) : undefined;
+    if (!tree) return;
+
+    const current = tree.nodes.find(n => n.id === currentNodeId);
+    if (!current) return;
+    
+    // Only route if the current node expects this speaker
+    const expectedSpeaker = current.speaker === "buyer" ? "seller" : "buyer";
+    if (speaker !== expectedSpeaker) return;
+
+    try {
+      const result = await matchOrCreateBranch(tree, currentNodeId, recentConversation, speaker);
+      
+      let switchedNode = false;
+      if (result.created) {
+        console.log(`New node created from ${speaker} input:`, result.node.id);
+        currentNodeId = result.node.id;
+        switchedNode = true;
+        clientWs.send(JSON.stringify({ type: "mock_node_created", nodeId: currentNodeId, title: result.node.title, parentId: current.id }));
+      } else if (result.matchedNodeId !== currentNodeId) {
+        console.log(`Matched existing node (${speaker}):`, result.matchedNodeId);
+        currentNodeId = result.matchedNodeId;
+        switchedNode = true;
+        clientWs.send(JSON.stringify({ type: "mock_node_matched", nodeId: currentNodeId }));
+      } else {
+        console.log(`LLM router elected to stay at current node (${speaker}):`, currentNodeId);
+      }
+
+      if (switchedNode) {
+        recentConversation = []; // Reset context since we moved
+
+        // NEW: Update OpenAI's system prompt with the new current node's context
+        const newSystemPrompt = generateMockPrompt(recordingId, currentNodeId);
+        const sessionUpdate = {
+          type: "session.update",
+          session: {
+            type: "realtime",
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.8,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 800
+            },
+            input_audio_transcription: { model: "whisper-1" },
+            instructions: newSystemPrompt
+          }
+        };
+        openaiWs.send(JSON.stringify(sessionUpdate));
+
+        // Depth Tracking
+        currentDepth++;
+        let breakpointHit = false;
+        let breakpointReason = "";
+
+        if (maxDepth !== undefined && currentDepth >= maxDepth) {
+          breakpointHit = true;
+          breakpointReason = "depth";
+        } else if (targetNodeIds.includes(currentNodeId)) {
+          breakpointHit = true;
+          breakpointReason = "node";
+        }
+
+        if (breakpointHit) {
+          console.log(`Breakpoint reached. Reason: ${breakpointReason}`);
+          clientWs.send(JSON.stringify({
+            type: "mock_breakpoint_reached",
+            reason: breakpointReason,
+            nodeId: currentNodeId,
+            depth: currentDepth
+          }));
+          
+          // End the session to stop OpenAI from talking
+          openaiWs.close();
+          return;
+        }
+      }
+    } catch (e) {
+      console.error("Error branching:", e);
+    }
+  };
 
   // Route messages from OpenAI -> Client
   openaiWs.on("message", async (data) => {
@@ -274,6 +360,7 @@ export async function handleMockSession(
         appendTranscript(recordingId, "buyer", event.transcript);
         if (event.transcript) {
           recentConversation.push({ role: "buyer", text: event.transcript });
+          runRouter("buyer");
         }
       }
 
@@ -282,80 +369,7 @@ export async function handleMockSession(
         appendTranscript(recordingId, "seller", event.transcript);
         if (event.transcript) {
           recentConversation.push({ role: "seller", text: event.transcript });
-        }
-
-        // Try to branch the tree based on the seller's input
-        const rec = getRecording(recordingId);
-        const tree = rec ? getTree(rec.treeId) : undefined;
-        if (tree && event.transcript) {
-          try {
-            const result = await matchOrCreateBranch(tree, currentNodeId, recentConversation);
-            
-            let switchedNode = false;
-            if (result.created) {
-              console.log("New node created from seller input:", result.node.id);
-              currentNodeId = result.node.id;
-              switchedNode = true;
-              clientWs.send(JSON.stringify({ type: "mock_node_created", nodeId: currentNodeId, title: result.node.title }));
-            } else if (result.matchedNodeId !== currentNodeId) {
-              console.log("Matched existing node:", result.matchedNodeId);
-              currentNodeId = result.matchedNodeId;
-              switchedNode = true;
-              clientWs.send(JSON.stringify({ type: "mock_node_matched", nodeId: currentNodeId }));
-            } else {
-              console.log("LLM router elected to stay at current node:", currentNodeId);
-            }
-
-            if (switchedNode) {
-              recentConversation = []; // Reset context since we moved
-
-              // NEW: Update OpenAI's system prompt with the new current node's context
-              const newSystemPrompt = generateMockPrompt(recordingId, currentNodeId);
-              const sessionUpdate = {
-                type: "session.update",
-                session: {
-                  type: "realtime",
-                  turn_detection: {
-                    type: "server_vad",
-                    threshold: 0.8,
-                    prefix_padding_ms: 300,
-                    silence_duration_ms: 800
-                  },
-                  instructions: newSystemPrompt
-                }
-              };
-              openaiWs.send(JSON.stringify(sessionUpdate));
-
-              // Depth Tracking
-              currentDepth++;
-              let breakpointHit = false;
-              let breakpointReason = "";
-
-              if (maxDepth !== undefined && currentDepth >= maxDepth) {
-                breakpointHit = true;
-                breakpointReason = "depth";
-              } else if (targetNodeIds.includes(currentNodeId)) {
-                breakpointHit = true;
-                breakpointReason = "node";
-              }
-
-              if (breakpointHit) {
-                console.log(`Breakpoint reached. Reason: ${breakpointReason}`);
-                clientWs.send(JSON.stringify({
-                  type: "mock_breakpoint_reached",
-                  reason: breakpointReason,
-                  nodeId: currentNodeId,
-                  depth: currentDepth
-                }));
-                
-                // End the session to stop OpenAI from talking
-                openaiWs.close();
-                return;
-              }
-            }
-          } catch (e) {
-            console.error("Error branching:", e);
-          }
+          runRouter("seller");
         }
       }
 
