@@ -24,6 +24,10 @@
   --color-accent: #3dd6d0;
   --color-accent-quiet: #1e3a3a;
 
+  /* actor — muted, off the signal ramp + teal (buyer vs seller) */
+  --color-buyer: #b8a8f0;
+  --color-seller: #93b8db;
+
   /* type */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;

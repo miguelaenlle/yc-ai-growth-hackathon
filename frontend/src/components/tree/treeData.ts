@@ -4,14 +4,34 @@ import type { Node, Edge } from "@xyflow/react";
 // Convex example: a real recorded "spine" (the lost call) plus AI-explored
 // alternative branches, each scored by a success probability.
 
+export type Actor = "buyer" | "seller";
+
 export interface CallNodeData {
   kind: "real" | "ai";
   title: string;
   description?: string;
   success?: number; // 0..1, AI nodes only → signal ramp
   onPath?: boolean; // on the real recorded path
+  actor?: Actor;
   [key: string]: unknown;
 }
+
+// Whose words/decision each node represents.
+const ACTOR: Record<string, Actor> = {
+  opening: "seller", discovery: "seller", pushback: "buyer", roadmap: "seller",
+  deal_lost: "buyer", lost_followup: "seller", alternative: "seller",
+  continue: "buyer", book_demo: "seller", demo_prep: "seller",
+  loop_champion: "seller", pricing: "buyer", discount: "seller",
+  roi_case: "seller", cfo: "buyer", skeptical: "buyer",
+  live_walkthrough: "seller", customization: "seller", needs_proof: "buyer",
+  case_study: "seller", scope_risk: "buyer", quantify: "seller",
+  pain_big: "buyer", urgency: "seller", exec_intro: "seller",
+  proposal: "seller", negotiate: "seller", quick_win: "seller",
+  expand: "seller", pain_small: "buyer", nurture: "seller",
+  reframe: "seller", agenda: "seller", discovery_deep: "seller",
+  multithread: "seller", group_demo: "seller", tech_eval: "seller",
+  security: "buyer", rapport: "seller", next_steps: "seller",
+};
 
 export interface RawNode {
   id: string;
@@ -246,6 +266,7 @@ function build(): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
       description: node.description,
       success: node.success,
       onPath: node.onPath,
+      actor: ACTOR[node.id],
       depth,
     },
     width: BASE_W,

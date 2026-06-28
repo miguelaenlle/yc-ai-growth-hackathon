@@ -29,6 +29,13 @@ function CallNodeImpl({ data }: NodeProps) {
   const scale = typeof d.scale === "number" ? d.scale : 1;
   const titleOnly = d.titleOnly === true;
 
+  // Actor: a blue left bar marks the seller (the role the user simulates);
+  // buyer has no bar. Hover shows the label.
+  const actor = d.actor === "buyer" || d.actor === "seller" ? d.actor : undefined;
+  const actorLabel = actor === "buyer" ? "Buyer" : actor === "seller" ? "Seller" : undefined;
+  const isSeller = actor === "seller";
+  const sideColor = isAi ? "border-accent/60" : "border-border-strong";
+
   return (
     // Outer wrapper fills the (focus-scaled) React Flow box; handles anchor here
     // so edges stay correct. The card inside is fixed-size and scaled.
@@ -45,75 +52,95 @@ function CallNodeImpl({ data }: NodeProps) {
           transformOrigin: "top left",
         }}
       >
-      <div
-        style={{
-          animationDelay: `${depth * 70}ms`,
-          width: "100%",
-          height: "100%",
-          opacity: typeof d.opacity === "number" ? d.opacity : 1,
-        }}
-        className={
-          "group relative flex cursor-pointer flex-col rounded-lg transition-[opacity,border-color,box-shadow] duration-300 " +
-          (titleOnly ? "items-center justify-center px-3 py-2 text-center " : "px-4 py-3 ") +
-          // emphasis: selected pulses strongest; trunk nodes glow + ring
-          (d.focused
-            ? "ct-selected ring-2 ring-accent "
-            : d.onCurrentPath
-              ? "ring-2 ring-accent/60 shadow-[0_0_18px_-4px_rgba(61,214,208,0.45)] "
-              : "") +
-          // identity: AI = teal border (+ glimmer unless focused); Real = neutral
-          (isAi
-            ? "ct-ai-bg border border-accent/60 hover:border-accent/90 " +
-              (d.focused ? "" : "ct-glimmer shadow-[0_0_16px_-6px_rgba(61,214,208,0.45)] ")
-            : "border-l-[3px] border-y border-r border-y-border-strong border-r-border-strong border-l-text-muted bg-surface-2 hover:border-l-text " +
-              (d.focused ? "" : "animate-fade-up shadow-[0_1px_2px_rgba(0,0,0,0.4)] "))
-        }
-      >
-      {d.focused === true && (
-        <div className="absolute -right-2 -top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-          Current
-        </div>
-      )}
-      {/* tag row */}
-      {!titleOnly && (
-      <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">
-        {isAi ? (
-          <>
-            <span className="text-accent">
-              <Sparkle />
-            </span>
-            <span className="text-accent">AI</span>
-            {typeof d.success === "number" && (
-              <span style={{ color: rampColor(d.success) }}>
-                · {Math.round(d.success * 100)}% success
-              </span>
-            )}
-          </>
-        ) : (
-          <>
-            <span className="h-2 w-2 shrink-0 rounded-full bg-text-muted" />
-            <span className="uppercase tracking-wide text-text-muted">Real</span>
-          </>
-        )}
-      </div>
-      )}
+        <div
+          title={actorLabel}
+          style={{
+            animationDelay: `${depth * 70}ms`,
+            width: "100%",
+            height: "100%",
+            opacity: typeof d.opacity === "number" ? d.opacity : 1,
+          }}
+          className={
+            "group relative flex cursor-pointer flex-col rounded-lg transition-[opacity,border-color,box-shadow] duration-300 " +
+            (titleOnly ? "items-center justify-center px-3 py-2 text-center " : "px-4 py-3 ") +
+            // emphasis: selected pulses strongest; trunk nodes glow + ring
+            (d.focused
+              ? "ct-selected ring-2 ring-accent "
+              : d.onCurrentPath
+                ? "ring-2 ring-accent/60 shadow-[0_0_18px_-4px_rgba(61,214,208,0.45)] "
+                : "") +
+            // bg: AI synthetic, Real neutral
+            (isAi ? "ct-ai-bg " : "bg-surface-2 ") +
+            // border: seller gets a blue left bar; everyone else a uniform border
+            (isSeller
+              ? "border-y border-r border-l-[3px] " + sideColor + " border-l-seller "
+              : "border " + sideColor + " ") +
+            (isAi ? "hover:border-accent/90 " : "") +
+            (d.focused
+              ? ""
+              : isAi
+                ? "ct-glimmer shadow-[0_0_16px_-6px_rgba(61,214,208,0.45)] "
+                : "animate-fade-up shadow-[0_1px_2px_rgba(0,0,0,0.4)] ")
+          }
+        >
+          {d.focused === true && (
+            <div className="absolute -right-2 -top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+              Current
+            </div>
+          )}
 
-      <div
-        className={
-          "font-semibold text-text " +
-          (titleOnly
-            ? "text-[26px] leading-tight break-words"
-            : "truncate text-[15px]")
-        }
-      >
-        {d.title}
-      </div>
-      {!titleOnly && d.description && (
-        <div className="mt-0.5 text-[13px] leading-snug text-text-muted">
-          {d.description}
+          {!titleOnly && (
+            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">
+              {isAi ? (
+                <>
+                  <span className="text-accent">
+                    <Sparkle />
+                  </span>
+                  <span className="text-accent">AI</span>
+                  {typeof d.success === "number" && (
+                    <span style={{ color: rampColor(d.success) }}>
+                      · {Math.round(d.success * 100)}% success
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-text-muted" />
+                  <span className="uppercase tracking-wide text-text-muted">Real</span>
+                </>
+              )}
+              {actor && (
+                <span
+                  className={
+                    "ml-auto flex items-center gap-1 " +
+                    (isSeller ? "text-seller" : "text-text-muted")
+                  }
+                >
+                  {isSeller ? (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-seller" />
+                  ) : (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full border border-text-muted" />
+                  )}
+                  {actorLabel}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div
+            className={
+              "font-semibold text-text " +
+              (titleOnly ? "text-[26px] leading-tight break-words" : "truncate text-[15px]")
+            }
+          >
+            {d.title}
+          </div>
+          {!titleOnly && d.description && (
+            <div className="mt-0.5 text-[13px] leading-snug text-text-muted">
+              {d.description}
+            </div>
+          )}
         </div>
-      )}
-      </div>
       </div>
 
       <Handle type="source" position={Position.Right} style={handleStyle} />
