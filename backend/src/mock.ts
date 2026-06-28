@@ -7,6 +7,8 @@ import type { Id, Recording, Tree, TranscriptSegment } from "./types.js";
 import dotenv from "dotenv";
 dotenv.config();
 
+import { getPersonaInfo } from "./personas.js";
+
 /**
  * Stubbed product info
  */
@@ -18,16 +20,6 @@ function getProductInfo(companyId: Id): string {
 }
 
 /**
- * Stubbed persona info
- */
-function getPersonaInfo(buyerId: Id): string {
-  if (buyerId === "buy_john") {
-    return "John is a VP of Operations. His team is drowning in support tickets. His analytics team lives in Tableau, which is a hard requirement for him.";
-  }
-  return "Unknown persona.";
-}
-
-/**
  * Generates the system instructions for the OpenAI Realtime API.
  */
 function generateMockPrompt(recordingId: Id, currentNodeId: Id): string {
@@ -35,7 +27,7 @@ function generateMockPrompt(recordingId: Id, currentNodeId: Id): string {
   const tree = rec ? getTree(rec.treeId) : undefined;
 
   const productInfo = rec ? getProductInfo(rec.callId) : getProductInfo("co_convex"); // simplification
-  const personaInfo = rec ? getPersonaInfo("buy_john") : getPersonaInfo("buy_john"); // simplification
+  const personaInfo = getPersonaInfo("buy_polly"); // Hardcoded to Practice Polly per user request
 
   let pathContext = "No prior context.";
   if (tree && currentNodeId) {
@@ -81,12 +73,48 @@ async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNo
 
   try {
     const summary = getDecisionSummary(tree, currentNodeId);
-    for (const node of summary.path) {
+    
+    // Request script from LLM
+    const promptText = `
+You are a narrator summarizing a sales call up to this point. 
+The conversation path is:
+${summary.path.map(n => `ID: ${n.id} | ${n.speaker.toUpperCase()} SAID: ${n.description}`).join("\n")}
+
+Return a JSON object with a single key "script" containing an array of objects, one for each node in the exact order above. 
+Each object must have:
+- "nodeId": the exact ID of the node.
+- "narration": A brief, natural, 1-2 sentence narration of what happened at this step.
+`;
+
+    const llmRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "system", content: promptText }],
+        response_format: { type: "json_object" }
+      })
+    });
+
+    if (!llmRes.ok) {
+      console.error("LLM Precap failed:", await llmRes.text());
+      clientWs.send(JSON.stringify({ type: "precap_complete" }));
+      return;
+    }
+
+    const llmData = await llmRes.json();
+    const parsed = JSON.parse(llmData.choices[0].message.content);
+    const script = parsed.script || [];
+
+    for (const chunk of script) {
       // Send the node sync event
-      clientWs.send(JSON.stringify({ type: "precap_node", nodeId: node.id }));
-      
+      clientWs.send(JSON.stringify({ type: "precap_node", nodeId: chunk.nodeId }));
+
       // We simulate TTS by fetching from OpenAI TTS API
-      const text = `${node.speaker === 'seller' ? 'Seller' : 'Buyer'} said: ${node.description}`;
+      const text = chunk.narration;
       const response = await fetch("https://api.openai.com/v1/audio/speech", {
         method: "POST",
         headers: {
@@ -96,7 +124,7 @@ async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNo
         body: JSON.stringify({
           model: "tts-1",
           input: text,
-          voice: node.speaker === 'seller' ? "alloy" : "echo",
+          voice: "alloy",
           response_format: "opus",
         })
       });
@@ -141,6 +169,7 @@ export async function handleMockSession(clientWs: WebSocket, recordingId: Id, cu
   const openaiWs = new WebSocket(url, {
     headers: {
       "Authorization": `Bearer ${OPENAI_API_KEY}`,
+      "voice": "marin",
     },
   });
 
@@ -152,10 +181,8 @@ export async function handleMockSession(clientWs: WebSocket, recordingId: Id, cu
     const sessionUpdate = {
       type: "session.update",
       session: {
-        instructions: systemPrompt,
-        turn_detection: {
-          type: "server_vad",
-        },
+        type: "realtime",
+        instructions: systemPrompt
       }
     };
     openaiWs.send(JSON.stringify(sessionUpdate));
@@ -165,6 +192,7 @@ export async function handleMockSession(clientWs: WebSocket, recordingId: Id, cu
   openaiWs.on("message", (data) => {
     try {
       const event = JSON.parse(data.toString());
+      console.log("[OpenAI -> Client]", event.type);
 
       // Keep track of transcript when available
       if (event.type === "conversation.item.input_audio_transcription.completed") {
@@ -212,6 +240,14 @@ export async function handleMockSession(clientWs: WebSocket, recordingId: Id, cu
     // If the client sends raw binary or JSON, just pass it to OpenAI.
     // We expect the frontend to send standard OpenAI JSON events (e.g. input_audio_buffer.append)
     if (openaiWs.readyState === WebSocket.OPEN) {
+      try {
+        const event = JSON.parse(data.toString());
+        if (event.type !== "input_audio_buffer.append") {
+          console.log("[Client -> OpenAI]", event.type);
+        }
+      } catch (e) {
+        // likely binary or unparseable, ignore
+      }
       openaiWs.send(data);
     }
   });

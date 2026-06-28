@@ -1,5 +1,10 @@
 import { useState, useRef } from "react";
 
+type PrecapEvent = 
+  | { type: "node", nodeId: string } 
+  | { type: "audio", b64: string, mime: string } 
+  | { type: "complete" };
+
 export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [connected, setConnected] = useState(false);
@@ -8,6 +13,10 @@ export default function App() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const nextPlayTimeRef = useRef<number>(0);
+  
+  // Queue for precap playback
+  const precapQueueRef = useRef<PrecapEvent[]>([]);
+  const isPlayingPrecapRef = useRef(false);
 
   const addLog = (msg: string) => setLogs((prev) => [...prev, msg]);
 
@@ -25,33 +34,37 @@ export default function App() {
     }
 
     addLog("Connecting to WebSocket...");
-    // Hardcoded for rec_mock1 and n_push
     const ws = new WebSocket("ws://localhost:3001/mock/session/rec_mock1?currentNodeId=n_push&includePrecap=true");
     wsRef.current = ws;
 
     ws.onopen = () => {
       addLog("WS Connected. Awaiting Precap...");
       setConnected(true);
+      precapQueueRef.current = [];
+      isPlayingPrecapRef.current = false;
     };
 
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
         if (msg.type === "precap_node") {
-          addLog(`[TREE] Moved to: ${msg.nodeId}`);
+          precapQueueRef.current.push({ type: "node", nodeId: msg.nodeId });
+          processPrecapQueue();
         } else if (msg.type === "precap_audio") {
-          addLog("[AUDIO] Playing precap audio chunk...");
-          playBase64Audio(msg.b64_data, "audio/webm;codecs=opus"); // Usually opus or mp3 from OpenAI TTS
+          precapQueueRef.current.push({ type: "audio", b64: msg.b64_data, mime: "audio/webm;codecs=opus" });
+          processPrecapQueue();
         } else if (msg.type === "precap_complete") {
-          addLog("[INFO] Precap complete. Starting Interactive Mock...");
-          startMicStreaming(ws, stream);
-        } else if (msg.type === "response.audio.delta") {
+          precapQueueRef.current.push({ type: "complete" });
+          processPrecapQueue();
+        } else if (msg.type === "response.audio.delta" || msg.type === "response.output_audio.delta") {
           playPCM16(msg.delta);
         } else if (msg.type === "error") {
           addLog(`[ERROR] ${JSON.stringify(msg.error)}`);
         } else {
-          // Log other generic OpenAI realtime events
-          // addLog(`[EVENT] ${msg.type}`);
+          // Log other generic OpenAI realtime events but ignore the spammy audio ones
+          if (!["response.audio.delta", "response.output_audio.delta", "input_audio_buffer.append"].includes(msg.type)) {
+            addLog(`[EVENT] ${msg.type}`);
+          }
         }
       } catch (err) {
         addLog("Error parsing WS message");
@@ -64,6 +77,55 @@ export default function App() {
     };
   };
 
+  const processPrecapQueue = () => {
+    if (isPlayingPrecapRef.current || precapQueueRef.current.length === 0) return;
+    const item = precapQueueRef.current.shift();
+    if (!item) return;
+
+    if (item.type === "node") {
+      addLog(`[TREE] Moved to: ${item.nodeId}`);
+      processPrecapQueue();
+    } else if (item.type === "audio") {
+      isPlayingPrecapRef.current = true;
+      addLog("[AUDIO] Playing precap audio chunk...");
+      
+      const playBlob = (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.onended = () => {
+          isPlayingPrecapRef.current = false;
+          processPrecapQueue();
+        };
+        audio.onerror = () => {
+          isPlayingPrecapRef.current = false;
+          processPrecapQueue();
+        };
+        audio.play().catch(() => {
+          isPlayingPrecapRef.current = false;
+          processPrecapQueue();
+        });
+      };
+
+      try {
+        const binary = atob(item.b64);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+        const blob = new Blob([array], { type: item.mime });
+        playBlob(blob);
+      } catch(e) {
+         addLog("[ERROR] Failed to play base64 audio.");
+         isPlayingPrecapRef.current = false;
+         processPrecapQueue();
+      }
+    } else if (item.type === "complete") {
+      addLog("[INFO] Precap complete. Starting Interactive Mock...");
+      if (wsRef.current && mediaStreamRef.current) {
+        startMicStreaming(wsRef.current, mediaStreamRef.current);
+      }
+      processPrecapQueue();
+    }
+  };
+
   const disconnect = () => {
     if (wsRef.current) wsRef.current.close();
     cleanup();
@@ -71,6 +133,8 @@ export default function App() {
 
   const cleanup = () => {
     setConnected(false);
+    precapQueueRef.current = [];
+    isPlayingPrecapRef.current = false;
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
@@ -82,35 +146,6 @@ export default function App() {
     if (audioCtxRef.current) {
       audioCtxRef.current.close();
       audioCtxRef.current = null;
-    }
-  };
-
-  // -----------------------------------------------------
-  // Audio Playback & Recording Utilities
-  // -----------------------------------------------------
-
-  const playBase64Audio = (b64: string, mime: string) => {
-    try {
-      const binary = atob(b64);
-      const array = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
-      const blob = new Blob([array], { type: mime });
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.play();
-    } catch(e) {
-       // fallback for OpenAI TTS which defaults to mp3 sometimes
-       try {
-         const binary = atob(b64);
-         const array = new Uint8Array(binary.length);
-         for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
-         const blob = new Blob([array], { type: "audio/mp3" });
-         const url = URL.createObjectURL(blob);
-         const audio = new Audio(url);
-         audio.play();
-       } catch (e2) {
-         addLog("[ERROR] Failed to play base64 audio.");
-       }
     }
   };
 
