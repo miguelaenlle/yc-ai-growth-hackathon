@@ -30,6 +30,10 @@ interface UseSummarizeTreeAnimationOptions {
    *  the animation, since every frame is rebuilt from these. */
   baseNodes?: Node<CallNodeData>[];
   baseEdges?: ReturnType<typeof applyFocus>["edges"];
+  /** The actual call's tree root to lay out against. Defaults to the static demo
+   *  TREE; MUST be passed for real/uploaded calls whose node ids aren't the
+   *  canonical ones, or focus layout will crash looking up a missing node. */
+  root?: Parameters<typeof applyFocus>[0];
 }
 
 /**
@@ -45,6 +49,7 @@ export function useSummarizeTreeAnimation({
   isSummarizePlaying,
   baseNodes = initialNodes,
   baseEdges = initialEdges,
+  root = TREE,
 }: UseSummarizeTreeAnimationOptions) {
   const { setCenter, getZoom, fitView } = useReactFlow();
   const first = useRef(true);
@@ -78,7 +83,7 @@ export function useSummarizeTreeAnimation({
 
   useEffect(() => {
     const { nodes: target, edges: targetEdges } = applyFocus(
-      TREE,
+      root,
       baseNodes,
       baseEdges,
       selectedId,

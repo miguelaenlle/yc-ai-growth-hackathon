@@ -200,6 +200,7 @@ function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, 
     isSummarizePlaying,
     baseNodes,
     baseEdges: view.edges,
+    root: view.root,
   });
 
   // Re-apply focus when baseNodes change (e.g. the AI-recommended badge arrives
