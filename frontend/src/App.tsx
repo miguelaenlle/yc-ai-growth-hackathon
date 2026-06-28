@@ -144,8 +144,8 @@ export default function App() {
     }
 
     addLog("Connecting to WebSocket...");
-    const targetNodes = "n_looker,n_sql";
-    const wsUrl = `ws://localhost:3001/mock/session/rec_mock1?currentNodeId=n_push&includePrecap=true&maxDepth=2&targetNodeIds=${targetNodes}`;
+    const targetNodes = "n_less_year,n_more_year";
+    const wsUrl = `ws://localhost:3001/mock/session/rec_mock1?currentNodeId=n_push&includePrecap=true&maxDepth=4&targetNodeIds=${targetNodes}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
