@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ReactFlow,
@@ -7,11 +7,12 @@ import {
   BackgroundVariant,
   MiniMap,
   Panel,
-  useStore,
+  useReactFlow,
+  type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { initialNodes, initialEdges } from "../components/tree/treeData";
-import { applyFisheye } from "../components/tree/fisheye";
+import { initialNodes, initialEdges, BASE_W, BASE_H } from "../components/tree/treeData";
+import { applyFocus } from "../components/tree/focus";
 import { CallNode } from "../components/tree/CallNode";
 import { OutcomeBadge } from "../components/OutcomeBadge";
 import { Logo } from "../components/Logo";
@@ -86,19 +87,71 @@ function Avatar() {
   );
 }
 
-function Flow() {
-  // Recompute fish-eye scale from the live viewport center on every pan/zoom.
-  const tx = useStore((s) => s.transform[0]);
-  const ty = useStore((s) => s.transform[1]);
-  const zoom = useStore((s) => s.transform[2]);
-  const width = useStore((s) => s.width);
-  const height = useStore((s) => s.height);
+const DURATION = 440;
+const easeInOut = (t: number) =>
+  t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-  const nodes = useMemo(() => {
-    if (!width || !height) return initialNodes;
-    const focus = { x: (width / 2 - tx) / zoom, y: (height / 2 - ty) / zoom };
-    return applyFisheye(initialNodes, focus);
-  }, [tx, ty, zoom, width, height]);
+function Flow() {
+  // Click a node to focus it; everything else shrinks with distance from it.
+  const [selectedId, setSelectedId] = useState("opening");
+  const [nodes, setNodes] = useState(() => applyFocus(initialNodes, "opening"));
+  const { setCenter, getZoom } = useReactFlow();
+  const first = useRef(true);
+  const raf = useRef<number | undefined>(undefined);
+  const nodesRef = useRef(nodes);
+  nodesRef.current = nodes;
+
+  // On selection change, tween every node's position/size from where it is now
+  // to the repacked target. Driving it through state (not CSS) means the edges
+  // re-route every frame and animate together with the nodes.
+  useEffect(() => {
+    const target = applyFocus(initialNodes, selectedId);
+    if (first.current) {
+      first.current = false;
+      setNodes(target);
+      return;
+    }
+    const fromById = new Map(nodesRef.current.map((n) => [n.id, n]));
+    const start = performance.now();
+    cancelAnimationFrame(raf.current!);
+
+    const tick = (now: number) => {
+      const t = easeInOut(Math.min(1, (now - start) / DURATION));
+      setNodes(
+        target.map((tn) => {
+          const fn = fromById.get(tn.id) ?? tn;
+          const tw = (tn.width ?? BASE_W), th = (tn.height ?? BASE_H);
+          const fw = (fn.width ?? BASE_W), fh = (fn.height ?? BASE_H);
+          const ts = (tn.data as { scale?: number }).scale ?? 1;
+          const fs = (fn.data as { scale?: number }).scale ?? 1;
+          return {
+            ...tn,
+            width: lerp(fw, tw, t),
+            height: lerp(fh, th, t),
+            position: {
+              x: lerp(fn.position.x, tn.position.x, t),
+              y: lerp(fn.position.y, tn.position.y, t),
+            },
+            data: { ...tn.data, scale: lerp(fs, ts, t) },
+          };
+        }),
+      );
+      if (t < 1) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+
+    const f = target.find((n) => (n.data as { focused?: boolean }).focused);
+    if (f) {
+      setCenter(
+        f.position.x + (f.width ?? BASE_W) / 2,
+        f.position.y + (f.height ?? BASE_H) / 2,
+        { zoom: Math.max(getZoom(), 0.85), duration: DURATION },
+      );
+    }
+    return () => cancelAnimationFrame(raf.current!);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
 
   return (
     <ReactFlow
@@ -111,6 +164,7 @@ function Flow() {
       nodesDraggable={false}
       nodesConnectable={false}
       proOptions={{ hideAttribution: true }}
+      onNodeClick={(_, n: Node) => setSelectedId(n.id)}
     >
           <Background
             variant={BackgroundVariant.Dots}

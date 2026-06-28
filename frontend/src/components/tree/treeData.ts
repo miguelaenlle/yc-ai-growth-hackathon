@@ -13,7 +13,7 @@ export interface CallNodeData {
   [key: string]: unknown;
 }
 
-interface RawNode {
+export interface RawNode {
   id: string;
   kind: "real" | "ai";
   title: string;
@@ -24,7 +24,7 @@ interface RawNode {
 }
 
 // ---- The tree (parent → children). ~40 nodes. -----------------------------
-const TREE: RawNode = {
+export const TREE: RawNode = {
   id: "opening", kind: "real", title: "Opening", onPath: true,
   description: "Thanks for hopping on, John",
   children: [

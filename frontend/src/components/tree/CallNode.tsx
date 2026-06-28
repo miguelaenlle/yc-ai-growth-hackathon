@@ -29,21 +29,26 @@ function CallNodeImpl({ data }: NodeProps) {
   const scale = typeof d.scale === "number" ? d.scale : 1;
 
   return (
-    // Outer wrapper fills the (fish-eye-scaled) React Flow box; handles anchor
-    // here so edges stay correct. The card inside is fixed-size and scaled.
+    // Outer wrapper fills the (focus-scaled) React Flow box; handles anchor here
+    // so edges stay correct. The card inside is fixed-size and scaled.
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Handle type="target" position={Position.Left} style={handleStyle} />
 
+      {/* Scale lives on this wrapper (no animation), so the card's fade-up /
+          glimmer animation can't clobber the transform. */}
       <div
         style={{
           width: BASE_W,
           height: BASE_H,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
-          animationDelay: `${depth * 70}ms`,
         }}
+      >
+      <div
+        style={{ animationDelay: `${depth * 70}ms`, width: "100%", height: "100%" }}
         className={
-          "group flex flex-col rounded-lg px-4 py-3 transition-colors duration-150 " +
+          "group flex cursor-pointer flex-col rounded-lg px-4 py-3 transition-colors duration-150 " +
+          (d.focused ? "ring-2 ring-accent " : "") +
           (isAi
             ? "ct-glimmer border border-accent/60 bg-surface shadow-[0_0_16px_-6px_rgba(61,214,208,0.45)] hover:border-accent/90"
             : "animate-fade-up border-l-[3px] border-y border-r border-y-border-strong border-r-border-strong border-l-text-muted bg-surface-2 shadow-[0_1px_2px_rgba(0,0,0,0.4)] hover:border-l-text")
@@ -72,11 +77,12 @@ function CallNodeImpl({ data }: NodeProps) {
       </div>
 
       <div className="truncate text-[15px] font-semibold text-text">{d.title}</div>
-      {d.description && (
+      {!d.compact && d.description && (
         <div className="mt-0.5 text-[13px] leading-snug text-text-muted">
           {d.description}
         </div>
       )}
+      </div>
       </div>
 
       <Handle type="source" position={Position.Right} style={handleStyle} />
