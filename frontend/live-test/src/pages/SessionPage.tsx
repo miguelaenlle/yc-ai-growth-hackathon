@@ -1,13 +1,12 @@
 // @ts-nocheck
 // SessionPage — single-tab live call test harness.
 //
-// One browser tab, one WebSocket to /live/session/:id.
-// The page captures two separate mic streams (seller + buyer) from whatever
-// audio input devices are available. Each AudioContext sends tagged PCM frames:
+// One browser tab, one mic, one WebSocket to /live/session/:id.
+// Seller always starts. Press Space or Enter to hand the turn to the next speaker.
+// Each audio chunk is tagged with the current speaker before being sent:
 //   { speaker: "seller"|"buyer", audio: "<base64 pcm16>" }
 //
-// The seller's coaching overlay (transcript, metrics, tree, assist card) is
-// shown in this tab. The buyer side is mic-only — no coaching UI.
+// The seller's coaching overlay (transcript, metrics, tree, assist card) is shown here.
 
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
@@ -16,11 +15,11 @@ const BACKEND = "http://localhost:3001";
 const WS_BACKEND = "ws://localhost:3001";
 const SAMPLE_RATE = 24000; // must match OpenAI Realtime expectation
 
-type TranscriptLine = { speaker: "seller" | "buyer"; text: string; index: number };
+type Speaker = "seller" | "buyer";
+type TranscriptLine = { speaker: Speaker; text: string; index: number };
 type TreeNode = { id: string; parentId: string | null; childIds: string[]; title: string; description: string; speaker: string };
 type Metrics = { confidence: number; hesitation: number; enthusiasm: number };
 type AssistCard = { triggerText: string; response: string; searchedWeb: boolean } | null;
-type DeviceInfo = { deviceId: string; label: string };
 
 // ---------------------------------------------------------------------------
 // Tree component
@@ -80,20 +79,18 @@ function MetricBar({ label, value, color }: { label: string; value: number; colo
 }
 
 // ---------------------------------------------------------------------------
-// Mic capture helpers
+// Single-mic stream — reads speaker from getSpeaker() on every audio chunk
 // ---------------------------------------------------------------------------
 
 function startMicStream(
   deviceId: string,
-  speaker: "seller" | "buyer",
+  getSpeaker: () => Speaker,
   ws: WebSocket,
-  onCtx: (ctx: AudioContext) => void,
 ): Promise<() => void> {
   return navigator.mediaDevices.getUserMedia({
     audio: { deviceId: deviceId ? { exact: deviceId } : undefined },
   }).then(stream => {
     const ctx = new window.AudioContext({ sampleRate: SAMPLE_RATE });
-    onCtx(ctx);
     const source = ctx.createMediaStreamSource(stream);
     const processor = ctx.createScriptProcessor(4096, 1, 1);
     source.connect(processor);
@@ -110,7 +107,7 @@ function startMicStream(
       const bytes = new Uint8Array(pcm16.buffer);
       let binary = "";
       for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-      ws.send(JSON.stringify({ speaker, audio: btoa(binary) }));
+      ws.send(JSON.stringify({ speaker: getSpeaker(), audio: btoa(binary) }));
     };
 
     return () => {
@@ -129,10 +126,8 @@ function startMicStream(
 export function SessionPage() {
   const { recordingId } = useParams<{ recordingId: string }>();
 
-  const [devices, setDevices] = useState<DeviceInfo[]>([]);
-  const [sellerDevice, setSellerDevice] = useState("");
-  const [buyerDevice, setBuyerDevice] = useState("");
   const [connected, setConnected] = useState(false);
+  const [activeSpeaker, setActiveSpeaker] = useState<Speaker>("seller");
   const [logs, setLogs] = useState<string[]>([]);
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
   const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
@@ -141,31 +136,17 @@ export function SessionPage() {
   const [assistCard, setAssistCard] = useState<AssistCard>(null);
   const [zoom, setZoom] = useState(0.7);
 
+  // Ref mirrors activeSpeaker so the audio callback always reads the latest value
+  const activeSpeakerRef = useRef<Speaker>("seller");
+
   const wsRef = useRef<WebSocket | null>(null);
   const sseRef = useRef<EventSource | null>(null);
-  const cleanupSellerRef = useRef<(() => void) | null>(null);
-  const cleanupBuyerRef = useRef<(() => void) | null>(null);
+  const cleanupMicRef = useRef<(() => void) | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
   const addLog = (msg: string) => setLogs(prev => [...prev, `${new Date().toLocaleTimeString()} ${msg}`]);
 
-  // Enumerate audio input devices
-  useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(() => navigator.mediaDevices.enumerateDevices())
-      .then(all => {
-        const mics = all
-          .filter(d => d.kind === "audioinput")
-          .map((d, i) => ({ deviceId: d.deviceId, label: d.label || `Mic ${i + 1}` }));
-        setDevices(mics);
-        if (mics[0]) setSellerDevice(mics[0].deviceId);
-        if (mics[1]) setBuyerDevice(mics[1].deviceId);
-        else if (mics[0]) setBuyerDevice(mics[0].deviceId);
-      })
-      .catch(() => addLog("[WARN] Could not enumerate audio devices"));
-  }, []);
-
-  // Fetch tree
+  // Fetch tree on mount
   useEffect(() => {
     fetch(`${BACKEND}/recordings/${recordingId}`)
       .then(r => r.json())
@@ -179,6 +160,22 @@ export function SessionPage() {
 
   // Auto-scroll transcript
   useEffect(() => { transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [transcript]);
+
+  // Spacebar / Enter → hand the turn to the other speaker
+  useEffect(() => {
+    if (!connected) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        const next: Speaker = activeSpeakerRef.current === "seller" ? "buyer" : "seller";
+        activeSpeakerRef.current = next;
+        setActiveSpeaker(next);
+        addLog(`[TURN] Now: ${next.toUpperCase()}`);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [connected]);
 
   const connectSSE = () => {
     if (sseRef.current) sseRef.current.close();
@@ -211,29 +208,27 @@ export function SessionPage() {
 
   const connect = async () => {
     if (connected) return;
+    // Reset to seller turn
+    activeSpeakerRef.current = "seller";
+    setActiveSpeaker("seller");
+
     addLog("Connecting to session WebSocket...");
     const ws = new WebSocket(`${WS_BACKEND}/live/session/${recordingId}`);
     wsRef.current = ws;
 
     ws.onopen = async () => {
-      addLog("[WS] Connected. Starting mic streams...");
+      addLog("[WS] Connected. Starting mic...");
       setConnected(true);
       connectSSE();
-
       try {
-        cleanupSellerRef.current = await startMicStream(sellerDevice, "seller", ws,
-          () => addLog("[MIC] Seller stream started"));
-        addLog("[MIC] Seller mic active");
+        cleanupMicRef.current = await startMicStream(
+          "",
+          () => activeSpeakerRef.current,
+          ws,
+        );
+        addLog("[MIC] Active — seller speaking first. Press Space/Enter to switch turns.");
       } catch (e) {
-        addLog("[MIC] Seller mic error: " + String(e));
-      }
-
-      try {
-        cleanupBuyerRef.current = await startMicStream(buyerDevice, "buyer", ws,
-          () => addLog("[MIC] Buyer stream started"));
-        addLog("[MIC] Buyer mic active");
-      } catch (e) {
-        addLog("[MIC] Buyer mic error: " + String(e));
+        addLog("[MIC] Error: " + String(e));
       }
     };
 
@@ -254,9 +249,11 @@ export function SessionPage() {
 
   const cleanup = () => {
     setConnected(false);
-    cleanupSellerRef.current?.(); cleanupSellerRef.current = null;
-    cleanupBuyerRef.current?.(); cleanupBuyerRef.current = null;
+    cleanupMicRef.current?.();
+    cleanupMicRef.current = null;
   };
+
+  const speakerColor: Record<Speaker, string> = { seller: "#2563eb", buyer: "#059669" };
 
   return (
     <div style={{ fontFamily: "sans-serif", padding: 16, background: "#f9fafb", minHeight: "100vh" }}>
@@ -265,30 +262,28 @@ export function SessionPage() {
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
         <h2 style={{ margin: 0 }}>🎙 Live Session — <code style={{ fontSize: 14 }}>{recordingId}</code></h2>
 
-        {/* Mic selectors */}
-        {!connected && (
-          <>
-            <label style={labelStyle}>
-              Seller mic:
-              <select value={sellerDevice} onChange={e => setSellerDevice(e.target.value)} style={selectStyle}>
-                {devices.map(d => <option key={d.deviceId} value={d.deviceId}>{d.label}</option>)}
-              </select>
-            </label>
-            <label style={labelStyle}>
-              Buyer mic:
-              <select value={buyerDevice} onChange={e => setBuyerDevice(e.target.value)} style={selectStyle}>
-                {devices.map(d => <option key={d.deviceId} value={d.deviceId}>{d.label}</option>)}
-              </select>
-            </label>
-          </>
-        )}
-
         {!connected
           ? <button onClick={connect} style={btn("#2563eb")}>Start Session</button>
           : <button onClick={disconnect} style={btn("#dc2626")}>End Session</button>}
+
         <span style={{ fontSize: 12, color: connected ? "#16a34a" : "#9ca3af" }}>
           {connected ? "● Live" : "○ Not connected"}
         </span>
+
+        {/* Active speaker indicator */}
+        {connected && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            background: "#fff", border: `2px solid ${speakerColor[activeSpeaker]}`,
+            borderRadius: 8, padding: "6px 14px",
+          }}>
+            <span style={{ fontSize: 13, color: "#374151" }}>Speaking:</span>
+            <strong style={{ fontSize: 15, color: speakerColor[activeSpeaker], textTransform: "uppercase" }}>
+              {activeSpeaker}
+            </strong>
+            <span style={{ fontSize: 11, color: "#9ca3af" }}>· Space / Enter to switch</span>
+          </div>
+        )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
@@ -302,7 +297,7 @@ export function SessionPage() {
                 <div key={i} style={{ marginBottom: 6 }}>
                   <span style={{
                     fontWeight: "bold", fontSize: 11, textTransform: "uppercase", marginRight: 6,
-                    color: line.speaker === "seller" ? "#2563eb" : "#059669",
+                    color: speakerColor[line.speaker],
                   }}>{line.speaker}:</span>
                   <span style={{ fontSize: 13 }}>{line.text}</span>
                 </div>
@@ -379,5 +374,3 @@ const panel: React.CSSProperties = { background: "#fff", border: "1px solid #e5e
 const panelTitle: React.CSSProperties = { margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" };
 const btn = (bg: string): React.CSSProperties => ({ padding: "8px 16px", background: bg, color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14 });
 const smallBtn: React.CSSProperties = { padding: "2px 8px", background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 4, cursor: "pointer", fontSize: 14 };
-const labelStyle: React.CSSProperties = { fontSize: 13, color: "#374151", display: "flex", alignItems: "center", gap: 6 };
-const selectStyle: React.CSSProperties = { fontSize: 13, padding: "4px 8px", borderRadius: 4, border: "1px solid #d1d5db" };
