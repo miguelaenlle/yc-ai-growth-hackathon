@@ -18,6 +18,9 @@ npm-debug.log*
 backend/public/data/audio/*
 !backend/public/data/audio/.gitkeep
 
+# original documentation (local reference only)
+OG_DOCUMENTATION/
+
 # os / editor
 .DS_Store
 .vscode/
