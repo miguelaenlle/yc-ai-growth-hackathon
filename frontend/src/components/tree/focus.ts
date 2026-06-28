@@ -1,5 +1,5 @@
 import type { Node, Edge } from "@xyflow/react";
-import { TREE, BASE_W, BASE_H } from "./treeData";
+import { BASE_W, BASE_H } from "./treeData";
 import type { RawNode, CallNodeData } from "./treeData";
 
 // Click a node to focus it. The root→selected path is laid out as a straight
@@ -13,28 +13,28 @@ const V_GAP = 26; // base vertical gap between siblings (at scale 1)
 const BAND_GAP = 70; // gap between the trunk and stacked off-path branches
 const TITLE_ONLY_AT = 0.9; // below this scale, show only the title
 
-function parentMap(): Map<string, string> {
+function parentMap(root: RawNode): Map<string, string> {
   const m = new Map<string, string>();
   (function walk(n: RawNode) {
     for (const c of n.children ?? []) {
       m.set(c.id, n.id);
       walk(c);
     }
-  })(TREE);
+  })(root);
   return m;
 }
 
-function nodeIndex(): Map<string, RawNode> {
+function nodeIndex(root: RawNode): Map<string, RawNode> {
   const m = new Map<string, RawNode>();
   (function walk(n: RawNode) {
     m.set(n.id, n);
     (n.children ?? []).forEach(walk);
-  })(TREE);
+  })(root);
   return m;
 }
 
 /** BFS hop count from the selected node over the undirected tree. */
-function hopsFrom(selectedId: string): Map<string, number> {
+function hopsFrom(root: RawNode, selectedId: string): Map<string, number> {
   const adj = new Map<string, string[]>();
   const link = (a: string, b: string) => {
     (adj.get(a) ?? adj.set(a, []).get(a)!).push(b);
@@ -45,7 +45,7 @@ function hopsFrom(selectedId: string): Map<string, number> {
       link(c.id, n.id);
       walk(c);
     }
-  })(TREE);
+  })(root);
 
   const hops = new Map<string, number>([[selectedId, 0]]);
   const queue = [selectedId];
@@ -94,6 +94,7 @@ interface Placed {
 }
 
 function layoutPath(
+  root: RawNode,
   scaleOf: (id: string) => number,
   path: string[],
   byId: Map<string, RawNode>,
@@ -115,7 +116,7 @@ function layoutPath(
     extent.set(node.id, e);
     return e;
   }
-  measure(TREE);
+  measure(root);
 
   // Place an off-trunk subtree, each node centered in its extent band.
   function assign(node: RawNode, x: number, top: number): void {
@@ -197,13 +198,14 @@ function layoutPath(
 }
 
 export function applyFocus(
+  root: RawNode,
   nodes: Node<CallNodeData>[],
   edges: Edge[],
   selectedId: string,
 ): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
-  const parent = parentMap();
-  const byId = nodeIndex();
-  const hops = hopsFrom(selectedId);
+  const parent = parentMap(root);
+  const byId = nodeIndex(root);
+  const hops = hopsFrom(root, selectedId);
   const ancestors = ancestorSet(selectedId, parent);
   const path = pathToRoot(selectedId, parent);
   const emphasized = new Set<string>([
@@ -215,7 +217,7 @@ export function applyFocus(
     id === selectedId ? 1.15 : ancestors.has(id) ? 1 : scaleFor(hops.get(id));
   const opacityOf = (id: string) =>
     emphasized.has(id) ? 1 : Math.max(0.22, Math.min(0.6, scaleOf(id)));
-  const placed = layoutPath(scaleOf, path, byId);
+  const placed = layoutPath(root, scaleOf, path, byId);
 
   const outNodes = nodes.map((n) => {
     const p = placed.get(n.id);

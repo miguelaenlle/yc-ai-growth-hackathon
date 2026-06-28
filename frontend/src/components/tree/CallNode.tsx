@@ -43,13 +43,16 @@ function CallNodeImpl({ data }: NodeProps) {
       <Handle type="target" position={Position.Left} style={handleStyle} />
 
       {/* Scale lives on this wrapper (no animation), so the card's fade-up /
-          glimmer animation can't clobber the transform. */}
+          glimmer animation can't clobber the transform. Overlays (badges,
+          button) live on THIS wrapper — NOT inside the card — so the AI card's
+          overflow:hidden (shimmer clip) can't cut them off. */}
       <div
         style={{
           width: BASE_W,
           height: BASE_H,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
+          position: "relative",
         }}
       >
         <div
@@ -83,12 +86,6 @@ function CallNodeImpl({ data }: NodeProps) {
                 : "animate-fade-up shadow-[0_1px_2px_rgba(0,0,0,0.4)] ")
           }
         >
-          {d.focused === true && (
-            <div className="absolute -right-2 -top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-              Current
-            </div>
-          )}
-
           {!titleOnly && (
             <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">
               {isAi ? (
@@ -141,6 +138,43 @@ function CallNodeImpl({ data }: NodeProps) {
             </div>
           )}
         </div>
+
+        {/* --- Overlays: siblings of the card so overflow:hidden can't clip --- */}
+        {d.focused === true && (
+          <div className="absolute -right-2 -top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+            Current
+          </div>
+        )}
+
+        {(d.marker === "start" || d.marker === "breakpoint" || d.marker === "end") && (
+          <div
+            className={
+              "absolute -left-2 -top-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-[0_1px_3px_rgba(0,0,0,0.5)] " +
+              (d.marker === "start"
+                ? "bg-accent text-bg"
+                : d.marker === "breakpoint"
+                  ? "bg-signal-low text-bg"
+                  : "bg-text text-bg")
+            }
+          >
+            {d.marker === "breakpoint" && (
+              <span className="h-1.5 w-1.5 rounded-full bg-bg" />
+            )}
+            {d.marker === "start" ? "Start" : d.marker === "breakpoint" ? "Breakpoint" : "End"}
+          </div>
+        )}
+
+        {d.focused === true && typeof d.onSimulate === "function" && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              (d.onSimulate as () => void)();
+            }}
+            className="absolute left-1/2 top-full mt-3 -translate-x-1/2 whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+          >
+            Simulate from here
+          </button>
+        )}
       </div>
 
       <Handle type="source" position={Position.Right} style={handleStyle} />

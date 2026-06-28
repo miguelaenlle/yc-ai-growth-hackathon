@@ -6,42 +6,42 @@
       "nodeId": "n_open"
     },
     {
-      "atMs": 7508,
+      "atMs": 5602,
       "nodeId": "n_disc"
     },
     {
-      "atMs": 16796,
+      "atMs": 13583,
       "nodeId": "n_push"
     },
     {
-      "atMs": 27323,
+      "atMs": 20336,
       "nodeId": "n_road"
     },
     {
-      "atMs": 38392,
+      "atMs": 29391,
       "nodeId": "n_lost"
     }
   ],
   "script": [
     {
       "nodeId": "n_open",
-      "narration": "Great opening — you started with a friendly 'Thanks for hopping on, John,' which set a nice tone."
+      "narration": "You started strong with a clean opening, getting John engaged right away."
     },
     {
       "nodeId": "n_disc",
-      "narration": "You quickly dug into the discovery by asking, 'How's ticket volume lately?' That got you talking about real pain points."
+      "narration": "You then dove into discovery and asked about ticket volume, which helped tease out some relevant issues."
     },
     {
       "nodeId": "n_push",
-      "narration": "But then Tableau came up, and you sensed some hesitation when he said, 'You don't have Tableau integration,' which really threw you off."
+      "narration": "But when the Tableau integration concern came up, your confidence dipped, and it showed."
     },
     {
       "nodeId": "n_road",
-      "narration": "Instead of home-running with that thirty-eight-K SQL connector option, you mentioned it's on your roadmap, which dropped the EV to just four K."
+      "narration": "Instead of pursuing that high-value customization path, you went with the roadmap, which dropped the EV significantly."
     },
     {
       "nodeId": "n_lost",
-      "narration": "That left you with him saying, 'Just send me the deck,' signaling he was checked out. Tough spot."
+      "narration": "In the end, he checked out, saying just send the deck, and that was it — deal lost."
     }
   ]
 }

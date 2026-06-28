@@ -14,3 +14,17 @@ export const BACKEND_TO_UI_NODE: Record<Id, string> = {
 export function toUiNodeId(backendNodeId: Id): string {
   return BACKEND_TO_UI_NODE[backendNodeId] ?? backendNodeId;
 }
+
+/** Frontend treeData ids → backend seed node ids (inverse of the map above). */
+export const UI_TO_BACKEND_NODE: Record<string, Id> = Object.fromEntries(
+  Object.entries(BACKEND_TO_UI_NODE).map(([backendId, uiId]) => [uiId, backendId]),
+);
+
+/** True when a UI tree node maps to a real backend node (i.e. is simulatable). */
+export function isSimulatableUiNode(uiNodeId: string): boolean {
+  return uiNodeId in UI_TO_BACKEND_NODE;
+}
+
+export function toBackendNodeId(uiNodeId: string): Id {
+  return UI_TO_BACKEND_NODE[uiNodeId] ?? uiNodeId;
+}

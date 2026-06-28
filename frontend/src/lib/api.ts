@@ -9,7 +9,7 @@ export async function fetchCalls(): Promise<CallSummary[]> {
   return data;
 }
 
-/** GET /calls/:id → CallDetail */
+/** GET /calls/:id → CallDetail ({ call, tree, recordings }). */
 export async function fetchCallDetail(callId: string): Promise<CallDetail> {
   const { data } = await api.get<CallDetail>(`/calls/${callId}`);
   return data;

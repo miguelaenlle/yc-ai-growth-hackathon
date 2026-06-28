@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, type Dispatch, type SetStateAction } fr
 import { useReactFlow, type Node } from "@xyflow/react";
 import { applyFocus } from "../tree/focus";
 import {
+  TREE,
   initialNodes,
   initialEdges,
   BASE_W,
   BASE_H,
+  type CallNodeData,
 } from "../tree/treeData";
 import {
   SUMMARIZE_IDLE_FOCUS_MS,
@@ -17,12 +19,17 @@ import {
 import { summarize_easeInOut, summarize_lerp } from "./summarize_easing";
 
 interface UseSummarizeTreeAnimationOptions {
-  nodes: Node[];
+  nodes: Node<CallNodeData>[];
   selectedId: string;
   setSelectedId: (id: string) => void;
-  setNodes: Dispatch<SetStateAction<Node[]>>;
+  setNodes: Dispatch<SetStateAction<Node<CallNodeData>[]>>;
   setEdges: Dispatch<SetStateAction<ReturnType<typeof applyFocus>["edges"]>>;
   isSummarizePlaying: boolean;
+  /** Base nodes/edges to repack — defaults to the static review tree. Pass an
+   *  augmented copy (e.g. with per-node `onSimulate`) to keep that data across
+   *  the animation, since every frame is rebuilt from these. */
+  baseNodes?: Node<CallNodeData>[];
+  baseEdges?: ReturnType<typeof applyFocus>["edges"];
 }
 
 /**
@@ -36,6 +43,8 @@ export function useSummarizeTreeAnimation({
   setNodes,
   setEdges,
   isSummarizePlaying,
+  baseNodes = initialNodes,
+  baseEdges = initialEdges,
 }: UseSummarizeTreeAnimationOptions) {
   const { setCenter, getZoom, fitView } = useReactFlow();
   const first = useRef(true);
@@ -69,8 +78,9 @@ export function useSummarizeTreeAnimation({
 
   useEffect(() => {
     const { nodes: target, edges: targetEdges } = applyFocus(
-      initialNodes,
-      initialEdges,
+      TREE,
+      baseNodes,
+      baseEdges,
       selectedId,
     );
     setEdges(targetEdges);
