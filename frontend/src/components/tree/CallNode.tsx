@@ -27,6 +27,7 @@ function CallNodeImpl({ data }: NodeProps) {
   const isAi = d.kind === "ai";
   const depth = typeof d.depth === "number" ? d.depth : 0;
   const scale = typeof d.scale === "number" ? d.scale : 1;
+  const titleOnly = d.titleOnly === true;
 
   return (
     // Outer wrapper fills the (focus-scaled) React Flow box; handles anchor here
@@ -52,7 +53,8 @@ function CallNodeImpl({ data }: NodeProps) {
           opacity: typeof d.opacity === "number" ? d.opacity : 1,
         }}
         className={
-          "group flex cursor-pointer flex-col rounded-lg px-4 py-3 transition-[opacity,border-color,box-shadow] duration-300 " +
+          "group flex cursor-pointer flex-col rounded-lg transition-[opacity,border-color,box-shadow] duration-300 " +
+          (titleOnly ? "items-center justify-center px-3 py-2 text-center " : "px-4 py-3 ") +
           (d.focused
             ? "ring-2 ring-accent "
             : d.onCurrentPath
@@ -64,6 +66,7 @@ function CallNodeImpl({ data }: NodeProps) {
         }
       >
       {/* tag row */}
+      {!titleOnly && (
       <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">
         {isAi ? (
           <>
@@ -84,9 +87,19 @@ function CallNodeImpl({ data }: NodeProps) {
           </>
         )}
       </div>
+      )}
 
-      <div className="truncate text-[15px] font-semibold text-text">{d.title}</div>
-      {!d.compact && d.description && (
+      <div
+        className={
+          "font-semibold text-text " +
+          (titleOnly
+            ? "text-[26px] leading-tight break-words"
+            : "truncate text-[15px]")
+        }
+      >
+        {d.title}
+      </div>
+      {!titleOnly && d.description && (
         <div className="mt-0.5 text-[13px] leading-snug text-text-muted">
           {d.description}
         </div>

@@ -2,14 +2,36 @@ import type { Node, Edge } from "@xyflow/react";
 import { TREE, BASE_W, BASE_H } from "./treeData";
 import type { RawNode, CallNodeData } from "./treeData";
 
-// Click a node to focus it: it stays full size, every other node shrinks
-// exponentially with its graph distance (hops) from the focused node — and the
-// LAYOUT is repacked so gaps (edge lengths) shrink with the nodes.
+// Click a node to focus it. The root→selected path is laid out as a straight
+// horizontal trunk (y = 0); the selected node's children fan to its right and
+// off-path branches stack above/below the trunk. Nodes shrink exponentially
+// with graph distance from the selected node; the path stays full size.
 const FALLOFF = 0.58; // scale multiplier per hop away
-const MIN = 0.16; // smallest scale
+const MIN = 0.45; // smallest scale — keeps small nodes a reasonable size
 const H_GAP = 80; // base horizontal gap between levels (at scale 1)
 const V_GAP = 26; // base vertical gap between siblings (at scale 1)
-const COMPACT_AT = 0.5; // below this scale, drop the description
+const BAND_GAP = 70; // gap between the trunk and stacked off-path branches
+const TITLE_ONLY_AT = 0.9; // below this scale, show only the title
+
+function parentMap(): Map<string, string> {
+  const m = new Map<string, string>();
+  (function walk(n: RawNode) {
+    for (const c of n.children ?? []) {
+      m.set(c.id, n.id);
+      walk(c);
+    }
+  })(TREE);
+  return m;
+}
+
+function nodeIndex(): Map<string, RawNode> {
+  const m = new Map<string, RawNode>();
+  (function walk(n: RawNode) {
+    m.set(n.id, n);
+    (n.children ?? []).forEach(walk);
+  })(TREE);
+  return m;
+}
 
 /** BFS hop count from the selected node over the undirected tree. */
 function hopsFrom(selectedId: string): Map<string, number> {
@@ -40,59 +62,46 @@ function hopsFrom(selectedId: string): Map<string, number> {
   return hops;
 }
 
-// Selected node + its parent and direct children (hops 0 and 1) stay full size;
-// exponential downsizing begins beyond that.
 const scaleFor = (h: number | undefined) =>
   h == null ? MIN : Math.max(MIN, Math.pow(FALLOFF, Math.max(0, h - 1)));
 
-/** The selected node and every ancestor up to the root — all kept full size. */
-function ancestorsOf(selectedId: string): Set<string> {
-  const parent = new Map<string, string>();
-  (function walk(n: RawNode) {
-    for (const c of n.children ?? []) {
-      parent.set(c.id, n.id);
-      walk(c);
-    }
-  })(TREE);
+function ancestorSet(selectedId: string, parent: Map<string, string>): Set<string> {
   const set = new Set<string>([selectedId]);
-  let cur: string | undefined = selectedId;
-  while (cur && parent.has(cur)) {
-    cur = parent.get(cur);
-    if (cur) set.add(cur);
+  let cur = selectedId;
+  while (parent.has(cur)) {
+    cur = parent.get(cur)!;
+    set.add(cur);
   }
   return set;
 }
 
-/** Direct children of the selected node. */
-function childIdsOf(selectedId: string): Set<string> {
-  let found: RawNode | null = null;
-  (function walk(n: RawNode) {
-    if (found) return;
-    if (n.id === selectedId) {
-      found = n;
-      return;
-    }
-    for (const c of n.children ?? []) walk(c);
-  })(TREE);
-  return new Set((found?.children ?? []).map((c) => c.id));
+/** Ordered path root → selected. */
+function pathToRoot(selectedId: string, parent: Map<string, string>): string[] {
+  const chain = [selectedId];
+  let cur = selectedId;
+  while (parent.has(cur)) {
+    cur = parent.get(cur)!;
+    chain.push(cur);
+  }
+  return chain.reverse();
 }
 
 interface Placed {
-  x: number; // top-left x
-  yc: number; // center y
+  x: number;
+  yc: number;
   w: number;
   h: number;
 }
 
-/** Left-to-right layout where each node's box AND the gaps around it scale by
-    `scaleOf(id)`. Uses subtree "extents" so a node's reserved vertical band is
-    always at least its own height → siblings can never overlap, even when one
-    node is much larger than the rest. */
-function layout(scaleOf: (id: string) => number): Map<string, Placed> {
+function layoutPath(
+  scaleOf: (id: string) => number,
+  path: string[],
+  byId: Map<string, RawNode>,
+): Map<string, Placed> {
   const out = new Map<string, Placed>();
   const extent = new Map<string, number>();
 
-  // Pass 1: each subtree reserves max(own height, stacked children + gaps).
+  // Subtree extent = max(own height, stacked children + gaps) → no overlap.
   function measure(node: RawNode): number {
     const s = scaleOf(node.id);
     const h = BASE_H * s;
@@ -108,14 +117,13 @@ function layout(scaleOf: (id: string) => number): Map<string, Placed> {
   }
   measure(TREE);
 
-  // Pass 2: place each node centered in its band; children block centered too.
+  // Place an off-trunk subtree, each node centered in its extent band.
   function assign(node: RawNode, x: number, top: number): void {
     const s = scaleOf(node.id);
     const w = BASE_W * s;
     const h = BASE_H * s;
     const e = extent.get(node.id)!;
     out.set(node.id, { x, yc: top + e / 2, w, h });
-
     const kids = node.children ?? [];
     if (!kids.length) return;
     const block =
@@ -127,7 +135,63 @@ function layout(scaleOf: (id: string) => number): Map<string, Placed> {
       ct += extent.get(c.id)! + V_GAP * s;
     }
   }
-  assign(TREE, 0, 0);
+
+  // 1. Straight trunk along y = 0.
+  const trunkX: number[] = [];
+  let x = 0;
+  for (const id of path) {
+    const s = scaleOf(id);
+    trunkX.push(x);
+    out.set(id, { x, yc: 0, w: BASE_W * s, h: BASE_H * s });
+    x += BASE_W * s + H_GAP * s;
+  }
+
+  // 2. Selected node's children fan, centered on the trunk, to its right.
+  const selId = path[path.length - 1];
+  const sel = byId.get(selId)!;
+  const selS = scaleOf(selId);
+  const selChildX = trunkX[path.length - 1] + BASE_W * selS + H_GAP * selS;
+  const selKids = sel.children ?? [];
+  let fanHalf = 0;
+  if (selKids.length) {
+    const block =
+      selKids.reduce((a, c) => a + extent.get(c.id)!, 0) +
+      V_GAP * selS * (selKids.length - 1);
+    fanHalf = block / 2;
+    let ct = -block / 2;
+    for (const c of selKids) {
+      assign(c, selChildX, ct);
+      ct += extent.get(c.id)! + V_GAP * selS;
+    }
+  }
+
+  // 3. Off-path branches of the ancestor trunk nodes. Each branch keeps the side
+  //    it sat on relative to the path: siblings listed BEFORE the path-continuation
+  //    child go above, those AFTER go below — so branches land where they were
+  //    originally (mostly below, since the path is the first child at each fork).
+  //    Global cursors keep the bands disjoint so nothing overlaps.
+  let aboveTop = -(fanHalf + BAND_GAP);
+  let belowBottom = fanHalf + BAND_GAP;
+  for (let i = 0; i < path.length - 1; i++) {
+    const node = byId.get(path[i])!;
+    const s = scaleOf(path[i]);
+    const childX = trunkX[i] + BASE_W * s + H_GAP * s;
+    const kids = node.children ?? [];
+    const nextIdx = kids.findIndex((c) => c.id === path[i + 1]);
+
+    // Above: nearest the path-child first (closest to trunk), earlier siblings higher.
+    for (const b of kids.slice(0, nextIdx).reverse()) {
+      const e = extent.get(b.id)!;
+      assign(b, childX, aboveTop - e);
+      aboveTop -= e + BAND_GAP;
+    }
+    // Below: nearest the path-child first (closest to trunk), later siblings lower.
+    for (const b of kids.slice(nextIdx + 1)) {
+      const e = extent.get(b.id)!;
+      assign(b, childX, belowBottom);
+      belowBottom += e + BAND_GAP;
+    }
+  }
 
   return out;
 }
@@ -137,14 +201,19 @@ export function applyFocus(
   edges: Edge[],
   selectedId: string,
 ): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
+  const parent = parentMap();
+  const byId = nodeIndex();
   const hops = hopsFrom(selectedId);
-  const ancestors = ancestorsOf(selectedId);
-  // Emphasis = the path to the root + the selected node's direct children.
-  const emphasized = new Set<string>([...ancestors, ...childIdsOf(selectedId)]);
+  const ancestors = ancestorSet(selectedId, parent);
+  const path = pathToRoot(selectedId, parent);
+  const emphasized = new Set<string>([
+    ...ancestors,
+    ...(byId.get(selectedId)?.children ?? []).map((c) => c.id),
+  ]);
   const scaleOf = (id: string) => (ancestors.has(id) ? 1 : scaleFor(hops.get(id)));
   const opacityOf = (id: string) =>
     emphasized.has(id) ? 1 : Math.max(0.22, Math.min(0.6, scaleOf(id)));
-  const placed = layout(scaleOf);
+  const placed = layoutPath(scaleOf, path, byId);
 
   const outNodes = nodes.map((n) => {
     const p = placed.get(n.id);
@@ -159,15 +228,13 @@ export function applyFocus(
         ...n.data,
         scale: s,
         opacity: opacityOf(n.id),
-        compact: s < COMPACT_AT,
+        titleOnly: s < TITLE_ONLY_AT,
         focused: n.id === selectedId,
         onCurrentPath: ancestors.has(n.id),
       },
     };
   });
 
-  // An edge is on the current path when both endpoints are ancestors (the
-  // root→selected chain). Highlight those boldly; keep the rest visible-but-dim.
   const outEdges = edges.map((e) => {
     if (ancestors.has(e.source) && ancestors.has(e.target)) {
       return {
