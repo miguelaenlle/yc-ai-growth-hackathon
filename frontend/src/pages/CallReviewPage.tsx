@@ -5,7 +5,6 @@ import {
   ReactFlowProvider,
   Background,
   BackgroundVariant,
-  MiniMap,
   Panel,
   useReactFlow,
   type Node,
@@ -21,6 +20,7 @@ import {
 import { applyFocus } from "../components/tree/focus";
 import { CallNode } from "../components/tree/CallNode";
 import { NodePreview } from "../components/tree/NodePreview";
+import { TreeMiniMap } from "../components/tree/TreeMiniMap";
 import { OutcomeBadge } from "../components/OutcomeBadge";
 import { Logo } from "../components/Logo";
 
@@ -218,22 +218,9 @@ function Flow() {
             size={1.5}
             color="var(--color-border)"
           />
-          <MiniMap
-            pannable
-            zoomable
-            maskColor="rgba(13,16,20,0.7)"
-            style={{
-              background: "var(--color-surface)",
-              border: "1px solid var(--color-border)",
-              borderRadius: 8,
-            }}
-            nodeColor={(n) =>
-              (n.data as { kind?: string })?.kind === "ai"
-                ? "var(--color-accent)"
-                : "var(--color-border-strong)"
-            }
-            nodeStrokeWidth={0}
-          />
+          <Panel position="bottom-right">
+            <TreeMiniMap nodes={nodes} edges={edges} />
+          </Panel>
           <Panel position="top-right" className="flex items-center gap-3">
             <button className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]">
               Summarize Call
