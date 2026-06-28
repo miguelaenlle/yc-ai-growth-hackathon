@@ -8,7 +8,17 @@
 import cors from "cors";
 import express, { type Request, type Response } from "express";
 import expressWs from "express-ws";
+import { type WebSocket } from "ws";
+import multer from "multer";
+import { promises as fs } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __serverdirname = dirname(fileURLToPath(import.meta.url));
 import { handleMockSession } from "./mock.js";
+import { handleLiveSession } from "./live.js";
+import { generateAssistCard } from "./assist.js";
+import { getProductInfo } from "./product.js";
 import {
   getCall,
   getRecording,
@@ -36,6 +46,7 @@ import type { AudioScoreByIndex } from "./audio/types.js";
 import type {
   AiFeedback,
   AiNotes,
+  AssistCard,
   Call,
   CallDetail,
   CallSummary,
@@ -409,63 +420,39 @@ app.post("/transcribe", (_req: Request, res: Response) => {
   res.json({ segments: [] });
 });
 
-// 12. POST /agent/notes (NotesReq) → AiNotes
-app.post("/agent/notes", (req: Request, res: Response) => {
-  const { window: windowSegments, recordingId } = req.body ?? {};
+// 12. POST /agent/notes (NotesReq) → AssistCard
+// Accepts { window: TranscriptSegment[], recordingId, buyerUtterance? }
+// Uses GPT + web search to generate a real-time assist card for the seller.
+app.post("/agent/notes", async (req: Request, res: Response) => {
+  const { window: windowSegments, recordingId, buyerUtterance } = req.body ?? {};
 
-  // Scan the transcript window for known keywords
-  const text = Array.isArray(windowSegments)
-    ? windowSegments.map((s: { text: string }) => s.text ?? "").join(" ").toLowerCase()
-    : "";
+  const rec = typeof recordingId === "string" ? getRecording(recordingId) : null;
+  const productContext = rec ? getProductInfo(rec.callId) : "Unknown product.";
 
-  const commitments: string[] = [];
-  const objections: string[] = [];
-  const facts: string[] = [];
-  const suggestions: string[] = [];
+  const latestUtterance: string =
+    typeof buyerUtterance === "string"
+      ? buyerUtterance
+      : Array.isArray(windowSegments) && windowSegments.length > 0
+        ? (windowSegments[windowSegments.length - 1] as { text?: string }).text ?? ""
+        : "";
 
-  if (text.includes("tableau") || text.includes("integration")) {
-    objections.push("No Tableau integration");
-  }
-  if (text.includes("roadmap")) {
-    objections.push("Feature not on current roadmap");
-  }
-  if (text.includes("sql") || text.includes("connector")) {
-    suggestions.push("Offer SQL connectors as a bridge — no migration required");
-  }
-  if (text.includes("demo") || text.includes("calendar")) {
-    commitments.push("Demo / calendar follow-up");
-  }
-  if (text.includes("deck") || (text.includes("send") && text.includes("deck"))) {
-    facts.push("Buyer requested materials — deal may be cooling");
-  }
-  if (text.includes("price") || text.includes("budget")) {
-    facts.push("Budget constraint raised");
-  }
-  if (text.includes("analytics") || text.includes("standardized")) {
-    facts.push("Analytics team has existing tooling standardized");
+  const recentSegments = Array.isArray(windowSegments) ? windowSegments : [];
+
+  const card = await generateAssistCard(latestUtterance, productContext, recentSegments);
+
+  // generateAssistCard returns null for short/filler utterances
+  if (!card) {
+    return res.json({ skipped: true, reason: "utterance too short" });
   }
 
-  const notes: AiNotes = { commitments, objections, facts, suggestions };
-
-  // Merge into recording.aiNotes and emit a notes SSE event if recordingId given
-  if (typeof recordingId === "string") {
-    const rec = getRecording(recordingId);
-    if (rec) {
-      rec.aiNotes = rec.aiNotes
-        ? {
-            commitments: [...new Set([...rec.aiNotes.commitments, ...commitments])],
-            objections: [...new Set([...rec.aiNotes.objections, ...objections])],
-            facts: [...new Set([...rec.aiNotes.facts, ...facts])],
-            suggestions: [...new Set([...rec.aiNotes.suggestions, ...suggestions])],
-          }
-        : notes;
-      putRecording(rec);
-      persist();
-      emitEvent(recordingId, { type: "notes", notes: rec.aiNotes });
-    }
+  if (rec) {
+    rec.aiNotes = card;
+    putRecording(rec);
+    persist();
+    emitEvent(recordingId as string, { type: "notes", card });
   }
 
-  res.json(notes);
+  res.json(card);
 });
 
 // 13. POST /agent/branch (BranchReq) → { node } | { node:null, matchedNodeId }
@@ -572,6 +559,50 @@ app.ws("/mock/session/:recordingId", (ws, req) => {
   }
   handleMockSession(ws as any, recordingId, currentNodeId, includePrecap);
 });
+
+// ---------------------------------------------------------------------------
+// WS /live/session/:recordingId — unified live call session.
+// A single browser WebSocket carries tagged audio for both seller and buyer:
+//   { speaker: "seller"|"buyer", audio: "<base64 pcm16>" }
+// live.ts routes each frame to the correct SpeakerStream internally.
+// ---------------------------------------------------------------------------
+
+app.ws("/live/session/:recordingId", (ws, req) => {
+  const { recordingId } = req.params;
+  if (!recordingId) { ws.close(1008, "recordingId required"); return; }
+  console.log(`[live] Session connected for ${recordingId}`);
+  handleLiveSession(ws as unknown as WebSocket, recordingId, emitEvent);
+});
+
+// ---------------------------------------------------------------------------
+// POST /recordings/:id/audio — full call recording upload (end of call)
+// Frontend uploads the merged audio file; backend saves it and updates audioPath.
+// ---------------------------------------------------------------------------
+
+const audioUpload = multer({ storage: multer.memoryStorage() });
+
+app.post(
+  "/recordings/:id/audio",
+  audioUpload.single("audio"),
+  async (req: Request, res: Response) => {
+    const rec = getRecording(req.params.id);
+    if (!rec) return notFound(res, `recording ${req.params.id} not found`);
+
+    if (!req.file) return fail(res, 400, "bad_input", "audio file required (field: audio)");
+
+    const dir = join(__serverdirname, "..", "public", "data", "audio", rec.id);
+    await fs.mkdir(dir, { recursive: true });
+    const filePath = join(dir, "full_call.webm");
+    await fs.writeFile(filePath, req.file.buffer);
+
+    rec.audioPath = `/data/audio/${rec.id}/full_call.webm`;
+    rec.isActive = false;
+    putRecording(rec);
+    persist();
+
+    res.json({ ok: true, audioPath: rec.audioPath });
+  },
+);
 
 // ---------------------------------------------------------------------------
 

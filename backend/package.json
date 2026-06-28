@@ -5,16 +5,18 @@
   "type": "module",
   "description": "CallTree backend — single Express process, local JSON store (hackathon scaffold).",
   "scripts": {
-    "dev": "node --env-file=.env --import tsx --watch src/server.ts",
-    "start": "node --env-file=.env --import tsx src/server.ts",
+    "dev": "node --use-system-ca --env-file=.env --import tsx --watch src/server.ts",
+    "start": "node --use-system-ca --env-file=.env --import tsx src/server.ts",
     "build": "tsc --noEmit false",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/multer": "^2.1.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^4.21.2",
     "express-ws": "^5.0.2",
+    "multer": "^2.2.0",
     "openai": "^6.45.0",
     "ws": "^8.21.0"
   },

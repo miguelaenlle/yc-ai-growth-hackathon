@@ -3,21 +3,25 @@
     "note": "Dummy data for CallTree. Frontend can import this directly and stub the API against it until the backend exists. Lists are arrays; trees and recordings are keyed by id for O(1) lookup. Deal value for Convex is $48,000; expectedValue = round(successProbability * 48000).",
     "dealValue": 48000
   },
-
   "companies": [
     {
       "id": "co_convex",
       "name": "Convex",
       "buyers": [
-        { "id": "buy_john", "name": "John Doe", "title": "VP of Operations" }
+        {
+          "id": "buy_john",
+          "name": "John Doe",
+          "title": "VP of Operations"
+        }
       ]
     }
   ],
-
   "salespeople": [
-    { "id": "sp_jane", "name": "Jane Doe" }
+    {
+      "id": "sp_jane",
+      "name": "Jane Doe"
+    }
   ],
-
   "calls": [
     {
       "id": "call_convex",
@@ -26,10 +30,13 @@
       "buyerId": "buy_john",
       "startedAt": "2026-06-25T17:00:00-07:00",
       "treeId": "tree_convex",
-      "recordingIds": ["rec_real", "rec_mock1"]
+      "recordingIds": [
+        "rec_real",
+        "rec_live1",
+        "rec_mock1"
+      ]
     }
   ],
-
   "trees": {
     "tree_convex": {
       "id": "tree_convex",
@@ -37,72 +44,381 @@
       "rootNodeId": "n_open",
       "nodes": [
         {
-          "id": "n_open", "parentId": null, "childIds": ["n_disc"],
-          "title": "Opening", "description": "Thanks for hopping on, John",
-          "speaker": "seller", "tMs": 0,
-          "successProbability": 0.50, "expectedValue": 24000,
-          "metrics": { "confidence": 0.72, "hesitation": 0.18, "enthusiasm": 0.55 }
+          "id": "n_open",
+          "parentId": null,
+          "childIds": [
+            "n_disc",
+            "n_mqxl33ap_mit0"
+          ],
+          "title": "Opening",
+          "description": "Thanks for hopping on, John",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.49,
+            "hesitation": 0.86,
+            "enthusiasm": 1
+          }
         },
         {
-          "id": "n_disc", "parentId": "n_open", "childIds": ["n_push"],
-          "title": "Discovery", "description": "How's ticket volume lately?",
-          "speaker": "seller", "tMs": 11000,
-          "successProbability": 0.50, "expectedValue": 24000,
-          "metrics": { "confidence": 0.68, "hesitation": 0.22, "enthusiasm": 0.58 }
+          "id": "n_disc",
+          "parentId": "n_open",
+          "childIds": [
+            "n_push"
+          ],
+          "title": "Discovery",
+          "description": "How's ticket volume lately?",
+          "speaker": "seller",
+          "tMs": 11000,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.68,
+            "hesitation": 0.22,
+            "enthusiasm": 0.58
+          }
         },
         {
-          "id": "n_push", "parentId": "n_disc", "childIds": ["n_road", "n_alt", "n_cust"],
-          "title": "Pushback", "description": "You don't have Tableau integration",
-          "speaker": "buyer", "tMs": 23000,
-          "successProbability": 0.45, "expectedValue": 21600,
-          "metrics": { "confidence": 0.34, "hesitation": 0.71, "enthusiasm": 0.30 }
+          "id": "n_push",
+          "parentId": "n_disc",
+          "childIds": [
+            "n_road",
+            "n_alt",
+            "n_cust"
+          ],
+          "title": "Pushback",
+          "description": "You don't have Tableau integration",
+          "speaker": "buyer",
+          "tMs": 23000,
+          "successProbability": 0.45,
+          "expectedValue": 21600,
+          "metrics": {
+            "confidence": 0.34,
+            "hesitation": 0.71,
+            "enthusiasm": 0.3
+          }
         },
         {
-          "id": "n_road", "parentId": "n_push", "childIds": ["n_lost"],
-          "title": "On the roadmap", "description": "It's an upcoming feature",
-          "speaker": "seller", "tMs": 31000,
-          "successProbability": 0.08, "expectedValue": 3840,
-          "metrics": { "confidence": 0.31, "hesitation": 0.66, "enthusiasm": 0.24 }
+          "id": "n_road",
+          "parentId": "n_push",
+          "childIds": [
+            "n_lost"
+          ],
+          "title": "On the roadmap",
+          "description": "It's an upcoming feature",
+          "speaker": "seller",
+          "tMs": 31000,
+          "successProbability": 0.08,
+          "expectedValue": 3840,
+          "metrics": {
+            "confidence": 0.31,
+            "hesitation": 0.66,
+            "enthusiasm": 0.24
+          }
         },
         {
-          "id": "n_alt", "parentId": "n_push", "childIds": ["n_agree"],
-          "title": "Alternative", "description": "Use our SQL connectors instead",
-          "speaker": "seller", "tMs": 13000,
-          "successProbability": 0.80, "expectedValue": 38400,
-          "metrics": { "confidence": 0.70, "hesitation": 0.20, "enthusiasm": 0.62 }
+          "id": "n_alt",
+          "parentId": "n_push",
+          "childIds": [
+            "n_agree"
+          ],
+          "title": "Alternative",
+          "description": "Use our SQL connectors instead",
+          "speaker": "seller",
+          "tMs": 13000,
+          "successProbability": 0.8,
+          "expectedValue": 38400,
+          "metrics": {
+            "confidence": 0.7,
+            "hesitation": 0.2,
+            "enthusiasm": 0.62
+          }
         },
         {
-          "id": "n_cust", "parentId": "n_push", "childIds": ["n_proof"],
-          "title": "Customization", "description": "We'll build it next week",
-          "speaker": "seller", "tMs": 0,
-          "successProbability": 0.50, "expectedValue": 24000,
-          "metrics": { "confidence": 0.55, "hesitation": 0.40, "enthusiasm": 0.45 }
+          "id": "n_cust",
+          "parentId": "n_push",
+          "childIds": [
+            "n_proof"
+          ],
+          "title": "Customization",
+          "description": "We'll build it next week",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.55,
+            "hesitation": 0.4,
+            "enthusiasm": 0.45
+          }
         },
         {
-          "id": "n_lost", "parentId": "n_road", "childIds": [],
-          "title": "Deal lost", "description": "Just send me the deck",
-          "speaker": "buyer", "tMs": 38000,
-          "successProbability": 0.02, "expectedValue": 960,
-          "metrics": { "confidence": 0.25, "hesitation": 0.52, "enthusiasm": 0.12 }
+          "id": "n_lost",
+          "parentId": "n_road",
+          "childIds": [],
+          "title": "Deal lost",
+          "description": "Just send me the deck",
+          "speaker": "buyer",
+          "tMs": 38000,
+          "successProbability": 0.02,
+          "expectedValue": 960,
+          "metrics": {
+            "confidence": 0.25,
+            "hesitation": 0.52,
+            "enthusiasm": 0.12
+          }
         },
         {
-          "id": "n_agree", "parentId": "n_alt", "childIds": [],
-          "title": "Agreement", "description": "Got it — let's book a demo",
-          "speaker": "buyer", "tMs": 21000,
-          "successProbability": 0.95, "expectedValue": 45600,
-          "metrics": { "confidence": 0.80, "hesitation": 0.15, "enthusiasm": 0.78 }
+          "id": "n_agree",
+          "parentId": "n_alt",
+          "childIds": [],
+          "title": "Agreement",
+          "description": "Got it — let's book a demo",
+          "speaker": "buyer",
+          "tMs": 21000,
+          "successProbability": 0.95,
+          "expectedValue": 45600,
+          "metrics": {
+            "confidence": 0.8,
+            "hesitation": 0.15,
+            "enthusiasm": 0.78
+          }
         },
         {
-          "id": "n_proof", "parentId": "n_cust", "childIds": [],
-          "title": "Needs proof", "description": "I'll believe it when I see it",
-          "speaker": "buyer", "tMs": 0,
-          "successProbability": 0.45, "expectedValue": 21600,
-          "metrics": { "confidence": 0.50, "hesitation": 0.45, "enthusiasm": 0.35 }
+          "id": "n_proof",
+          "parentId": "n_cust",
+          "childIds": [],
+          "title": "Needs proof",
+          "description": "I'll believe it when I see it",
+          "speaker": "buyer",
+          "tMs": 0,
+          "successProbability": 0.45,
+          "expectedValue": 21600,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.45,
+            "enthusiasm": 0.35
+          }
+        },
+        {
+          "id": "n_mqxl33ap_mit0",
+          "parentId": "n_open",
+          "childIds": [
+            "n_mqxl33h6_oey0"
+          ],
+          "title": "Mimicking Buyer and Seller Locally",
+          "description": "Inquiring about simulating both roles on one device.",
+          "speaker": "buyer",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.32,
+            "enthusiasm": 0.54
+          }
+        },
+        {
+          "id": "n_mqxl33h6_oey0",
+          "parentId": "n_mqxl33ap_mit0",
+          "childIds": [
+            "n_mqxl33py_u8at"
+          ],
+          "title": "Got it to work, but the thing is locally, how would you mimi",
+          "description": "Got it to work, but the thing is locally, how would you mimic both the buyer and seller on the same device?",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.32,
+            "enthusiasm": 0.54
+          }
+        },
+        {
+          "id": "n_mqxl33py_u8at",
+          "parentId": "n_mqxl33h6_oey0",
+          "childIds": [
+            "n_mqxl33x3_nq92"
+          ],
+          "title": "We have to do it.",
+          "description": "We have to do it.",
+          "speaker": "buyer",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.3,
+            "enthusiasm": 0.5
+          }
+        },
+        {
+          "id": "n_mqxl33x3_nq92",
+          "parentId": "n_mqxl33py_u8at",
+          "childIds": [
+            "n_mqxlxn5e_gw4c"
+          ],
+          "title": "We have to do it.",
+          "description": "We have to do it.",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.34,
+            "enthusiasm": 0.58
+          }
+        },
+        {
+          "id": "n_mqxlxn5e_gw4c",
+          "parentId": "n_mqxl33x3_nq92",
+          "childIds": [
+            "n_mqxlxpxg_425u"
+          ],
+          "title": "I'm trying to buy some software",
+          "description": "I'm trying to buy some software",
+          "speaker": "buyer",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.3,
+            "enthusiasm": 0.5
+          }
+        },
+        {
+          "id": "n_mqxlxpxg_425u",
+          "parentId": "n_mqxlxn5e_gw4c",
+          "childIds": [
+            "n_mqxly1g3_kxln"
+          ],
+          "title": "Hello, I'm trying to buy some software",
+          "description": "Hello, I'm trying to buy some software",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.35,
+            "hesitation": 0.5,
+            "enthusiasm": 0.5
+          }
+        },
+        {
+          "id": "n_mqxly1g3_kxln",
+          "parentId": "n_mqxlxpxg_425u",
+          "childIds": [
+            "n_mqxly4ww_kcd5"
+          ],
+          "title": "You didn't get it? Both of them are saying it's both, well, ",
+          "description": "You didn't get it? Both of them are saying it's both, well, this one is saying it's both people.",
+          "speaker": "buyer",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.32,
+            "enthusiasm": 0.54
+          }
+        },
+        {
+          "id": "n_mqxly4ww_kcd5",
+          "parentId": "n_mqxly1g3_kxln",
+          "childIds": [
+            "n_mqxlycgu_9pwe"
+          ],
+          "title": "You didn't get it? Both of them are saying it's both, well, ",
+          "description": "You didn't get it? Both of them are saying it's both, well, this one is saying it's both people.",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.36,
+            "enthusiasm": 0.62
+          }
+        },
+        {
+          "id": "n_mqxlycgu_9pwe",
+          "parentId": "n_mqxly4ww_kcd5",
+          "childIds": [
+            "n_mqxlyf34_zzl6"
+          ],
+          "title": "Because the mic is being used by both of them, right? It's t",
+          "description": "Because the mic is being used by both of them, right? It's the same device. Yeah. If we don't have speaker diarization as part of WebSockets, then...",
+          "speaker": "buyer",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.32,
+            "enthusiasm": 0.54
+          }
+        },
+        {
+          "id": "n_mqxlyf34_zzl6",
+          "parentId": "n_mqxlycgu_9pwe",
+          "childIds": [
+            "n_mqxlyhkl_qc0e"
+          ],
+          "title": "Because the mic is being used by both of them, right? It's t",
+          "description": "Because the mic is being used by both of them, right? It's the same device. Yeah. If we don't have speaker diarization as part of WebSockets, then...",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.42,
+            "hesitation": 0.4,
+            "enthusiasm": 0.54
+          }
+        },
+        {
+          "id": "n_mqxlyhkl_qc0e",
+          "parentId": "n_mqxlyf34_zzl6",
+          "childIds": [
+            "n_mqxlyk5q_sz1b"
+          ],
+          "title": "We either have to talk with an AI, as our example,",
+          "description": "We either have to talk with an AI, as our example,",
+          "speaker": "buyer",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.32,
+            "enthusiasm": 0.54
+          }
+        },
+        {
+          "id": "n_mqxlyk5q_sz1b",
+          "parentId": "n_mqxlyhkl_qc0e",
+          "childIds": [],
+          "title": "We either have to talk with an AI, as our example,",
+          "description": "We either have to talk with an AI, as our example,",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.32,
+            "enthusiasm": 0.54
+          }
         }
       ]
     }
   },
-
   "recordings": {
     "rec_real": {
       "id": "rec_real",
@@ -115,42 +431,524 @@
       "audioPath": "/data/audio/rec_real.webm",
       "lengthMs": 48000,
       "transcript": [
-        { "index": 0, "speaker": "seller", "text": "Thanks for hopping on, John. How's your week going?", "tStartMs": 0, "tEndMs": 6000 },
-        { "index": 1, "speaker": "buyer", "text": "Good, a bit slammed. What did you want to show me?", "tStartMs": 6000, "tEndMs": 11000 },
-        { "index": 2, "speaker": "seller", "text": "How's ticket volume been lately on the support team?", "tStartMs": 11000, "tEndMs": 16000 },
-        { "index": 3, "speaker": "buyer", "text": "Honestly it's been rough, we're drowning in tickets.", "tStartMs": 16000, "tEndMs": 23000 },
-        { "index": 4, "speaker": "buyer", "text": "But here's the thing, you don't have Tableau integration, and our whole analytics team lives in it.", "tStartMs": 23000, "tEndMs": 31000 },
-        { "index": 5, "speaker": "seller", "text": "Right, uh, Tableau, that's actually on our roadmap, it's an upcoming feature.", "tStartMs": 31000, "tEndMs": 38000 },
-        { "index": 6, "speaker": "buyer", "text": "Okay. Well, just send me the deck and I'll take a look.", "tStartMs": 38000, "tEndMs": 44000 },
-        { "index": 7, "speaker": "seller", "text": "Sure, I'll get that over to you today.", "tStartMs": 44000, "tEndMs": 48000 }
+        {
+          "index": 0,
+          "speaker": "seller",
+          "text": "Thanks for hopping on, John. How's your week going?",
+          "tStartMs": 0,
+          "tEndMs": 6000
+        },
+        {
+          "index": 1,
+          "speaker": "buyer",
+          "text": "Good, a bit slammed. What did you want to show me?",
+          "tStartMs": 6000,
+          "tEndMs": 11000
+        },
+        {
+          "index": 2,
+          "speaker": "seller",
+          "text": "How's ticket volume been lately on the support team?",
+          "tStartMs": 11000,
+          "tEndMs": 16000
+        },
+        {
+          "index": 3,
+          "speaker": "buyer",
+          "text": "Honestly it's been rough, we're drowning in tickets.",
+          "tStartMs": 16000,
+          "tEndMs": 23000
+        },
+        {
+          "index": 4,
+          "speaker": "buyer",
+          "text": "But here's the thing, you don't have Tableau integration, and our whole analytics team lives in it.",
+          "tStartMs": 23000,
+          "tEndMs": 31000
+        },
+        {
+          "index": 5,
+          "speaker": "seller",
+          "text": "Right, uh, Tableau, that's actually on our roadmap, it's an upcoming feature.",
+          "tStartMs": 31000,
+          "tEndMs": 38000
+        },
+        {
+          "index": 6,
+          "speaker": "buyer",
+          "text": "Okay. Well, just send me the deck and I'll take a look.",
+          "tStartMs": 38000,
+          "tEndMs": 44000
+        },
+        {
+          "index": 7,
+          "speaker": "seller",
+          "text": "Sure, I'll get that over to you today.",
+          "tStartMs": 44000,
+          "tEndMs": 48000
+        }
       ],
       "traversal": {
         "initialNodeId": "n_open",
         "finalNodeId": "n_lost",
         "steps": [
-          { "transcriptIndex": 2, "fromNodeId": "n_open", "toNodeId": "n_disc", "tMs": 11000 },
-          { "transcriptIndex": 4, "fromNodeId": "n_disc", "toNodeId": "n_push", "tMs": 23000 },
-          { "transcriptIndex": 5, "fromNodeId": "n_push", "toNodeId": "n_road", "tMs": 31000 },
-          { "transcriptIndex": 6, "fromNodeId": "n_road", "toNodeId": "n_lost", "tMs": 38000 }
+          {
+            "transcriptIndex": 2,
+            "fromNodeId": "n_open",
+            "toNodeId": "n_disc",
+            "tMs": 11000
+          },
+          {
+            "transcriptIndex": 4,
+            "fromNodeId": "n_disc",
+            "toNodeId": "n_push",
+            "tMs": 23000
+          },
+          {
+            "transcriptIndex": 5,
+            "fromNodeId": "n_push",
+            "toNodeId": "n_road",
+            "tMs": 31000
+          },
+          {
+            "transcriptIndex": 6,
+            "fromNodeId": "n_road",
+            "toNodeId": "n_lost",
+            "tMs": 38000
+          }
         ]
       },
       "aiNotes": {
-        "commitments": ["Send the deck today"],
-        "objections": ["No Tableau integration"],
-        "facts": ["Analytics team standardized on Tableau", "Support team overwhelmed by ticket volume"],
-        "suggestions": ["Offer SQL connectors as a bridge", "Quantify the ticket backlog"]
+        "commitments": [
+          "Send the deck today"
+        ],
+        "objections": [
+          "No Tableau integration"
+        ],
+        "facts": [
+          "Analytics team standardized on Tableau",
+          "Support team overwhelmed by ticket volume"
+        ],
+        "suggestions": [
+          "Offer SQL connectors as a bridge",
+          "Quantify the ticket backlog"
+        ]
       },
       "aiFeedback": {
         "summary": "You surfaced strong pain quickly, but the Tableau objection turned the call. Deflecting to the roadmap read as 'not today,' and John disengaged.",
-        "strengths": ["Warm, low-friction open", "Surfaced a real pain (ticket overload) within two minutes"],
-        "weaknesses": ["Hesitated when the Tableau objection landed", "Answered a present-day gap with a future promise"],
+        "strengths": [
+          "Warm, low-friction open",
+          "Surfaced a real pain (ticket overload) within two minutes"
+        ],
+        "weaknesses": [
+          "Hesitated when the Tableau objection landed",
+          "Answered a present-day gap with a future promise"
+        ],
         "practiceTargets": [
-          { "nodeId": "n_push", "reason": "Confidence dropped and hesitation spiked the moment the objection landed", "drill": "Hold the room: acknowledge the gap, then pivot to value", "metric": "hesitation", "score": 0.71 },
-          { "nodeId": "n_road", "reason": "Answered the gap with a roadmap promise instead of a present-day alternative", "drill": "Reframe to the SQL-connector workaround", "metric": "confidence", "score": 0.31 }
+          {
+            "nodeId": "n_push",
+            "reason": "Confidence dropped and hesitation spiked the moment the objection landed",
+            "drill": "Hold the room: acknowledge the gap, then pivot to value",
+            "metric": "hesitation",
+            "score": 0.71
+          },
+          {
+            "nodeId": "n_road",
+            "reason": "Answered the gap with a roadmap promise instead of a present-day alternative",
+            "drill": "Reframe to the SQL-connector workaround",
+            "metric": "confidence",
+            "score": 0.31
+          }
         ]
       }
     },
-
+    "rec_live1": {
+      "id": "rec_live1",
+      "callId": "call_convex",
+      "treeId": "tree_convex",
+      "isReal": true,
+      "isActive": false,
+      "startNodeId": "n_open",
+      "stopNodeId": null,
+      "audioPath": "",
+      "lengthMs": 0,
+      "transcript": [
+        {
+          "index": 0,
+          "speaker": "buyer",
+          "text": "Let's see, can you hear me now?",
+          "tStartMs": 1782638693351,
+          "tEndMs": 1782638694770
+        },
+        {
+          "index": 1,
+          "speaker": "buyer",
+          "text": "We're actually happy that you are.",
+          "tStartMs": 1782638693351,
+          "tEndMs": 1782638695901
+        },
+        {
+          "index": 0,
+          "speaker": "seller",
+          "text": "Let's see, can you hear me now?",
+          "tStartMs": 1782638695692,
+          "tEndMs": 1782638697172
+        },
+        {
+          "index": 2,
+          "speaker": "buyer",
+          "text": "because we are implementing that and it's already in JIRA and we're going to be working on it.",
+          "tStartMs": 1782638705451,
+          "tEndMs": 1782638706499
+        },
+        {
+          "index": 1,
+          "speaker": "seller",
+          "text": "because we are implementing that and it's already in Jira and we're going to be working on it.",
+          "tStartMs": 1782638705417,
+          "tEndMs": 1782638706801
+        },
+        {
+          "index": 2,
+          "speaker": "seller",
+          "text": "Okay, this is pretty good.",
+          "tStartMs": 1782638712084,
+          "tEndMs": 1782638712981
+        },
+        {
+          "index": 3,
+          "speaker": "buyer",
+          "text": "Okay, this is pretty good.",
+          "tStartMs": 1782638714621,
+          "tEndMs": 1782638715279
+        },
+        {
+          "index": 3,
+          "speaker": "seller",
+          "text": "Ah",
+          "tStartMs": 1782638714629,
+          "tEndMs": 1782638716094
+        },
+        {
+          "index": 4,
+          "speaker": "buyer",
+          "text": "It's Thanksgiving, okay.",
+          "tStartMs": 1782638718744,
+          "tEndMs": 1782638719176
+        },
+        {
+          "index": 4,
+          "speaker": "seller",
+          "text": "It is Thanksgiving, okay.",
+          "tStartMs": 1782638718908,
+          "tEndMs": 1782638719252
+        },
+        {
+          "index": 5,
+          "speaker": "buyer",
+          "text": "Now, for the buyer.",
+          "tStartMs": 1782638718744,
+          "tEndMs": 1782638724266
+        },
+        {
+          "index": 5,
+          "speaker": "seller",
+          "text": "Now, for the buyer.",
+          "tStartMs": 1782638718908,
+          "tEndMs": 1782638726172
+        },
+        {
+          "index": 6,
+          "speaker": "seller",
+          "text": "Wow",
+          "tStartMs": 1782638727193,
+          "tEndMs": 1782638729080
+        },
+        {
+          "index": 6,
+          "speaker": "buyer",
+          "text": "Wow",
+          "tStartMs": 1782638727176,
+          "tEndMs": 1782638729693
+        },
+        {
+          "index": 7,
+          "speaker": "seller",
+          "text": "This is so funny, we are...",
+          "tStartMs": 1782638735575,
+          "tEndMs": 1782638735861
+        },
+        {
+          "index": 7,
+          "speaker": "buyer",
+          "text": "This is so funny",
+          "tStartMs": 1782638735540,
+          "tEndMs": 1782638736814
+        },
+        {
+          "index": 8,
+          "speaker": "seller",
+          "text": "아..",
+          "tStartMs": 1782638737133,
+          "tEndMs": 1782638737875
+        },
+        {
+          "index": 8,
+          "speaker": "buyer",
+          "text": "아...",
+          "tStartMs": 1782638737081,
+          "tEndMs": 1782638738070
+        },
+        {
+          "index": 9,
+          "speaker": "buyer",
+          "text": "LMAO",
+          "tStartMs": 1782638739465,
+          "tEndMs": 1782638739877
+        },
+        {
+          "index": 9,
+          "speaker": "seller",
+          "text": "LMAO",
+          "tStartMs": 1782638739550,
+          "tEndMs": 1782638740255
+        },
+        {
+          "index": 10,
+          "speaker": "buyer",
+          "text": "Yes. Yes.",
+          "tStartMs": 1782638740675,
+          "tEndMs": 1782638740887
+        },
+        {
+          "index": 10,
+          "speaker": "seller",
+          "text": "Yeah. Yes.",
+          "tStartMs": 1782638740782,
+          "tEndMs": 1782638742167
+        },
+        {
+          "index": 11,
+          "speaker": "buyer",
+          "text": "got it to work, but the thing is, locally, how would you mimic both the buyer and seller on the same device?",
+          "tStartMs": 1782638748616,
+          "tEndMs": 1782638748991
+        },
+        {
+          "index": 11,
+          "speaker": "seller",
+          "text": "Got it to work, but the thing is locally, how would you mimic both the buyer and seller on the same device?",
+          "tStartMs": 1782638748637,
+          "tEndMs": 1782638750121
+        },
+        {
+          "index": 12,
+          "speaker": "buyer",
+          "text": "We have to do it.",
+          "tStartMs": 1782638748616,
+          "tEndMs": 1782638751133
+        },
+        {
+          "index": 12,
+          "speaker": "seller",
+          "text": "We have to do it.",
+          "tStartMs": 1782638748637,
+          "tEndMs": 1782638751185
+        },
+        {
+          "index": 0,
+          "speaker": "seller",
+          "text": "Thanks.",
+          "tStartMs": 1782640144038,
+          "tEndMs": 1782640144231
+        },
+        {
+          "index": 1,
+          "speaker": "seller",
+          "text": "Say something.",
+          "tStartMs": 1782640146259,
+          "tEndMs": 1782640146634
+        },
+        {
+          "index": 0,
+          "speaker": "buyer",
+          "text": "Say something.",
+          "tStartMs": 1782640146701,
+          "tEndMs": 1782640147276
+        },
+        {
+          "index": 1,
+          "speaker": "buyer",
+          "text": "I'm trying to buy some software",
+          "tStartMs": 1782640146701,
+          "tEndMs": 1782640149887
+        },
+        {
+          "index": 2,
+          "speaker": "seller",
+          "text": "Hello, I'm trying to buy some software",
+          "tStartMs": 1782640146259,
+          "tEndMs": 1782640150597
+        },
+        {
+          "index": 3,
+          "speaker": "seller",
+          "text": "Bye.",
+          "tStartMs": 1782640158203,
+          "tEndMs": 1782640160224
+        },
+        {
+          "index": 2,
+          "speaker": "buyer",
+          "text": "You don't.",
+          "tStartMs": 1782640161211,
+          "tEndMs": 1782640163074
+        },
+        {
+          "index": 4,
+          "speaker": "seller",
+          "text": "You don't",
+          "tStartMs": 1782640161276,
+          "tEndMs": 1782640164101
+        },
+        {
+          "index": 3,
+          "speaker": "buyer",
+          "text": "You didn't get it? Both of them are saying it's both, well, this one is saying it's both people.",
+          "tStartMs": 1782640172459,
+          "tEndMs": 1782640172495
+        },
+        {
+          "index": 5,
+          "speaker": "seller",
+          "text": "You didn't get it? Both of them are saying it's both, well, this one is saying it's both people.",
+          "tStartMs": 1782640172374,
+          "tEndMs": 1782640173595
+        },
+        {
+          "index": 6,
+          "speaker": "seller",
+          "text": "That's what I'm saying.",
+          "tStartMs": 1782640174798,
+          "tEndMs": 1782640175082
+        },
+        {
+          "index": 4,
+          "speaker": "buyer",
+          "text": "That's what I'm saying.",
+          "tStartMs": 1782640174792,
+          "tEndMs": 1782640175912
+        },
+        {
+          "index": 5,
+          "speaker": "buyer",
+          "text": "Because the mic is being used by both of them, right? It's the same device. Yeah. If we don't have speaker diarization as part of WebSockets, then...",
+          "tStartMs": 1782640188564,
+          "tEndMs": 1782640189061
+        },
+        {
+          "index": 7,
+          "speaker": "seller",
+          "text": "Because the mic is being used by both of them, right? It's the same device. Yeah. If we don't have speaker diarization as part of WebSockets, then...",
+          "tStartMs": 1782640188635,
+          "tEndMs": 1782640191254
+        },
+        {
+          "index": 6,
+          "speaker": "buyer",
+          "text": "We either have to talk with an AI, as our example,",
+          "tStartMs": 1782640195228,
+          "tEndMs": 1782640195514
+        },
+        {
+          "index": 8,
+          "speaker": "seller",
+          "text": "We either have to talk with an AI, as our example,",
+          "tStartMs": 1782640195133,
+          "tEndMs": 1782640196454
+        }
+      ],
+      "traversal": {
+        "initialNodeId": "n_open",
+        "finalNodeId": "n_mqxlyk5q_sz1b",
+        "steps": [
+          {
+            "transcriptIndex": 11,
+            "fromNodeId": "n_open",
+            "toNodeId": "n_mqxl33ap_mit0",
+            "tMs": 1782638748616
+          },
+          {
+            "transcriptIndex": 11,
+            "fromNodeId": "n_mqxl33ap_mit0",
+            "toNodeId": "n_mqxl33h6_oey0",
+            "tMs": 1782638748637
+          },
+          {
+            "transcriptIndex": 12,
+            "fromNodeId": "n_mqxl33h6_oey0",
+            "toNodeId": "n_mqxl33py_u8at",
+            "tMs": 1782638748616
+          },
+          {
+            "transcriptIndex": 12,
+            "fromNodeId": "n_mqxl33py_u8at",
+            "toNodeId": "n_mqxl33x3_nq92",
+            "tMs": 1782638748637
+          },
+          {
+            "transcriptIndex": 1,
+            "fromNodeId": "n_mqxl33x3_nq92",
+            "toNodeId": "n_mqxlxn5e_gw4c",
+            "tMs": 1782640146701
+          },
+          {
+            "transcriptIndex": 2,
+            "fromNodeId": "n_mqxlxn5e_gw4c",
+            "toNodeId": "n_mqxlxpxg_425u",
+            "tMs": 1782640146259
+          },
+          {
+            "transcriptIndex": 3,
+            "fromNodeId": "n_mqxlxpxg_425u",
+            "toNodeId": "n_mqxly1g3_kxln",
+            "tMs": 1782640172459
+          },
+          {
+            "transcriptIndex": 5,
+            "fromNodeId": "n_mqxly1g3_kxln",
+            "toNodeId": "n_mqxly4ww_kcd5",
+            "tMs": 1782640172374
+          },
+          {
+            "transcriptIndex": 5,
+            "fromNodeId": "n_mqxly4ww_kcd5",
+            "toNodeId": "n_mqxlycgu_9pwe",
+            "tMs": 1782640188564
+          },
+          {
+            "transcriptIndex": 7,
+            "fromNodeId": "n_mqxlycgu_9pwe",
+            "toNodeId": "n_mqxlyf34_zzl6",
+            "tMs": 1782640188635
+          },
+          {
+            "transcriptIndex": 6,
+            "fromNodeId": "n_mqxlyf34_zzl6",
+            "toNodeId": "n_mqxlyhkl_qc0e",
+            "tMs": 1782640195228
+          },
+          {
+            "transcriptIndex": 8,
+            "fromNodeId": "n_mqxlyhkl_qc0e",
+            "toNodeId": "n_mqxlyk5q_sz1b",
+            "tMs": 1782640195133
+          }
+        ]
+      },
+      "aiNotes": null,
+      "aiFeedback": null
+    },
     "rec_mock1": {
       "id": "rec_mock1",
       "callId": "call_convex",
@@ -162,23 +960,60 @@
       "audioPath": "/data/audio/rec_mock1.webm",
       "lengthMs": 27000,
       "transcript": [
-        { "index": 0, "speaker": "seller", "text": "Totally hear you on Tableau. Quick question, what do you actually build in it day to day?", "tStartMs": 0, "tEndMs": 7000 },
-        { "index": 1, "speaker": "buyer", "text": "Mostly support dashboards, ticket trends, that kind of thing.", "tStartMs": 7000, "tEndMs": 13000 },
-        { "index": 2, "speaker": "seller", "text": "Got it. So you can pull all of that straight from our SQL connectors into the same dashboards, no migration, you keep Tableau.", "tStartMs": 13000, "tEndMs": 21000 },
-        { "index": 3, "speaker": "buyer", "text": "Oh, okay, that actually works. Let's get a demo on the calendar.", "tStartMs": 21000, "tEndMs": 27000 }
+        {
+          "index": 0,
+          "speaker": "seller",
+          "text": "Totally hear you on Tableau. Quick question, what do you actually build in it day to day?",
+          "tStartMs": 0,
+          "tEndMs": 7000
+        },
+        {
+          "index": 1,
+          "speaker": "buyer",
+          "text": "Mostly support dashboards, ticket trends, that kind of thing.",
+          "tStartMs": 7000,
+          "tEndMs": 13000
+        },
+        {
+          "index": 2,
+          "speaker": "seller",
+          "text": "Got it. So you can pull all of that straight from our SQL connectors into the same dashboards, no migration, you keep Tableau.",
+          "tStartMs": 13000,
+          "tEndMs": 21000
+        },
+        {
+          "index": 3,
+          "speaker": "buyer",
+          "text": "Oh, okay, that actually works. Let's get a demo on the calendar.",
+          "tStartMs": 21000,
+          "tEndMs": 27000
+        }
       ],
       "traversal": {
         "initialNodeId": "n_push",
         "finalNodeId": "n_agree",
         "steps": [
-          { "transcriptIndex": 2, "fromNodeId": "n_push", "toNodeId": "n_alt", "tMs": 13000 },
-          { "transcriptIndex": 3, "fromNodeId": "n_alt", "toNodeId": "n_agree", "tMs": 21000 }
+          {
+            "transcriptIndex": 2,
+            "fromNodeId": "n_push",
+            "toNodeId": "n_alt",
+            "tMs": 13000
+          },
+          {
+            "transcriptIndex": 3,
+            "fromNodeId": "n_alt",
+            "toNodeId": "n_agree",
+            "tMs": 21000
+          }
         ]
       },
       "aiNotes": null,
       "aiFeedback": {
         "summary": "Clean recovery. You reframed the Tableau gap into a no-migration win and booked the demo.",
-        "strengths": ["Asked what they build before pitching", "Removed the migration objection"],
+        "strengths": [
+          "Asked what they build before pitching",
+          "Removed the migration objection"
+        ],
         "weaknesses": [],
         "practiceTargets": []
       }

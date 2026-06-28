@@ -14,13 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const CACHE_DIR = join(__dirname, "data", "cache");
 
 import { getPersonaInfo } from "./personas.js";
-
-function getProductInfo(companyId: Id): string {
-  if (companyId === "co_convex") {
-    return "Convex is a high-performance backend-as-a-service. It syncs state in real-time, guarantees transactional consistency, and is a $48k ACV deal.";
-  }
-  return "Unknown product.";
-}
+import { getProductInfo } from "./product.js";
 
 function generateMockPrompt(recordingId: Id, currentNodeId: Id): string {
   const rec = getRecording(recordingId);
@@ -142,7 +136,7 @@ Each object must have:
       return;
     }
 
-    const llmData = await llmRes.json();
+    const llmData = await llmRes.json() as { choices: { message: { content: string } }[] };
     const parsed = JSON.parse(llmData.choices[0].message.content);
     const script = parsed.script || [];
 
@@ -262,7 +256,7 @@ export async function handleMockSession(
     if (speaker !== expectedSpeaker) return;
 
     try {
-      const result = await matchOrCreateBranch(tree, currentNodeId, recentConversation, speaker);
+      const result = matchOrCreateBranch(tree, currentNodeId, recentConversation.map(m => m.text).join(" "));
 
       let switchedNode = false;
       if (result.created) {
