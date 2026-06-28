@@ -3,21 +3,25 @@
     "note": "Dummy data for CallTree. Frontend can import this directly and stub the API against it until the backend exists. Lists are arrays; trees and recordings are keyed by id for O(1) lookup. Deal value for Convex is $48,000; expectedValue = round(successProbability * 48000).",
     "dealValue": 48000
   },
-
   "companies": [
     {
       "id": "co_convex",
       "name": "Convex",
       "buyers": [
-        { "id": "buy_john", "name": "John Doe", "title": "VP of Operations" }
+        {
+          "id": "buy_john",
+          "name": "John Doe",
+          "title": "VP of Operations"
+        }
       ]
     }
   ],
-
   "salespeople": [
-    { "id": "sp_jane", "name": "Jane Doe" }
+    {
+      "id": "sp_jane",
+      "name": "Jane Doe"
+    }
   ],
-
   "calls": [
     {
       "id": "call_convex",
@@ -26,10 +30,16 @@
       "buyerId": "buy_john",
       "startedAt": "2026-06-25T17:00:00-07:00",
       "treeId": "tree_convex",
-      "recordingIds": ["rec_real", "rec_mock1"]
+      "recordingIds": [
+        "rec_real",
+        "rec_mock1",
+        "rec_mqxeeu5u_pula",
+        "rec_mqxegprt_imfa",
+        "rec_mqxeh2bz_6cqd",
+        "rec_mqxekboh_69yh"
+      ]
     }
   ],
-
   "trees": {
     "tree_convex": {
       "id": "tree_convex",
@@ -37,72 +47,200 @@
       "rootNodeId": "n_open",
       "nodes": [
         {
-          "id": "n_open", "parentId": null, "childIds": ["n_disc"],
-          "title": "Opening", "description": "Thanks for hopping on, John",
-          "speaker": "seller", "tMs": 0,
-          "successProbability": 0.50, "expectedValue": 24000,
-          "metrics": { "confidence": 0.72, "hesitation": 0.18, "enthusiasm": 0.55 }
+          "id": "n_open",
+          "parentId": null,
+          "childIds": [
+            "n_disc"
+          ],
+          "title": "Opening",
+          "description": "Thanks for hopping on, John",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.72,
+            "hesitation": 0.18,
+            "enthusiasm": 0.55
+          }
         },
         {
-          "id": "n_disc", "parentId": "n_open", "childIds": ["n_push"],
-          "title": "Discovery", "description": "How's ticket volume lately?",
-          "speaker": "seller", "tMs": 11000,
-          "successProbability": 0.50, "expectedValue": 24000,
-          "metrics": { "confidence": 0.68, "hesitation": 0.22, "enthusiasm": 0.58 }
+          "id": "n_disc",
+          "parentId": "n_open",
+          "childIds": [
+            "n_push"
+          ],
+          "title": "Discovery",
+          "description": "How's ticket volume lately?",
+          "speaker": "seller",
+          "tMs": 11000,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.68,
+            "hesitation": 0.22,
+            "enthusiasm": 0.58
+          }
         },
         {
-          "id": "n_push", "parentId": "n_disc", "childIds": ["n_road", "n_alt", "n_cust"],
-          "title": "Pushback", "description": "You don't have Tableau integration",
-          "speaker": "buyer", "tMs": 23000,
-          "successProbability": 0.45, "expectedValue": 21600,
-          "metrics": { "confidence": 0.34, "hesitation": 0.71, "enthusiasm": 0.30 }
+          "id": "n_push",
+          "parentId": "n_disc",
+          "childIds": [
+            "n_road",
+            "n_alt",
+            "n_cust",
+            "n_mqxeevur_h15e",
+            "n_mqxeklno_relr"
+          ],
+          "title": "Pushback",
+          "description": "You don't have Tableau integration",
+          "speaker": "buyer",
+          "tMs": 23000,
+          "successProbability": 0.45,
+          "expectedValue": 21600,
+          "metrics": {
+            "confidence": 1,
+            "hesitation": 0.35,
+            "enthusiasm": 1
+          }
         },
         {
-          "id": "n_road", "parentId": "n_push", "childIds": ["n_lost"],
-          "title": "On the roadmap", "description": "It's an upcoming feature",
-          "speaker": "seller", "tMs": 31000,
-          "successProbability": 0.08, "expectedValue": 3840,
-          "metrics": { "confidence": 0.31, "hesitation": 0.66, "enthusiasm": 0.24 }
+          "id": "n_road",
+          "parentId": "n_push",
+          "childIds": [
+            "n_lost"
+          ],
+          "title": "On the roadmap",
+          "description": "It's an upcoming feature",
+          "speaker": "seller",
+          "tMs": 31000,
+          "successProbability": 0.08,
+          "expectedValue": 3840,
+          "metrics": {
+            "confidence": 0.31,
+            "hesitation": 0.66,
+            "enthusiasm": 0.24
+          }
         },
         {
-          "id": "n_alt", "parentId": "n_push", "childIds": ["n_agree"],
-          "title": "Alternative", "description": "Use our SQL connectors instead",
-          "speaker": "seller", "tMs": 13000,
-          "successProbability": 0.80, "expectedValue": 38400,
-          "metrics": { "confidence": 0.70, "hesitation": 0.20, "enthusiasm": 0.62 }
+          "id": "n_alt",
+          "parentId": "n_push",
+          "childIds": [
+            "n_agree"
+          ],
+          "title": "Alternative",
+          "description": "Use our SQL connectors instead",
+          "speaker": "seller",
+          "tMs": 13000,
+          "successProbability": 0.8,
+          "expectedValue": 38400,
+          "metrics": {
+            "confidence": 0.7,
+            "hesitation": 0.2,
+            "enthusiasm": 0.62
+          }
         },
         {
-          "id": "n_cust", "parentId": "n_push", "childIds": ["n_proof"],
-          "title": "Customization", "description": "We'll build it next week",
-          "speaker": "seller", "tMs": 0,
-          "successProbability": 0.50, "expectedValue": 24000,
-          "metrics": { "confidence": 0.55, "hesitation": 0.40, "enthusiasm": 0.45 }
+          "id": "n_cust",
+          "parentId": "n_push",
+          "childIds": [
+            "n_proof"
+          ],
+          "title": "Customization",
+          "description": "We'll build it next week",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.55,
+            "hesitation": 0.4,
+            "enthusiasm": 0.45
+          }
         },
         {
-          "id": "n_lost", "parentId": "n_road", "childIds": [],
-          "title": "Deal lost", "description": "Just send me the deck",
-          "speaker": "buyer", "tMs": 38000,
-          "successProbability": 0.02, "expectedValue": 960,
-          "metrics": { "confidence": 0.25, "hesitation": 0.52, "enthusiasm": 0.12 }
+          "id": "n_lost",
+          "parentId": "n_road",
+          "childIds": [],
+          "title": "Deal lost",
+          "description": "Just send me the deck",
+          "speaker": "buyer",
+          "tMs": 38000,
+          "successProbability": 0.02,
+          "expectedValue": 960,
+          "metrics": {
+            "confidence": 0.25,
+            "hesitation": 0.52,
+            "enthusiasm": 0.12
+          }
         },
         {
-          "id": "n_agree", "parentId": "n_alt", "childIds": [],
-          "title": "Agreement", "description": "Got it — let's book a demo",
-          "speaker": "buyer", "tMs": 21000,
-          "successProbability": 0.95, "expectedValue": 45600,
-          "metrics": { "confidence": 0.80, "hesitation": 0.15, "enthusiasm": 0.78 }
+          "id": "n_agree",
+          "parentId": "n_alt",
+          "childIds": [],
+          "title": "Agreement",
+          "description": "Got it — let's book a demo",
+          "speaker": "buyer",
+          "tMs": 21000,
+          "successProbability": 0.95,
+          "expectedValue": 45600,
+          "metrics": {
+            "confidence": 0.8,
+            "hesitation": 0.15,
+            "enthusiasm": 0.78
+          }
         },
         {
-          "id": "n_proof", "parentId": "n_cust", "childIds": [],
-          "title": "Needs proof", "description": "I'll believe it when I see it",
-          "speaker": "buyer", "tMs": 0,
-          "successProbability": 0.45, "expectedValue": 21600,
-          "metrics": { "confidence": 0.50, "hesitation": 0.45, "enthusiasm": 0.35 }
+          "id": "n_proof",
+          "parentId": "n_cust",
+          "childIds": [],
+          "title": "Needs proof",
+          "description": "I'll believe it when I see it",
+          "speaker": "buyer",
+          "tMs": 0,
+          "successProbability": 0.45,
+          "expectedValue": 21600,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.45,
+            "enthusiasm": 0.35
+          }
+        },
+        {
+          "id": "n_mqxeevur_h15e",
+          "parentId": "n_push",
+          "childIds": [],
+          "title": "What if we use SQL connectors to pipe data into Tableau inst",
+          "description": "What if we use SQL connectors to pipe data into Tableau instead?",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.3,
+            "enthusiasm": 0.5
+          }
+        },
+        {
+          "id": "n_mqxeklno_relr",
+          "parentId": "n_push",
+          "childIds": [],
+          "title": "What if we use SQL connectors instead?",
+          "description": "What if we use SQL connectors instead?",
+          "speaker": "seller",
+          "tMs": 0,
+          "successProbability": 0.5,
+          "expectedValue": 24000,
+          "metrics": {
+            "confidence": 0.5,
+            "hesitation": 0.3,
+            "enthusiasm": 0.5
+          }
         }
       ]
     }
   },
-
   "recordings": {
     "rec_real": {
       "id": "rec_real",
@@ -115,42 +253,137 @@
       "audioPath": "/data/audio/rec_real.webm",
       "lengthMs": 48000,
       "transcript": [
-        { "index": 0, "speaker": "seller", "text": "Thanks for hopping on, John. How's your week going?", "tStartMs": 0, "tEndMs": 6000 },
-        { "index": 1, "speaker": "buyer", "text": "Good, a bit slammed. What did you want to show me?", "tStartMs": 6000, "tEndMs": 11000 },
-        { "index": 2, "speaker": "seller", "text": "How's ticket volume been lately on the support team?", "tStartMs": 11000, "tEndMs": 16000 },
-        { "index": 3, "speaker": "buyer", "text": "Honestly it's been rough, we're drowning in tickets.", "tStartMs": 16000, "tEndMs": 23000 },
-        { "index": 4, "speaker": "buyer", "text": "But here's the thing, you don't have Tableau integration, and our whole analytics team lives in it.", "tStartMs": 23000, "tEndMs": 31000 },
-        { "index": 5, "speaker": "seller", "text": "Right, uh, Tableau, that's actually on our roadmap, it's an upcoming feature.", "tStartMs": 31000, "tEndMs": 38000 },
-        { "index": 6, "speaker": "buyer", "text": "Okay. Well, just send me the deck and I'll take a look.", "tStartMs": 38000, "tEndMs": 44000 },
-        { "index": 7, "speaker": "seller", "text": "Sure, I'll get that over to you today.", "tStartMs": 44000, "tEndMs": 48000 }
+        {
+          "index": 0,
+          "speaker": "seller",
+          "text": "Thanks for hopping on, John. How's your week going?",
+          "tStartMs": 0,
+          "tEndMs": 6000
+        },
+        {
+          "index": 1,
+          "speaker": "buyer",
+          "text": "Good, a bit slammed. What did you want to show me?",
+          "tStartMs": 6000,
+          "tEndMs": 11000
+        },
+        {
+          "index": 2,
+          "speaker": "seller",
+          "text": "How's ticket volume been lately on the support team?",
+          "tStartMs": 11000,
+          "tEndMs": 16000
+        },
+        {
+          "index": 3,
+          "speaker": "buyer",
+          "text": "Honestly it's been rough, we're drowning in tickets.",
+          "tStartMs": 16000,
+          "tEndMs": 23000
+        },
+        {
+          "index": 4,
+          "speaker": "buyer",
+          "text": "But here's the thing, you don't have Tableau integration, and our whole analytics team lives in it.",
+          "tStartMs": 23000,
+          "tEndMs": 31000
+        },
+        {
+          "index": 5,
+          "speaker": "seller",
+          "text": "Right, uh, Tableau, that's actually on our roadmap, it's an upcoming feature.",
+          "tStartMs": 31000,
+          "tEndMs": 38000
+        },
+        {
+          "index": 6,
+          "speaker": "buyer",
+          "text": "Okay. Well, just send me the deck and I'll take a look.",
+          "tStartMs": 38000,
+          "tEndMs": 44000
+        },
+        {
+          "index": 7,
+          "speaker": "seller",
+          "text": "Sure, I'll get that over to you today.",
+          "tStartMs": 44000,
+          "tEndMs": 48000
+        }
       ],
       "traversal": {
         "initialNodeId": "n_open",
         "finalNodeId": "n_lost",
         "steps": [
-          { "transcriptIndex": 2, "fromNodeId": "n_open", "toNodeId": "n_disc", "tMs": 11000 },
-          { "transcriptIndex": 4, "fromNodeId": "n_disc", "toNodeId": "n_push", "tMs": 23000 },
-          { "transcriptIndex": 5, "fromNodeId": "n_push", "toNodeId": "n_road", "tMs": 31000 },
-          { "transcriptIndex": 6, "fromNodeId": "n_road", "toNodeId": "n_lost", "tMs": 38000 }
+          {
+            "transcriptIndex": 2,
+            "fromNodeId": "n_open",
+            "toNodeId": "n_disc",
+            "tMs": 11000
+          },
+          {
+            "transcriptIndex": 4,
+            "fromNodeId": "n_disc",
+            "toNodeId": "n_push",
+            "tMs": 23000
+          },
+          {
+            "transcriptIndex": 5,
+            "fromNodeId": "n_push",
+            "toNodeId": "n_road",
+            "tMs": 31000
+          },
+          {
+            "transcriptIndex": 6,
+            "fromNodeId": "n_road",
+            "toNodeId": "n_lost",
+            "tMs": 38000
+          }
         ]
       },
       "aiNotes": {
-        "commitments": ["Send the deck today"],
-        "objections": ["No Tableau integration"],
-        "facts": ["Analytics team standardized on Tableau", "Support team overwhelmed by ticket volume"],
-        "suggestions": ["Offer SQL connectors as a bridge", "Quantify the ticket backlog"]
+        "commitments": [
+          "Send the deck today"
+        ],
+        "objections": [
+          "No Tableau integration"
+        ],
+        "facts": [
+          "Analytics team standardized on Tableau",
+          "Support team overwhelmed by ticket volume"
+        ],
+        "suggestions": [
+          "Offer SQL connectors as a bridge",
+          "Quantify the ticket backlog"
+        ]
       },
       "aiFeedback": {
         "summary": "You surfaced strong pain quickly, but the Tableau objection turned the call. Deflecting to the roadmap read as 'not today,' and John disengaged.",
-        "strengths": ["Warm, low-friction open", "Surfaced a real pain (ticket overload) within two minutes"],
-        "weaknesses": ["Hesitated when the Tableau objection landed", "Answered a present-day gap with a future promise"],
+        "strengths": [
+          "Warm, low-friction open",
+          "Surfaced a real pain (ticket overload) within two minutes"
+        ],
+        "weaknesses": [
+          "Hesitated when the Tableau objection landed",
+          "Answered a present-day gap with a future promise"
+        ],
         "practiceTargets": [
-          { "nodeId": "n_push", "reason": "Confidence dropped and hesitation spiked the moment the objection landed", "drill": "Hold the room: acknowledge the gap, then pivot to value", "metric": "hesitation", "score": 0.71 },
-          { "nodeId": "n_road", "reason": "Answered the gap with a roadmap promise instead of a present-day alternative", "drill": "Reframe to the SQL-connector workaround", "metric": "confidence", "score": 0.31 }
+          {
+            "nodeId": "n_push",
+            "reason": "Confidence dropped and hesitation spiked the moment the objection landed",
+            "drill": "Hold the room: acknowledge the gap, then pivot to value",
+            "metric": "hesitation",
+            "score": 0.71
+          },
+          {
+            "nodeId": "n_road",
+            "reason": "Answered the gap with a roadmap promise instead of a present-day alternative",
+            "drill": "Reframe to the SQL-connector workaround",
+            "metric": "confidence",
+            "score": 0.31
+          }
         ]
       }
     },
-
     "rec_mock1": {
       "id": "rec_mock1",
       "callId": "call_convex",
@@ -162,25 +395,345 @@
       "audioPath": "/data/audio/rec_mock1.webm",
       "lengthMs": 27000,
       "transcript": [
-        { "index": 0, "speaker": "seller", "text": "Totally hear you on Tableau. Quick question, what do you actually build in it day to day?", "tStartMs": 0, "tEndMs": 7000 },
-        { "index": 1, "speaker": "buyer", "text": "Mostly support dashboards, ticket trends, that kind of thing.", "tStartMs": 7000, "tEndMs": 13000 },
-        { "index": 2, "speaker": "seller", "text": "Got it. So you can pull all of that straight from our SQL connectors into the same dashboards, no migration, you keep Tableau.", "tStartMs": 13000, "tEndMs": 21000 },
-        { "index": 3, "speaker": "buyer", "text": "Oh, okay, that actually works. Let's get a demo on the calendar.", "tStartMs": 21000, "tEndMs": 27000 }
+        {
+          "index": 0,
+          "speaker": "seller",
+          "text": "Totally hear you on Tableau. Quick question, what do you actually build in it day to day?",
+          "tStartMs": 0,
+          "tEndMs": 7000
+        },
+        {
+          "index": 1,
+          "speaker": "buyer",
+          "text": "Mostly support dashboards, ticket trends, that kind of thing.",
+          "tStartMs": 7000,
+          "tEndMs": 13000
+        },
+        {
+          "index": 2,
+          "speaker": "seller",
+          "text": "Got it. So you can pull all of that straight from our SQL connectors into the same dashboards, no migration, you keep Tableau.",
+          "tStartMs": 13000,
+          "tEndMs": 21000
+        },
+        {
+          "index": 3,
+          "speaker": "buyer",
+          "text": "Oh, okay, that actually works. Let's get a demo on the calendar.",
+          "tStartMs": 21000,
+          "tEndMs": 27000
+        }
       ],
       "traversal": {
         "initialNodeId": "n_push",
         "finalNodeId": "n_agree",
         "steps": [
-          { "transcriptIndex": 2, "fromNodeId": "n_push", "toNodeId": "n_alt", "tMs": 13000 },
-          { "transcriptIndex": 3, "fromNodeId": "n_alt", "toNodeId": "n_agree", "tMs": 21000 }
+          {
+            "transcriptIndex": 2,
+            "fromNodeId": "n_push",
+            "toNodeId": "n_alt",
+            "tMs": 13000
+          },
+          {
+            "transcriptIndex": 3,
+            "fromNodeId": "n_alt",
+            "toNodeId": "n_agree",
+            "tMs": 21000
+          }
         ]
       },
       "aiNotes": null,
       "aiFeedback": {
         "summary": "Clean recovery. You reframed the Tableau gap into a no-migration win and booked the demo.",
-        "strengths": ["Asked what they build before pitching", "Removed the migration objection"],
+        "strengths": [
+          "Asked what they build before pitching",
+          "Removed the migration objection"
+        ],
         "weaknesses": [],
         "practiceTargets": []
+      }
+    },
+    "rec_mqxeeu5u_pula": {
+      "id": "rec_mqxeeu5u_pula",
+      "callId": "call_convex",
+      "treeId": "tree_convex",
+      "isReal": false,
+      "isActive": true,
+      "startNodeId": "n_push",
+      "stopNodeId": null,
+      "audioPath": "",
+      "lengthMs": 28000,
+      "transcript": [
+        {
+          "index": 0,
+          "speaker": "buyer",
+          "text": "You don't have Tableau integration. Our analytics team is fully standardized on it.",
+          "tStartMs": 0,
+          "tEndMs": 7000
+        },
+        {
+          "index": 1,
+          "speaker": "seller",
+          "text": "Totally understand — your team won't need to change anything. Our SQL connectors pipe data directly into Tableau.",
+          "tStartMs": 8000,
+          "tEndMs": 17000
+        },
+        {
+          "index": 2,
+          "speaker": "buyer",
+          "text": "Oh, so we'd keep Tableau and just pipe data in through your connectors? That actually works for us. Let's book a demo.",
+          "tStartMs": 18000,
+          "tEndMs": 28000
+        }
+      ],
+      "traversal": {
+        "initialNodeId": "n_push",
+        "finalNodeId": "n_push",
+        "steps": []
+      },
+      "aiNotes": {
+        "commitments": [
+          "Demo / calendar follow-up"
+        ],
+        "objections": [
+          "No Tableau integration"
+        ],
+        "facts": [
+          "Analytics team has existing tooling standardized"
+        ],
+        "suggestions": [
+          "Offer SQL connectors as a bridge — no migration required"
+        ]
+      },
+      "aiFeedback": {
+        "summary": "Call reviewed. 3 node(s) flagged for practice based on signal metrics.",
+        "strengths": [
+          "Structured opening",
+          "Clear discovery questions"
+        ],
+        "weaknesses": [
+          "Weak enthusiasm at \"Deal lost\"",
+          "Weak enthusiasm at \"On the roadmap\"",
+          "Weak enthusiasm at \"Needs proof\""
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_lost",
+            "reason": "Low enthusiasm detected at \"Deal lost\"",
+            "drill": "Practice handling \"Just send me the deck\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": 0.15000000000000002
+          },
+          {
+            "nodeId": "n_road",
+            "reason": "Low enthusiasm detected at \"On the roadmap\"",
+            "drill": "Practice handling \"It's an upcoming feature\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": 0.11000000000000004
+          },
+          {
+            "nodeId": "n_proof",
+            "reason": "Low enthusiasm detected at \"Needs proof\"",
+            "drill": "Practice handling \"I'll believe it when I see it\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": -0.39999999999999997
+          }
+        ]
+      }
+    },
+    "rec_mqxegprt_imfa": {
+      "id": "rec_mqxegprt_imfa",
+      "callId": "call_convex",
+      "treeId": "tree_convex",
+      "isReal": false,
+      "isActive": true,
+      "startNodeId": "n_push",
+      "stopNodeId": null,
+      "audioPath": "",
+      "lengthMs": 28000,
+      "transcript": [
+        {
+          "index": 0,
+          "speaker": "buyer",
+          "text": "You don't have Tableau integration. Our analytics team is fully standardized on it.",
+          "tStartMs": 0,
+          "tEndMs": 7000
+        },
+        {
+          "index": 1,
+          "speaker": "seller",
+          "text": "Totally understand — your team won't need to change anything. Our SQL connectors pipe data directly into Tableau.",
+          "tStartMs": 8000,
+          "tEndMs": 17000
+        },
+        {
+          "index": 2,
+          "speaker": "buyer",
+          "text": "Oh, so we'd keep Tableau and just pipe data in through your connectors? That actually works for us. Let's book a demo.",
+          "tStartMs": 18000,
+          "tEndMs": 28000
+        }
+      ],
+      "traversal": {
+        "initialNodeId": "n_push",
+        "finalNodeId": "n_push",
+        "steps": []
+      },
+      "aiNotes": {
+        "commitments": [
+          "Demo / calendar follow-up"
+        ],
+        "objections": [
+          "No Tableau integration"
+        ],
+        "facts": [
+          "Analytics team has existing tooling standardized"
+        ],
+        "suggestions": [
+          "Offer SQL connectors as a bridge — no migration required"
+        ]
+      },
+      "aiFeedback": {
+        "summary": "Call reviewed. 3 node(s) flagged for practice based on signal metrics.",
+        "strengths": [
+          "Structured opening",
+          "Clear discovery questions"
+        ],
+        "weaknesses": [
+          "Weak enthusiasm at \"Deal lost\"",
+          "Weak enthusiasm at \"On the roadmap\"",
+          "Weak enthusiasm at \"Needs proof\""
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_lost",
+            "reason": "Low enthusiasm detected at \"Deal lost\"",
+            "drill": "Practice handling \"Just send me the deck\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": 0.15000000000000002
+          },
+          {
+            "nodeId": "n_road",
+            "reason": "Low enthusiasm detected at \"On the roadmap\"",
+            "drill": "Practice handling \"It's an upcoming feature\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": 0.11000000000000004
+          },
+          {
+            "nodeId": "n_proof",
+            "reason": "Low enthusiasm detected at \"Needs proof\"",
+            "drill": "Practice handling \"I'll believe it when I see it\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": -0.39999999999999997
+          }
+        ]
+      }
+    },
+    "rec_mqxeh2bz_6cqd": {
+      "id": "rec_mqxeh2bz_6cqd",
+      "callId": "call_convex",
+      "treeId": "tree_convex",
+      "isReal": false,
+      "isActive": true,
+      "startNodeId": "n_push",
+      "stopNodeId": null,
+      "audioPath": "",
+      "lengthMs": 0,
+      "transcript": [],
+      "traversal": {
+        "initialNodeId": "n_push",
+        "finalNodeId": "n_push",
+        "steps": []
+      },
+      "aiNotes": null,
+      "aiFeedback": null
+    },
+    "rec_mqxekboh_69yh": {
+      "id": "rec_mqxekboh_69yh",
+      "callId": "call_convex",
+      "treeId": "tree_convex",
+      "isReal": false,
+      "isActive": true,
+      "startNodeId": "n_push",
+      "stopNodeId": null,
+      "audioPath": "",
+      "lengthMs": 28000,
+      "transcript": [
+        {
+          "index": 0,
+          "speaker": "buyer",
+          "text": "You don't have Tableau integration. Our analytics team is fully standardized on it.",
+          "tStartMs": 0,
+          "tEndMs": 7000
+        },
+        {
+          "index": 1,
+          "speaker": "seller",
+          "text": "Totally understand — your team won't need to change anything. Our SQL connectors pipe data directly into Tableau.",
+          "tStartMs": 8000,
+          "tEndMs": 17000
+        },
+        {
+          "index": 2,
+          "speaker": "buyer",
+          "text": "Oh, so we'd keep Tableau and just pipe data in through your connectors? That actually works for us. Let's book a demo.",
+          "tStartMs": 18000,
+          "tEndMs": 28000
+        }
+      ],
+      "traversal": {
+        "initialNodeId": "n_push",
+        "finalNodeId": "n_push",
+        "steps": []
+      },
+      "aiNotes": {
+        "commitments": [
+          "Demo / calendar follow-up"
+        ],
+        "objections": [
+          "No Tableau integration"
+        ],
+        "facts": [
+          "Analytics team has existing tooling standardized"
+        ],
+        "suggestions": [
+          "Offer SQL connectors as a bridge — no migration required"
+        ]
+      },
+      "aiFeedback": {
+        "summary": "Call reviewed. 3 node(s) flagged for practice based on signal metrics.",
+        "strengths": [
+          "Structured opening",
+          "Clear discovery questions"
+        ],
+        "weaknesses": [
+          "Weak enthusiasm at \"Deal lost\"",
+          "Weak enthusiasm at \"On the roadmap\"",
+          "Weak enthusiasm at \"Needs proof\""
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_lost",
+            "reason": "Low enthusiasm detected at \"Deal lost\"",
+            "drill": "Practice handling \"Just send me the deck\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": 0.15000000000000002
+          },
+          {
+            "nodeId": "n_road",
+            "reason": "Low enthusiasm detected at \"On the roadmap\"",
+            "drill": "Practice handling \"It's an upcoming feature\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": 0.11000000000000004
+          },
+          {
+            "nodeId": "n_proof",
+            "reason": "Low enthusiasm detected at \"Needs proof\"",
+            "drill": "Practice handling \"I'll believe it when I see it\" with stronger enthusiasm.",
+            "metric": "enthusiasm",
+            "score": -0.39999999999999997
+          }
+        ]
       }
     }
   }

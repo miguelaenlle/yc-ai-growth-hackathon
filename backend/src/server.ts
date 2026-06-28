@@ -401,12 +401,26 @@ app.get("/stream/:recordingId", (req: Request, res: Response) => {
   });
 });
 
+// DEBUG — GET /debug/store → full in-memory store snapshot
+// Used by the debug frontend to watch seed.json mutations in real time.
+app.get("/debug/store", (_req: Request, res: Response) => {
+  res.json(store);
+});
+
 // 11. POST /transcribe (multipart) → { segments }
-app.post("/transcribe", (_req: Request, res: Response) => {
-  // TODO(phase5): forward audio to Whisper, offset timestamps by tStartMs,
-  // continue index from the recording's transcript length.
-  // When implemented, pass prosody data as AudioScore to computeMetrics().
-  res.json({ segments: [] });
+// Returns hardcoded Tableau demo segments so the debug panel gets real data
+// without needing an actual audio file or Whisper.
+app.post("/transcribe", (req: Request, res: Response) => {
+  const tStartMs = Number(req.body?.tStartMs ?? 0);
+  const offset = isNaN(tStartMs) ? 0 : tStartMs;
+  // Hardcoded transcript for the Tableau objection demo scenario
+  res.json({
+    segments: [
+      { index: 0, speaker: "buyer", text: "You don't have Tableau integration. Our analytics team is fully standardized on it.", tStartMs: offset + 0, tEndMs: offset + 7000 },
+      { index: 1, speaker: "seller", text: "Totally understand — your team won't need to change anything. Our SQL connectors pipe data directly into Tableau.", tStartMs: offset + 8000, tEndMs: offset + 17000 },
+      { index: 2, speaker: "buyer", text: "Oh, so we'd keep Tableau and just pipe data in through your connectors? That actually works for us. Let's book a demo.", tStartMs: offset + 18000, tEndMs: offset + 28000 },
+    ],
+  });
 });
 
 // 12. POST /agent/notes (NotesReq) → AiNotes
