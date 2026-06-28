@@ -63,6 +63,11 @@
   }
 }
 
+/* Tree edges fade smoothly when their emphasis (opacity) changes on selection. */
+.react-flow__edge {
+  transition: opacity 0.35s ease;
+}
+
 /* AI tree nodes: soft accent glow breath + a periodic shimmer sweep. */
 .ct-glimmer {
   animation:

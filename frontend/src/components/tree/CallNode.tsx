@@ -45,10 +45,19 @@ function CallNodeImpl({ data }: NodeProps) {
         }}
       >
       <div
-        style={{ animationDelay: `${depth * 70}ms`, width: "100%", height: "100%" }}
+        style={{
+          animationDelay: `${depth * 70}ms`,
+          width: "100%",
+          height: "100%",
+          opacity: typeof d.opacity === "number" ? d.opacity : 1,
+        }}
         className={
-          "group flex cursor-pointer flex-col rounded-lg px-4 py-3 transition-colors duration-150 " +
-          (d.focused ? "ring-2 ring-accent " : "") +
+          "group flex cursor-pointer flex-col rounded-lg px-4 py-3 transition-[opacity,border-color,box-shadow] duration-300 " +
+          (d.focused
+            ? "ring-2 ring-accent "
+            : d.onCurrentPath
+              ? "ring-1 ring-accent/50 "
+              : "") +
           (isAi
             ? "ct-glimmer border border-accent/60 bg-surface shadow-[0_0_16px_-6px_rgba(61,214,208,0.45)] hover:border-accent/90"
             : "animate-fade-up border-l-[3px] border-y border-r border-y-border-strong border-r-border-strong border-l-text-muted bg-surface-2 shadow-[0_1px_2px_rgba(0,0,0,0.4)] hover:border-l-text")

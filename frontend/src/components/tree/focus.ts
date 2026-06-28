@@ -1,4 +1,4 @@
-import type { Node } from "@xyflow/react";
+import type { Node, Edge } from "@xyflow/react";
 import { TREE, BASE_W, BASE_H } from "./treeData";
 import type { RawNode, CallNodeData } from "./treeData";
 
@@ -44,6 +44,38 @@ function hopsFrom(selectedId: string): Map<string, number> {
 // exponential downsizing begins beyond that.
 const scaleFor = (h: number | undefined) =>
   h == null ? MIN : Math.max(MIN, Math.pow(FALLOFF, Math.max(0, h - 1)));
+
+/** The selected node and every ancestor up to the root — all kept full size. */
+function ancestorsOf(selectedId: string): Set<string> {
+  const parent = new Map<string, string>();
+  (function walk(n: RawNode) {
+    for (const c of n.children ?? []) {
+      parent.set(c.id, n.id);
+      walk(c);
+    }
+  })(TREE);
+  const set = new Set<string>([selectedId]);
+  let cur: string | undefined = selectedId;
+  while (cur && parent.has(cur)) {
+    cur = parent.get(cur);
+    if (cur) set.add(cur);
+  }
+  return set;
+}
+
+/** Direct children of the selected node. */
+function childIdsOf(selectedId: string): Set<string> {
+  let found: RawNode | null = null;
+  (function walk(n: RawNode) {
+    if (found) return;
+    if (n.id === selectedId) {
+      found = n;
+      return;
+    }
+    for (const c of n.children ?? []) walk(c);
+  })(TREE);
+  return new Set((found?.children ?? []).map((c) => c.id));
+}
 
 interface Placed {
   x: number; // top-left x
@@ -102,13 +134,19 @@ function layout(scaleOf: (id: string) => number): Map<string, Placed> {
 
 export function applyFocus(
   nodes: Node<CallNodeData>[],
+  edges: Edge[],
   selectedId: string,
-): Node<CallNodeData>[] {
+): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
   const hops = hopsFrom(selectedId);
-  const scaleOf = (id: string) => scaleFor(hops.get(id));
+  const ancestors = ancestorsOf(selectedId);
+  // Emphasis = the path to the root + the selected node's direct children.
+  const emphasized = new Set<string>([...ancestors, ...childIdsOf(selectedId)]);
+  const scaleOf = (id: string) => (ancestors.has(id) ? 1 : scaleFor(hops.get(id)));
+  const opacityOf = (id: string) =>
+    emphasized.has(id) ? 1 : Math.max(0.22, Math.min(0.6, scaleOf(id)));
   const placed = layout(scaleOf);
 
-  return nodes.map((n) => {
+  const outNodes = nodes.map((n) => {
     const p = placed.get(n.id);
     if (!p) return n;
     const s = scaleOf(n.id);
@@ -117,7 +155,37 @@ export function applyFocus(
       width: p.w,
       height: p.h,
       position: { x: p.x, y: p.yc - p.h / 2 },
-      data: { ...n.data, scale: s, compact: s < COMPACT_AT, focused: n.id === selectedId },
+      data: {
+        ...n.data,
+        scale: s,
+        opacity: opacityOf(n.id),
+        compact: s < COMPACT_AT,
+        focused: n.id === selectedId,
+        onCurrentPath: ancestors.has(n.id),
+      },
     };
   });
+
+  // An edge is on the current path when both endpoints are ancestors (the
+  // root→selected chain). Highlight those boldly; keep the rest visible-but-dim.
+  const outEdges = edges.map((e) => {
+    if (ancestors.has(e.source) && ancestors.has(e.target)) {
+      return {
+        ...e,
+        animated: false,
+        style: {
+          ...e.style,
+          stroke: "var(--color-accent)",
+          strokeWidth: 3,
+          strokeDasharray: undefined,
+          opacity: 1,
+          filter: "drop-shadow(0 0 3px rgba(61,214,208,0.65))",
+        },
+      };
+    }
+    const op = Math.min(opacityOf(e.source), opacityOf(e.target));
+    return { ...e, style: { ...e.style, opacity: Math.max(0.45, op) } };
+  });
+
+  return { nodes: outNodes, edges: outEdges };
 }

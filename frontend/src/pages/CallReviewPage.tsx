@@ -95,7 +95,12 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 function Flow() {
   // Click a node to focus it; everything else shrinks with distance from it.
   const [selectedId, setSelectedId] = useState("opening");
-  const [nodes, setNodes] = useState(() => applyFocus(initialNodes, "opening"));
+  const [nodes, setNodes] = useState(
+    () => applyFocus(initialNodes, initialEdges, "opening").nodes,
+  );
+  const [edges, setEdges] = useState(
+    () => applyFocus(initialNodes, initialEdges, "opening").edges,
+  );
   const { setCenter, getZoom } = useReactFlow();
   const first = useRef(true);
   const raf = useRef<number | undefined>(undefined);
@@ -106,7 +111,12 @@ function Flow() {
   // to the repacked target. Driving it through state (not CSS) means the edges
   // re-route every frame and animate together with the nodes.
   useEffect(() => {
-    const target = applyFocus(initialNodes, selectedId);
+    const { nodes: target, edges: targetEdges } = applyFocus(
+      initialNodes,
+      initialEdges,
+      selectedId,
+    );
+    setEdges(targetEdges);
     if (first.current) {
       first.current = false;
       setNodes(target);
@@ -156,7 +166,7 @@ function Flow() {
   return (
     <ReactFlow
       nodes={nodes}
-      edges={initialEdges}
+      edges={edges}
       nodeTypes={nodeTypes}
       fitView
       fitViewOptions={{ padding: 0.2 }}
