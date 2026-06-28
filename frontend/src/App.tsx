@@ -1,5 +1,101 @@
 import { useState, useRef, useEffect } from "react";
 
+const treeCss = `
+  ul.tree-lines {
+    padding-left: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+  }
+  ul.tree-lines ul {
+    padding-left: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    position: relative;
+  }
+  ul.tree-lines li {
+    list-style-type: none;
+    position: relative;
+    padding: 20px 10px 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  ul.tree-lines li::before, ul.tree-lines li::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 50%;
+    border-top: 2px solid #cbd5e1;
+    width: 50%;
+    height: 20px;
+  }
+  ul.tree-lines li::after {
+    right: auto;
+    left: 50%;
+    border-left: 2px solid #cbd5e1;
+  }
+  
+  ul.tree-lines li:only-child::after, ul.tree-lines li:only-child::before {
+    display: none;
+  }
+  ul.tree-lines li:only-child {
+    padding-top: 0;
+  }
+  
+  ul.tree-lines li:first-child::before, ul.tree-lines li:last-child::after {
+    border: 0 none;
+  }
+  ul.tree-lines li:last-child::before {
+    border-right: 2px solid #cbd5e1;
+  }
+  
+  ul.tree-lines ul::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    border-left: 2px solid #cbd5e1;
+    width: 0;
+    height: 20px;
+    margin-left: -1px;
+  }
+`;
+
+const TreeNodeView = ({ node, allNodes, currentNodeId }: { node: any, allNodes: any[], currentNodeId: string }) => {
+  const children = allNodes.filter((n: any) => n.parentId === node.id);
+  const isCurrent = node.id === currentNodeId;
+  
+  return (
+    <li>
+      <div style={{
+        padding: '8px 12px', 
+        background: isCurrent ? '#2563eb' : '#ffffff', 
+        color: isCurrent ? '#ffffff' : '#111827', 
+        border: isCurrent ? '2px solid #1d4ed8' : '1px solid #d1d5db',
+        borderRadius: '6px',
+        display: 'inline-block',
+        position: 'relative',
+        zIndex: 2,
+        boxShadow: isCurrent ? '0 4px 6px -1px rgba(37, 99, 235, 0.4)' : '0 1px 3px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ fontWeight: 'bold' }}>{node.title}</div>
+        <div style={{ fontSize: '0.75em', color: isCurrent ? '#bfdbfe' : '#6b7280' }}>{node.id}</div>
+      </div>
+      {children.length > 0 && (
+        <ul>
+          {children.map((child: any) => (
+            <TreeNodeView key={child.id} node={child} allNodes={allNodes} currentNodeId={currentNodeId} />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+};
+
 type PrecapEvent = 
   | { type: "node", nodeId: string } 
   | { type: "audio", b64: string, mime: string } 
@@ -278,21 +374,15 @@ export default function App() {
 
         {/* Tree Visualization */}
         <div style={{ flex: 1, height: '400px', overflowY: 'scroll', background: '#fff', border: '1px solid #ccc', padding: 10, borderRadius: 4 }}>
-          <h3 style={{ marginTop: 0 }}>Tree Nodes</h3>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {treeNodes.map(node => (
-              <li key={node.id} style={{ 
-                padding: '8px', 
-                margin: '4px 0', 
-                background: node.id === currentNodeId ? '#dbeafe' : '#f3f4f6',
-                border: node.id === currentNodeId ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                borderRadius: '4px'
-              }}>
-                <strong>{node.title}</strong> 
-                <div style={{ fontSize: '0.85em', color: '#666' }}>ID: {node.id} | Desc: {node.description}</div>
-              </li>
-            ))}
-          </ul>
+          <style dangerouslySetInnerHTML={{ __html: treeCss }} />
+          <h3 style={{ marginTop: 0 }}>Conversation Tree</h3>
+          <div style={{ paddingLeft: '10px' }}>
+            <ul className="tree-lines">
+              {treeNodes.filter(n => !n.parentId).map(rootNode => (
+                 <TreeNodeView key={rootNode.id} node={rootNode} allNodes={treeNodes} currentNodeId={currentNodeId} />
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </div>
