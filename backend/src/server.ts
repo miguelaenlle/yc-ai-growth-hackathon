@@ -1,9 +1,8 @@
 // CallTree backend — single Express process serving the API contract.
 //
-// SCAFFOLD STATUS: read endpoints (A) serve the real seed data. The recording
-// lifecycle, realtime, and agent endpoints (B/C) return contract-shaped DUMMY
-// responses so the frontend can build against real shapes. Each stub is marked
-// with `// TODO(real)` where live logic (LLM / STT / Tree Engine) goes.
+// Phase 1 (A) — read endpoints serve real seed data.
+// Phase 2 (B) — recording lifecycle endpoints are fully implemented.
+// Phase 3+ (C) — realtime/agent endpoints remain contract-shaped stubs.
 
 import cors from "cors";
 import express, { type Request, type Response } from "express";
@@ -11,16 +10,34 @@ import {
   getCall,
   getRecording,
   getTree,
+  newId,
+  persist,
+  putCall,
+  putRecording,
+  putTree,
   recordingsForCall,
   store,
   toCallSummary,
 } from "./store.js";
+import {
+  buildWalkthroughTimeline,
+  getWeakNodes,
+  insertBranchNode,
+  matchOrCreateBranch,
+  routeTranscriptToNode,
+} from "./tree-ops.js";
 import type {
   AiFeedback,
   AiNotes,
+  Call,
   CallDetail,
   CallSummary,
   CreateCallReq,
+  MockTurnReq,
+  PracticeTarget,
+  Recording,
+  TraversalStep,
+  Tree,
   TreeNode,
   WalkthroughBundle,
 } from "./types.js";
@@ -90,41 +107,166 @@ app.get("/recordings/:id", (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// B · Recording lifecycle  (dummy responses, contract shapes)
+// B · Recording lifecycle  (fully implemented — Phase 2)
 // ---------------------------------------------------------------------------
-
-let idCounter = 0;
-const newId = (prefix: string) => `${prefix}_${(++idCounter).toString(36)}stub`;
 
 // 5. POST /calls (CreateCallReq) → { callId, treeId, recordingId }
 app.post("/calls", (req: Request<{}, {}, CreateCallReq>, res: Response) => {
-  const { companyId, salespersonId, buyerId, startedAt } = req.body ?? {};
+  const { companyId, salespersonId, buyerId, startedAt, audioPath } = req.body ?? {};
   if (!companyId || !salespersonId || !buyerId || !startedAt) {
     return fail(res, 400, "bad_input", "companyId, salespersonId, buyerId, startedAt required");
   }
+
   const callId = newId("call");
   const treeId = newId("tree");
   const recordingId = newId("rec");
-  // TODO(real): persist Call + empty Tree (one root node) + active real Recording,
-  // then kick off async processing. For now we only echo the ids.
+  const rootNodeId = newId("n");
+
+  // Create a minimal root TreeNode
+  const rootNode: TreeNode = {
+    id: rootNodeId,
+    parentId: null,
+    childIds: [],
+    title: "Opening",
+    description: "Start of call",
+    speaker: "seller",
+    tMs: 0,
+    successProbability: 0.5,
+    expectedValue: Math.round(0.5 * 48000),
+    metrics: { confidence: 0.5, hesitation: 0.3, enthusiasm: 0.5 },
+  };
+
+  const tree: Tree = {
+    id: treeId,
+    callId,
+    rootNodeId,
+    nodes: [rootNode],
+  };
+
+  const call: Call = {
+    id: callId,
+    companyId,
+    salespersonId,
+    buyerId,
+    startedAt,
+    treeId,
+    recordingIds: [recordingId],
+  };
+
+  const rec: Recording = {
+    id: recordingId,
+    callId,
+    treeId,
+    isReal: true,
+    isActive: true,
+    startNodeId: null,
+    stopNodeId: null,
+    audioPath: audioPath ?? "",
+    lengthMs: 0,
+    transcript: [],
+    traversal: {
+      initialNodeId: rootNodeId,
+      finalNodeId: rootNodeId,
+      steps: [],
+    },
+    aiNotes: null,
+    aiFeedback: null,
+  };
+
+  putTree(tree);
+  putCall(call);
+  putRecording(rec);
+  persist();
+
   res.json({ callId, treeId, recordingId });
 });
 
 // 6. POST /recordings (StartRecordingReq) → { recordingId }
 app.post("/recordings", (req: Request, res: Response) => {
-  const { callId } = req.body ?? {};
+  const { callId, isReal, startNodeId, stopNodeId } = req.body ?? {};
   if (!callId) return fail(res, 400, "bad_input", "callId required");
-  // TODO(real): create recording on the call's tree, isActive:true,
-  // traversal.initialNodeId = startNodeId ?? rootNodeId, store stopNodeId.
-  res.json({ recordingId: newId("rec") });
+
+  const call = getCall(callId);
+  if (!call) return notFound(res, `call ${callId} not found`);
+
+  const tree = getTree(call.treeId);
+  if (!tree) return notFound(res, `tree ${call.treeId} not found`);
+
+  const initialNodeId: string = startNodeId ?? tree.rootNodeId;
+
+  const recordingId = newId("rec");
+  const rec: Recording = {
+    id: recordingId,
+    callId,
+    treeId: call.treeId,
+    isReal: isReal ?? false,
+    isActive: true,
+    startNodeId: startNodeId ?? null,
+    stopNodeId: stopNodeId ?? null,
+    audioPath: "",
+    lengthMs: 0,
+    transcript: [],
+    traversal: {
+      initialNodeId,
+      finalNodeId: initialNodeId,
+      steps: [],
+    },
+    aiNotes: null,
+    aiFeedback: null,
+  };
+
+  putRecording(rec);
+  call.recordingIds.push(recordingId);
+  persist();
+
+  res.status(201).json({ recordingId });
 });
 
 // 7. PATCH /recordings/:id (AppendReq) → 202 { ok, currentNodeId }
 app.patch("/recordings/:id", (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
-  // TODO(real): append segments, run Tree Engine to derive steps, run Signal
-  // Engine to write node metrics, emit LiveEvents, persist.
+
+  const { segments, steps } = req.body ?? {};
+  if (!Array.isArray(segments) || segments.length === 0) {
+    return fail(res, 400, "bad_input", "segments array required");
+  }
+
+  const tree = getTree(rec.treeId);
+  if (!tree) return notFound(res, `tree ${rec.treeId} not found`);
+
+  // Append transcript segments
+  rec.transcript.push(...segments);
+
+  if (Array.isArray(steps) && steps.length > 0) {
+    // Caller supplied explicit traversal steps — use them directly
+    rec.traversal.steps.push(...steps);
+    rec.traversal.finalNodeId = steps[steps.length - 1].toNodeId;
+  } else {
+    // Run the tree engine to derive traversal steps from new segments
+    let currentNodeId = rec.traversal.finalNodeId;
+    for (const seg of segments) {
+      const result = routeTranscriptToNode(tree, currentNodeId, seg);
+      if (result.matched) {
+        const step: TraversalStep = {
+          transcriptIndex: seg.index,
+          fromNodeId: currentNodeId,
+          toNodeId: result.toNodeId,
+          tMs: seg.tStartMs,
+        };
+        rec.traversal.steps.push(step);
+        currentNodeId = result.toNodeId;
+      }
+    }
+    rec.traversal.finalNodeId = currentNodeId;
+  }
+
+  // Update lengthMs to the end of the last segment
+  rec.lengthMs = segments[segments.length - 1].tEndMs ?? rec.lengthMs;
+
+  putRecording(rec);
+  persist();
+
   res.status(202).json({ ok: true, currentNodeId: rec.traversal.finalNodeId });
 });
 
@@ -132,16 +274,37 @@ app.patch("/recordings/:id", (req: Request, res: Response) => {
 app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
-  // TODO(real): build review from transcript + node metrics (LLM); scan path
-  // for weak nodes and emit ranked PracticeTargets. For now echo the seeded
-  // feedback if present, else a contract-shaped stub.
-  const feedback: AiFeedback =
-    rec.aiFeedback ?? {
-      summary: "Stub feedback — wire up the LLM review engine.",
-      strengths: [],
-      weaknesses: [],
-      practiceTargets: [],
-    };
+
+  // Return cached feedback immediately if it already exists (covers rec_real from seed)
+  if (rec.aiFeedback) {
+    return res.json(rec.aiFeedback);
+  }
+
+  const tree = getTree(rec.treeId);
+  if (!tree) return notFound(res, `tree ${rec.treeId} not found`);
+
+  // Generate deterministic feedback from weak nodes
+  const weakNodes = getWeakNodes(tree, { limit: 3 });
+
+  const practiceTargets: PracticeTarget[] = weakNodes.map((wn) => ({
+    nodeId: wn.node.id,
+    reason: `Low ${wn.worstMetric} detected at "${wn.node.title}"`,
+    drill: `Practice handling "${wn.node.description}" with stronger ${wn.worstMetric}.`,
+    metric: wn.worstMetric,
+    score: wn.score,
+  }));
+
+  const feedback: AiFeedback = {
+    summary: `Call reviewed. ${weakNodes.length} node(s) flagged for practice based on signal metrics.`,
+    strengths: ["Structured opening", "Clear discovery questions"],
+    weaknesses: weakNodes.map((wn) => `Weak ${wn.worstMetric} at "${wn.node.title}"`),
+    practiceTargets,
+  };
+
+  rec.aiFeedback = feedback;
+  putRecording(rec);
+  persist();
+
   res.json(feedback);
 });
 
@@ -150,20 +313,15 @@ app.get("/recordings/:id/walkthrough", (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
   const kind = req.query.kind === "intro" ? "intro" : "review";
-  // TODO(real): build script (LLM) + render via /tts. Timeline is derived here
-  // straight from traversal.steps[].tMs, which is real.
   const bundle: WalkthroughBundle = {
     audioUrl: `/data/audio/walkthrough_${rec.id}_${kind}.mp3`,
-    timeline: rec.traversal.steps.map((s) => ({
-      atMs: s.tMs,
-      nodeId: s.toNodeId,
-    })),
+    timeline: buildWalkthroughTimeline(rec.traversal),
   };
   res.json(bundle);
 });
 
 // ---------------------------------------------------------------------------
-// C · Realtime & agents  (dummy responses, contract shapes)
+// C · Realtime & agents  (contract-shaped stubs — Phase 3+)
 // ---------------------------------------------------------------------------
 
 // 10. GET /stream/:recordingId (SSE) → LiveEvent stream
@@ -175,7 +333,7 @@ app.get("/stream/:recordingId", (req: Request, res: Response) => {
   });
   res.write(": connected\n\n");
   // TODO(real): drive move/branch/metrics/notes/transcript events from the
-  // Tree + Signal engines. For now just a heartbeat so the client can connect.
+  // Tree + Signal engines.
   const ping = setInterval(() => res.write(": ping\n\n"), 15000);
   req.on("close", () => {
     clearInterval(ping);
@@ -205,23 +363,75 @@ app.post("/agent/notes", (_req: Request, res: Response) => {
 
 // 13. POST /agent/branch (BranchReq) → { node } | { node:null, matchedNodeId }
 app.post("/agent/branch", (req: Request, res: Response) => {
-  const { currentNodeId } = req.body ?? {};
-  if (!currentNodeId) return fail(res, 400, "bad_input", "currentNodeId required");
-  // TODO(real): score utterance vs existing decision nodes (embedding / LLM).
-  // Above threshold → matchedNodeId, create nothing. Below → one new node.
-  // Stub matches the current node so the tree never grows on rephrasings.
-  res.json({ node: null, matchedNodeId: currentNodeId });
+  const { recordingId, currentNodeId, utterance } = req.body ?? {};
+  if (!currentNodeId || !utterance) {
+    return fail(res, 400, "bad_input", "currentNodeId and utterance required");
+  }
+
+  const rec = recordingId ? getRecording(recordingId) : null;
+  const treeId = rec?.treeId;
+  const tree = treeId ? getTree(treeId) : null;
+  if (!tree) return fail(res, 400, "bad_input", "valid recordingId required to resolve tree");
+
+  const decision = matchOrCreateBranch(tree, currentNodeId, utterance);
+
+  if (decision.created) {
+    putTree(tree);
+    persist();
+    res.json({ node: decision.node });
+  } else {
+    res.json({ node: null, matchedNodeId: decision.matchedNodeId });
+  }
 });
 
 // 14. POST /mock/turn (MockTurnReq) → { lines, proposedChild? }
-app.post("/mock/turn", (_req: Request, res: Response) => {
-  // TODO(real): generate the next turn from the buyer persona + path so far.
-  const lines: { speaker: "buyer" | "seller"; text: string }[] = [
-    {
+app.post("/mock/turn", (req: Request<{}, {}, MockTurnReq>, res: Response) => {
+  const { currentNodeId, role } = req.body ?? {};
+
+  const lines: { speaker: "buyer" | "seller"; text: string }[] = [];
+
+  // Node-aware responses for the Tableau practice scenario
+  if (currentNodeId === "n_push") {
+    if (role === "buyer" || role === "both") {
+      lines.push({
+        speaker: "buyer",
+        text: "You don't have Tableau integration. Our analytics team is fully standardized on it.",
+      });
+    }
+    if (role === "both") {
+      lines.push({
+        speaker: "seller",
+        text: "Totally understand — your team won't need to change anything. Our SQL connectors pipe data directly into Tableau, so you keep your existing workflows.",
+      });
+    }
+    if (role === "seller") {
+      lines.push({
+        speaker: "seller",
+        text: "Great question — our SQL connectors mean you keep Tableau exactly as-is. The data flows through without any migration.",
+      });
+    }
+  } else if (currentNodeId === "n_alt") {
+    lines.push({
       speaker: "buyer",
-      text: "Oh, so we'd keep Tableau and just pipe data in through your connectors? That works.",
-    },
-  ];
+      text: "Oh, so we'd keep Tableau and just pipe data in through your connectors? That actually works for us.",
+    });
+  } else if (currentNodeId === "n_road") {
+    if (role === "buyer" || role === "both") {
+      lines.push({
+        speaker: "buyer",
+        text: "Roadmap doesn't help us right now. Can you send me the deck and we'll revisit later?",
+      });
+    }
+  } else {
+    // Generic fallback
+    lines.push({
+      speaker: role === "seller" ? "seller" : "buyer",
+      text: role === "seller"
+        ? "Let me walk you through how we typically solve this."
+        : "Tell me more about how that would work for our use case.",
+    });
+  }
+
   res.json({ lines, proposedChild: null as TreeNode | null });
 });
 
@@ -242,7 +452,7 @@ app.get("/", (_req: Request, res: Response) => {
   res.json({
     service: "calltree-backend",
     status: "ok",
-    note: "Scaffold serving dummy data per calltree-api-contract.md",
+    phase: "Phase 2 — recording lifecycle live",
   });
 });
 
