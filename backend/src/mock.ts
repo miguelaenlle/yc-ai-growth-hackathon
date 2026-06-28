@@ -1,7 +1,14 @@
 import WebSocket from "ws";
-import { getDecisionSummary, matchOrCreateBranch } from "./tree-ops.js";
+import {
+  bestMatch,
+  getDecisionAlternatives,
+  getDecisionSummary,
+  getNodeById,
+  getNodeChildren,
+  matchOrCreateBranch,
+} from "./tree-ops.js";
 import { getRecording, getTree, store } from "./store.js";
-import type { Id, Recording, Tree, TranscriptSegment } from "./types.js";
+import type { Id, Recording, Tree, TranscriptSegment, TreeNode } from "./types.js";
 
 import { promises as fs } from "node:fs";
 import { dirname, join } from "node:path";
@@ -439,4 +446,371 @@ function appendTranscript(recordingId: Id, speaker: "buyer" | "seller", text: st
 
   rec.transcript.push(segment);
   console.log(`[Transcript ${recordingId}] ${speaker}: ${text}`);
+}
+
+// ===========================================================================
+// "Watch the AI ace this path" — live AI-vs-AI (role=both)
+//
+// Two OpenAI Realtime sockets (one expert seller, one buyer persona) take turns
+// down the tree's optimal branch. We drive each turn explicitly with a per-turn
+// directive (no mic, no server VAD), text-bridge each side's words into the
+// other for coherence, stream speaker-tagged audio to the client, and emit a
+// "why" rationale per move. Deterministic node stepping (we know the path) keeps
+// it demo-safe.
+// ===========================================================================
+
+const REALTIME_URL = "wss://api.openai.com/v1/realtime?model=gpt-realtime-2";
+
+function generateSellerPrompt(recordingId: Id, currentNodeId: Id): string {
+  const rec = getRecording(recordingId);
+  const tree = rec ? getTree(rec.treeId) : undefined;
+  const productInfo = rec ? getProductInfo(rec.callId) : getProductInfo("co_convex");
+
+  let pathContext = "No prior context.";
+  if (tree && currentNodeId) {
+    try {
+      const summary = getDecisionSummary(tree, currentNodeId);
+      pathContext = summary.path
+        .map((n) => `[${n.speaker.toUpperCase()}]: ${n.description}`)
+        .join("\n");
+    } catch {
+      // fall through with default
+    }
+  }
+
+  return `
+You are an elite B2B sales representative on a live call, demonstrating a textbook-perfect handling of this deal.
+
+PRODUCT CONTEXT:
+${productInfo}
+
+CONVERSATION SO FAR:
+${pathContext}
+
+INSTRUCTIONS:
+1. Stay strictly in character as the seller (the rep). Never break character.
+2. Be confident, warm, and concise — 1-2 sentences per turn, like a top closer.
+3. Respond directly to what the buyer just said.
+4. Follow the per-turn director guidance exactly to hit the intended move.
+`;
+}
+
+/** The per-turn instruction steering a side to voice a specific node's move. */
+function directiveForNode(node: TreeNode): string {
+  const who = node.speaker === "seller" ? "the seller (rep)" : "the buyer";
+  return `As ${who}, say one natural, concise line (1-2 sentences) that accomplishes this beat: "${node.title}" — ${node.description}. Do not narrate or add stage directions; just speak the line.`;
+}
+
+/** Templated "why this move works" — deterministic, instant, demo-safe. */
+function buildRationale(tree: Tree, node: TreeNode, prevSuccess: number | null): string {
+  if (node.speaker === "buyer") {
+    return `The buyer responds: "${node.description}".`;
+  }
+  const alts = getDecisionAlternatives(tree, node.id, new Set());
+  const weaker = alts
+    .filter((a) => a.successProbability < node.successProbability)
+    .sort((a, b) => a.successProbability - b.successProbability)[0];
+  if (weaker) {
+    return `Lead with "${node.title}" (${node.description}) instead of "${weaker.title}" — the stronger play here.`;
+  }
+  if (prevSuccess !== null && node.successProbability > prevSuccess) {
+    return `"${node.title}" — ${node.description}. This keeps the deal moving.`;
+  }
+  return `"${node.title}" — ${node.description}.`;
+}
+
+interface AiSide {
+  ws: WebSocket;
+  speaker: "seller" | "buyer";
+  ready: Promise<void>;
+  pending: { resolve: (t: string) => void; transcript: string } | null;
+  timeout: ReturnType<typeof setTimeout> | null;
+}
+
+function createRealtimeSide(
+  clientWs: WebSocket,
+  apiKey: string,
+  speaker: "seller" | "buyer",
+  voice: string,
+  instructions: string,
+  isClosed: () => boolean,
+): AiSide {
+  const ws = new WebSocket(REALTIME_URL, {
+    headers: { Authorization: `Bearer ${apiKey}`, voice },
+  });
+
+  const side: AiSide = { ws, speaker, ready: Promise.resolve(), pending: null, timeout: null };
+  let markReady: () => void = () => {};
+  side.ready = new Promise<void>((res) => (markReady = res));
+  let readyFired = false;
+
+  ws.on("open", () => {
+    ws.send(
+      JSON.stringify({
+        type: "session.update",
+        session: {
+          type: "realtime",
+          instructions,
+          // No mic on either side — disable VAD so the AI never auto-responds;
+          // turns are driven explicitly via response.create.
+          audio: { input: { turn_detection: null } },
+        },
+      }),
+    );
+  });
+
+  ws.on("message", (data) => {
+    let ev: any;
+    try {
+      ev = JSON.parse(data.toString());
+    } catch {
+      return;
+    }
+    switch (ev.type) {
+      case "session.updated":
+        if (!readyFired) {
+          readyFired = true;
+          markReady();
+        }
+        break;
+      case "response.audio.delta":
+      case "response.output_audio.delta":
+        if (!isClosed()) {
+          clientWs.send(
+            JSON.stringify({ type: "both_audio", speaker, delta: ev.delta }),
+          );
+        }
+        break;
+      case "response.audio_transcript.done":
+        if (side.pending && ev.transcript) side.pending.transcript = ev.transcript;
+        break;
+      case "response.done": {
+        if (side.pending) {
+          if (side.timeout) clearTimeout(side.timeout);
+          let t = side.pending.transcript;
+          if (!t) {
+            try {
+              t = ev.response.output[0].content[0].transcript;
+            } catch {
+              t = "";
+            }
+          }
+          const resolve = side.pending.resolve;
+          side.pending = null;
+          resolve(t || "");
+        }
+        break;
+      }
+      case "error":
+        console.error(`[both:${speaker}] realtime error`, ev.error ?? ev);
+        break;
+      default:
+        break;
+    }
+  });
+
+  ws.on("error", (err) => console.error(`[both:${speaker}] ws error`, err));
+  return side;
+}
+
+/** Trigger one spoken turn on a side and resolve with its transcript. */
+function runTurn(side: AiSide, directive: string): Promise<string> {
+  return new Promise<string>((resolve) => {
+    side.pending = { resolve, transcript: "" };
+    side.ws.send(
+      JSON.stringify({ type: "response.create", response: { instructions: directive } }),
+    );
+    // Safety net so a dropped response.done can't stall the whole demo.
+    side.timeout = setTimeout(() => {
+      if (side.pending) {
+        const t = side.pending.transcript;
+        side.pending = null;
+        resolve(t);
+      }
+    }, 20000);
+  });
+}
+
+/** Inject the other party's line so this side stays conversationally coherent. */
+function feedContext(side: AiSide, fromSpeaker: "seller" | "buyer", text: string) {
+  if (!text) return;
+  side.ws.send(
+    JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: `[${fromSpeaker.toUpperCase()}]: ${text}` }],
+      },
+    }),
+  );
+}
+
+/** Highest-success child of a node — the move we steer the AI toward each turn. */
+function optimalChildOf(tree: Tree, nodeId: Id): TreeNode | null {
+  const children = getNodeChildren(tree, nodeId);
+  if (children.length === 0) return null;
+  return children.reduce((best, c) =>
+    c.successProbability > best.successProbability ? c : best,
+  );
+}
+
+/**
+ * Decide which node the AI's utterance actually lands on — the same idea as the
+ * live flow routing the human's reply, but among the current node's existing
+ * children and biased to the steered optimal child: only diverge when the
+ * utterance clearly matches a different child, so the "ace it" demo stays clean
+ * (no stray 0.5-probability nodes).
+ */
+function chooseNextNode(tree: Tree, currentNodeId: Id, utterance: string, optimalId: Id): Id {
+  const children = getNodeChildren(tree, currentNodeId);
+  if (children.length === 0) return currentNodeId;
+  if (children.length === 1) return children[0].id;
+  const match = bestMatch(tree, currentNodeId, utterance);
+  if (match && match.nodeId !== optimalId && match.score >= 0.3) return match.nodeId;
+  return optimalId;
+}
+
+export async function handleBothSession(
+  clientWs: WebSocket,
+  recordingId: Id,
+  currentNodeId: Id,
+) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    clientWs.close(1011, "Missing OpenAI API Key");
+    return;
+  }
+
+  const rec = getRecording(recordingId);
+  const tree = rec ? getTree(rec.treeId) : undefined;
+  if (!tree) {
+    clientWs.send(JSON.stringify({ type: "error", error: "Tree not found." }));
+    clientWs.close();
+    return;
+  }
+
+  const startNode = getNodeById(tree, currentNodeId);
+  if (!startNode) {
+    clientWs.send(JSON.stringify({ type: "mock_complete", nodeId: currentNodeId }));
+    clientWs.close();
+    return;
+  }
+  console.log(`[both] watch from ${currentNodeId} (${startNode.title})`);
+
+  let closed = false;
+  const isClosed = () => closed;
+
+  const sellerSide = createRealtimeSide(
+    clientWs,
+    apiKey,
+    "seller",
+    "cedar",
+    generateSellerPrompt(recordingId, currentNodeId),
+    isClosed,
+  );
+  const buyerSide = createRealtimeSide(
+    clientWs,
+    apiKey,
+    "buyer",
+    "marin",
+    generateMockPrompt(recordingId, currentNodeId),
+    isClosed,
+  );
+
+  const teardown = () => {
+    closed = true;
+    if (sellerSide.timeout) clearTimeout(sellerSide.timeout);
+    if (buyerSide.timeout) clearTimeout(buyerSide.timeout);
+    try { sellerSide.ws.close(); } catch {}
+    try { buyerSide.ws.close(); } catch {}
+  };
+
+  clientWs.on("close", teardown);
+
+  const sideFor = (speaker: "seller" | "buyer") => (speaker === "seller" ? sellerSide : buyerSide);
+  const otherFor = (speaker: "seller" | "buyer") => (speaker === "seller" ? buyerSide : sellerSide);
+
+  // Send a node's tree-focus + rationale cues for a just-spoken turn.
+  const emitNode = (node: TreeNode, prevSuccess: number | null) => {
+    clientWs.send(JSON.stringify({ type: "mock_node_matched", nodeId: node.id }));
+    clientWs.send(
+      JSON.stringify({
+        type: "both_rationale",
+        nodeId: node.id,
+        text: buildRationale(tree, node, prevSuccess),
+        successProbability: node.successProbability,
+        expectedValue: node.expectedValue,
+        prevSuccess,
+        deltaWinRate: prevSuccess === null ? 0 : Math.round((node.successProbability - prevSuccess) * 100),
+      }),
+    );
+  };
+
+  try {
+    // Wait for both realtime sessions to be configured (with a hard timeout).
+    await Promise.race([
+      Promise.all([sellerSide.ready, buyerSide.ready]),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("Realtime connect timeout")), 15000)),
+    ]);
+
+    let nodeId = currentNodeId;
+    let prevSuccess: number | null = null;
+
+    // 1) Voice the starting node for context — we're already on it, just narrate.
+    {
+      const node = startNode;
+      const side = sideFor(node.speaker);
+      const other = otherFor(node.speaker);
+      clientWs.send(JSON.stringify({ type: "both_speaker", speaker: node.speaker }));
+      emitNode(node, null);
+      const transcript = await runTurn(side, directiveForNode(node));
+      if (!closed && transcript) {
+        clientWs.send(JSON.stringify({ type: "both_transcript", speaker: node.speaker, text: transcript, nodeId: node.id }));
+        feedContext(other, node.speaker, transcript);
+      }
+      prevSuccess = node.successProbability;
+    }
+
+    // 2) Walk forward, deriving each step from what the AI actually says.
+    const MAX_TURNS = 12;
+    let turns = 0;
+    while (!closed && turns < MAX_TURNS) {
+      const optimal = optimalChildOf(tree, nodeId);
+      if (!optimal) break; // reached a leaf
+
+      const speaker = optimal.speaker;
+      const side = sideFor(speaker);
+      const other = otherFor(speaker);
+
+      // who's talking now (captured before the audio so the FE can sync the turn)
+      clientWs.send(JSON.stringify({ type: "both_speaker", speaker }));
+      const transcript = await runTurn(side, directiveForNode(optimal));
+      if (closed) break;
+
+      // route: which node did the utterance actually land on?
+      nodeId = chooseNextNode(tree, nodeId, transcript, optimal.id);
+      const chosen = getNodeById(tree, nodeId);
+      if (!chosen) break;
+
+      emitNode(chosen, prevSuccess);
+      if (transcript) {
+        clientWs.send(JSON.stringify({ type: "both_transcript", speaker, text: transcript, nodeId: chosen.id }));
+        feedContext(other, speaker, transcript);
+      }
+      prevSuccess = chosen.successProbability;
+      turns++;
+    }
+
+    if (!closed) {
+      clientWs.send(JSON.stringify({ type: "mock_complete", nodeId }));
+    }
+  } catch (e) {
+    console.error("[both] session error", e);
+    if (!closed) clientWs.send(JSON.stringify({ type: "error", error: e instanceof Error ? e.message : "Both-session failed." }));
+  } finally {
+    teardown();
+    // Let the last audio chunk flush to the client before closing.
+    setTimeout(() => { try { clientWs.close(); } catch {} }, 1500);
+  }
 }

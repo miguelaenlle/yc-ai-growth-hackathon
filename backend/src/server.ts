@@ -48,7 +48,7 @@ import type {
   Tree,
   TreeNode,
 } from "./types.js";
-import { handleMockSession } from "./mock.js";
+import { handleBothSession, handleMockSession } from "./mock.js";
 import { getOrBuildWalkthrough } from "./walkthrough.js";
 
 const { app } = expressWs(express());
@@ -570,11 +570,24 @@ app.ws("/mock/session/:recordingId", (ws, req) => {
   const { recordingId } = req.params;
   const currentNodeId = req.query["currentNodeId"] as string;
   const includePrecap = req.query["includePrecap"] === "true";
+  const roleParam = req.query["role"];
+  const role = roleParam === "both" || roleParam === "seller" ? roleParam : "buyer";
+  const targetParam = req.query["targetNodeIds"];
+  const targetNodeIds =
+    typeof targetParam === "string" && targetParam.length > 0
+      ? targetParam.split(",")
+      : [];
   if (!recordingId || !currentNodeId) {
     ws.close(1008, "recordingId and currentNodeId required");
     return;
   }
-  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap);
+  // role=both → the AI plays both sides ("watch the AI ace this path"); the
+  // default buyer role keeps the existing mic-driven practice flow.
+  if (role === "both") {
+    handleBothSession(ws as any, recordingId, currentNodeId);
+    return;
+  }
+  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap, undefined, targetNodeIds);
 });
 
 // ---------------------------------------------------------------------------
