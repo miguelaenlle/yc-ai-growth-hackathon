@@ -11,6 +11,45 @@ export interface CallSummary {
   company: string;
   startedAt: string; // ISO 8601
   outcome: Outcome;
-  bestEV: number; // best expected value across the tree
-  // TODO: buyer/salesperson { name, title } once the contract is extended.
+  bestEV: number;
+}
+
+/** GET /calls/:id → CallDetail */
+export interface Call {
+  id: Id;
+  companyId: Id;
+  salespersonId: Id;
+  buyerId: Id;
+  startedAt: string;
+  treeId: Id;
+  recordingIds: Id[];
+}
+
+export interface Recording {
+  id: Id;
+  callId: Id;
+  treeId: Id;
+  isReal: boolean;
+  isActive: boolean;
+  startNodeId: Id | null;
+  stopNodeId: Id | null;
+  audioPath: string;
+  lengthMs: number;
+}
+
+export interface CallDetail {
+  call: Call;
+  tree: unknown;
+  recordings: Recording[];
+}
+
+/** GET /recordings/:id/walkthrough → WalkthroughBundle */
+export interface TimelineCue {
+  atMs: number;
+  nodeId: Id;
+}
+
+export interface WalkthroughBundle {
+  audioUrl: string;
+  timeline: TimelineCue[];
 }

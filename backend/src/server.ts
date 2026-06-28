@@ -8,7 +8,8 @@
 import cors from "cors";
 import express, { type Request, type Response } from "express";
 import expressWs from "express-ws";
-import { handleMockSession } from "./mock.js";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   getCall,
   getRecording,
@@ -23,7 +24,6 @@ import {
   toCallSummary,
 } from "./store.js";
 import {
-  buildWalkthroughTimeline,
   getNodeById,
   getWeakNodes,
   matchOrCreateBranch,
@@ -47,17 +47,19 @@ import type {
   TraversalStep,
   Tree,
   TreeNode,
-  WalkthroughBundle,
 } from "./types.js";
+import { handleMockSession } from "./mock.js";
+import { getOrBuildWalkthrough } from "./walkthrough.js";
 
 const { app } = expressWs(express());
 const PORT = Number(process.env.PORT) || 3001;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(cors());
 app.use(express.json());
 
 // Serve generated/seed audio from /data/audio (referenced by audioPath/audioUrl).
-app.use("/data", express.static(new URL("../public/data", import.meta.url).pathname));
+app.use("/data", express.static(join(__dirname, "../public/data")));
 
 // Audio analyzer — created once at startup. AUDIO_ANALYZER env var selects
 // which implementation is used (local | none | custom). Falls back gracefully
@@ -360,15 +362,17 @@ app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
 });
 
 // 9. GET /recordings/:id/walkthrough?kind=intro|review → WalkthroughBundle
-app.get("/recordings/:id/walkthrough", (req: Request, res: Response) => {
+app.get("/recordings/:id/walkthrough", async (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
   const kind = req.query.kind === "intro" ? "intro" : "review";
-  const bundle: WalkthroughBundle = {
-    audioUrl: `/data/audio/walkthrough_${rec.id}_${kind}.mp3`,
-    timeline: buildWalkthroughTimeline(rec.traversal),
-  };
-  res.json(bundle);
+  try {
+    const bundle = await getOrBuildWalkthrough(rec, kind);
+    res.json(bundle);
+  } catch (e) {
+    console.error("Walkthrough error:", e);
+    fail(res, 500, "walkthrough_failed", e instanceof Error ? e.message : "Walkthrough generation failed");
+  }
 });
 
 // ---------------------------------------------------------------------------
