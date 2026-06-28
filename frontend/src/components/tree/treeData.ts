@@ -13,6 +13,7 @@ export interface CallNodeData {
   success?: number; // 0..1, AI nodes only → signal ramp
   onPath?: boolean; // on the real recorded path
   actor?: Actor;
+  onSimulate?: () => void; // shown on the focused node → start a simulation here
   [key: string]: unknown;
 }
 
@@ -254,8 +255,13 @@ function layout(root: RawNode): Positioned[] {
 }
 
 // ---- Derive React Flow nodes + edges --------------------------------------
-function build(): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
-  const positioned = layout(TREE);
+// Reusable for any RawNode tree — the static seed (TREE) and trees built from
+// backend data both flow through here, so visuals stay identical.
+export function buildView(
+  root: RawNode,
+  actorOf: (id: string) => Actor | undefined,
+): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
+  const positioned = layout(root);
   const nodes: Node<CallNodeData>[] = positioned.map(({ node, cross, depth }) => ({
     id: node.id,
     type: "call",
@@ -266,7 +272,7 @@ function build(): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
       description: node.description,
       success: node.success,
       onPath: node.onPath,
-      actor: ACTOR[node.id],
+      actor: actorOf(node.id),
       depth,
     },
     width: BASE_W,
@@ -290,12 +296,15 @@ function build(): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
       walk(child);
     }
   };
-  walk(TREE);
+  walk(root);
 
   return { nodes, edges };
 }
 
-export const { nodes: initialNodes, edges: initialEdges } = build();
+export const { nodes: initialNodes, edges: initialEdges } = buildView(
+  TREE,
+  (id) => ACTOR[id],
+);
 export const NODE_COUNT = initialNodes.length;
 
 // Each node's fixed center (from layout) — fish-eye pins centers and only

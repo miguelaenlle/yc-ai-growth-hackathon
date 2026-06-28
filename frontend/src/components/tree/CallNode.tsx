@@ -140,6 +140,18 @@ function CallNodeImpl({ data }: NodeProps) {
               {d.description}
             </div>
           )}
+
+          {d.focused === true && typeof d.onSimulate === "function" && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                (d.onSimulate as () => void)();
+              }}
+              className="absolute left-1/2 top-full mt-3 -translate-x-1/2 whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+            >
+              Simulate from here
+            </button>
+          )}
         </div>
       </div>
 
