@@ -5,8 +5,9 @@
   "type": "module",
   "description": "CallTree backend — single Express process, local JSON store (hackathon scaffold).",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "start": "tsx src/server.ts",
+    "dev": "node --env-file=.env --import tsx --watch src/server.ts",
+    "start": "node --env-file=.env --import tsx src/server.ts",
+    "build": "tsc --noEmit false",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
