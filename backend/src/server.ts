@@ -17,6 +17,7 @@ import { handleLiveSession } from "./live.js";
 import { generateAssistCard } from "./assist.js";
 import { getProductInfo } from "./product.js";
 import {
+  DEAL_VALUE,
   getCall,
   getRecording,
   getTree,
@@ -170,7 +171,7 @@ app.post("/calls", (req: Request<{}, {}, CreateCallReq>, res: Response) => {
     speaker: "seller",
     tMs: 0,
     successProbability: 0.5,
-    expectedValue: Math.round(0.5 * 48000),
+    expectedValue: Math.round(0.5 * DEAL_VALUE),
     metrics: { confidence: 0.5, hesitation: 0.3, enthusiasm: 0.5 },
   };
 
@@ -488,35 +489,35 @@ app.post("/mock/turn", (req: Request<{}, {}, MockTurnReq>, res: Response) => {
 
   const lines: { speaker: "buyer" | "seller"; text: string }[] = [];
 
-  if (currentNodeId === "n_push") {
+  if (currentNodeId === "n_incumbent") {
     if (role === "buyer" || role === "both") {
       lines.push({
         speaker: "buyer",
-        text: "You don't have Tableau integration. Our analytics team is fully standardized on it.",
+        text: "We already use Microsoft Teams — it's bundled with our license, so why switch?",
       });
     }
     if (role === "both") {
       lines.push({
         speaker: "seller",
-        text: "Totally understand — your team won't need to change anything. Our SQL connectors pipe data directly into Tableau, so you keep your existing workflows.",
+        text: "Totally fair — you don't have to rip out Teams. Slack runs alongside it, and most teams adopt it where search and threads matter most.",
       });
     }
     if (role === "seller") {
       lines.push({
         speaker: "seller",
-        text: "Great question — our SQL connectors mean you keep Tableau exactly as-is. The data flows through without any migration.",
+        text: "Great point — Slack isn't a rip-and-replace. It runs alongside Teams, and teams lean on it for fast search, threads, and app integrations.",
       });
     }
-  } else if (currentNodeId === "n_alt") {
+  } else if (currentNodeId === "n_coexist") {
     lines.push({
       speaker: "buyer",
-      text: "Oh, so we'd keep Tableau and just pipe data in through your connectors? That actually works for us.",
+      text: "So we'd keep Teams and just run Slack alongside it? Where does Slack actually win for us?",
     });
-  } else if (currentNodeId === "n_road") {
+  } else if (currentNodeId === "n_knock") {
     if (role === "buyer" || role === "both") {
       lines.push({
         speaker: "buyer",
-        text: "Roadmap doesn't help us right now. Can you send me the deck and we'll revisit later?",
+        text: "I wouldn't call Teams outdated — it works for us. Just send me some info and we'll review it.",
       });
     }
   } else {

@@ -8,14 +8,14 @@ other way around.**
 |---|---|---|
 | [`context/calltree-product-overview.md`](context/calltree-product-overview.md) | The product: problem, the Record→Map→Review→Practice loop, what's on screen, scope | Any feature/UX/product decision |
 | [`context/calltree-api-contract.md`](context/calltree-api-contract.md) | Definitive API contract — types (§2), 15 endpoints (§3), the SSE `LiveEvent` stream (§4) | Any backend, frontend-data, or type work |
-| [`context/calltree-seed.json`](context/calltree-seed.json) | The one seeded Convex call the demo runs on (companies, calls, trees, recordings) | Any work touching data shapes or the demo |
+| [`context/calltree-seed.json`](context/calltree-seed.json) | Legacy seed reference. The live demo data (`backend/src/data/seed.json`, `frontend/src/data/tree.generated.ts`) is generated from `seed/` — edit `seed/calltree.seed.ts` and run `npm run seed`, never hand-edit the generated files | Any work touching data shapes or the demo |
 
 ## Ground rules
 
 - **The contract is canonical.** `backend/src/types.ts` is transcribed verbatim from
   contract §2 — if a type changes, change the contract first, then mirror it. Don't
   invent fields or endpoints not in `calltree-api-contract.md`.
-- **EV rule:** `expectedValue = round(successProbability * 48000)` (Convex is a $48k deal).
+- **EV rule:** `expectedValue = round(successProbability * 45000)` (Slack is a $45k, 250-seat deal).
 - **Scope:** hackathon — one user, local JSON store, single Express process on `:3001`.
   The goal is to demo the full loop end-to-end on the one seeded call, not to scale.
 - **Current state:** backend read endpoints serve real seed data; lifecycle/realtime/agent

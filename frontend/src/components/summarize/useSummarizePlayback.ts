@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { WalkthroughBundle } from "../../lib/types";
-import { toUiNodeId } from "../../lib/nodeIdMap";
 import { summarize_activeCueIndex } from "./summarize_timeline";
 
 interface UseSummarizePlaybackOptions {
@@ -29,7 +28,9 @@ export function useSummarizePlayback({
     const wt = walkthroughRef.current;
     if (!audio || !wt) return;
     const idx = summarize_activeCueIndex(wt.timeline, audio.currentTime * 1000);
-    onNodeFocus(toUiNodeId(wt.timeline[idx].nodeId));
+    // Backend and UI node ids are unified (see tree.generated.ts), so cue ids
+    // address tree nodes directly — no mapping needed.
+    onNodeFocus(wt.timeline[idx].nodeId);
   }, [onNodeFocus]);
 
   const handleEnded = useCallback(() => {

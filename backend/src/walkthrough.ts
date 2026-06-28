@@ -146,7 +146,7 @@ Return JSON: { "script": [{ "nodeId": "<exact node id>", "narration": "<spoken p
 Requirements:
 - Exactly one entry per path node, in the order listed above.
 - All segments together must read as ONE flowing ~20-second monologue (~60–75 words total). Each segment should hand off naturally to the next — use connectors like "From there", "But when", "That left you with", "So".
-- Example flow (do not copy verbatim): "Clean open — you got John talking fast." → "You pulled out real ticket pain within two minutes." → "Then Tableau hit, and your hesitation showed." → "You had a thirty-eight-K SQL connector path, but you went roadmap instead — EV dropped to four K." → "He checked out. Deal lost."
+- Example flow (do not copy verbatim): "Clean open — you got Sarah talking fast." → "Good discovery, you had her engaged." → "Then she raised Teams, and instead of reframing you knocked it." → "That made her defensive — the coexistence pitch was a forty-two-K path you skipped." → "She checked out. Deal lost."
 - Grade what happened: strengths, mistakes, and at seller forks whether the choice beat the EV of alternatives. Quote transcript briefly when provided.
 - Avoid staccato labels ("Good opening.", "Weak response.") — keep it conversational.
 - Do not assign homework or future practice — only grade this call.

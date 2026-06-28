@@ -16,7 +16,7 @@ import type {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const seedPath = join(__dirname, "data", "seed.json");
 
-export const DEAL_VALUE = 48000;
+export const DEAL_VALUE = 45000;
 
 export const store: SeedStore = JSON.parse(readFileSync(seedPath, "utf-8")) as SeedStore;
 

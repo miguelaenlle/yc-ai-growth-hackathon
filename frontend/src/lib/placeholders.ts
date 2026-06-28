@@ -15,6 +15,10 @@ interface Participants {
 }
 
 const BY_COMPANY: Record<string, Participants> = {
+  Slack: {
+    buyer: { name: "Sarah Chen", title: "VP of Operations" },
+    salesperson: { name: "Jane Doe", title: "Sales Representative" },
+  },
   Convex: {
     buyer: { name: "John Doe", title: "VP of Operations" },
     salesperson: { name: "Jane Doe", title: "Sales Representative" },

@@ -1,0 +1,58 @@
+[
+  {
+    "speaker": "seller",
+    "text": "Thanks for taking the time to chat today, Sarah — I’m excited to discuss how Slack can help your team."
+  },
+  {
+    "speaker": "buyer",
+    "text": "Of course, happy to chat. We’re always looking for ways to improve our processes."
+  },
+  {
+    "speaker": "seller",
+    "text": "Great! Can you share how your team communicates and collaborates using Microsoft Teams right now?"
+  },
+  {
+    "speaker": "buyer",
+    "text": "Well, we primarily use Teams for messaging and video calls. It’s integrated with our other Microsoft tools, so it works for us."
+  },
+  {
+    "speaker": "seller",
+    "text": "I see. But have you found any challenges with it? Sometimes I hear that it can be a bit cumbersome."
+  },
+  {
+    "speaker": "buyer",
+    "text": "I mean, it has its quirks, but it’s part of our Microsoft license, so it’s convenient."
+  },
+  {
+    "speaker": "seller",
+    "text": "I think Teams is a bit clunky and outdated — it really struggles with user experience. Slack is designed to be intuitive and user-friendly."
+  },
+  {
+    "speaker": "buyer",
+    "text": "I wouldn’t say it’s outdated. It’s just different. We’ve adapted to it."
+  },
+  {
+    "speaker": "seller",
+    "text": "But with Slack, you get a more streamlined experience. You can easily integrate with other apps and customize your workspace."
+  },
+  {
+    "speaker": "buyer",
+    "text": "I understand that, but we’ve already invested in Teams and it’s working for us."
+  },
+  {
+    "speaker": "seller",
+    "text": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
+  },
+  {
+    "speaker": "buyer",
+    "text": "Look, I appreciate your enthusiasm, but just send me some info, please."
+  },
+  {
+    "speaker": "seller",
+    "text": "Sure, I can do that. I just think you might be missing out on a better solution."
+  },
+  {
+    "speaker": "buyer",
+    "text": "Thanks, but I really just want the information. I’ll review it."
+  }
+]

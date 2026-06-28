@@ -1,5 +1,6 @@
-/** Default tree focus node when the review page loads or after summarize ends. */
-export const SUMMARIZE_START_NODE_ID = "opening";
+/** Default tree focus node when the review page loads or after summarize ends.
+ *  The canonical tree root (unified backend/UI id). */
+export const SUMMARIZE_START_NODE_ID = "n_open";
 
 /** Node/camera tween when the user clicks a node manually (idle review). */
 export const SUMMARIZE_IDLE_FOCUS_MS = 440;

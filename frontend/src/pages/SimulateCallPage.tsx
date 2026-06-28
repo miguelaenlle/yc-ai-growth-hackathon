@@ -81,9 +81,10 @@ export function SimulateCallPage() {
     navState?.buyerName ??
     (navState?.company ? participantsFor(navState.company).buyer.name : "Buyer");
 
-  // If we start on a buyer-spoken node, the AI buyer should open the turn.
-  const buyerFirst =
-    detail?.tree.nodes.find((n) => n.id === startNodeId)?.speaker === "buyer";
+  // The AI buyer always opens the turn. The precap narrates the path through the
+  // start node inclusive, so by the time the mic is live the buyer should speak
+  // the natural next line rather than waiting on the user (server VAD).
+  const buyerFirst = true;
 
   const session = useMockSession({
     recordingId,

@@ -27,7 +27,7 @@ function generateMockPrompt(recordingId: Id, currentNodeId: Id): string {
   const rec = getRecording(recordingId);
   const tree = rec ? getTree(rec.treeId) : undefined;
 
-  const productInfo = rec ? getProductInfo(rec.callId) : getProductInfo("co_convex");
+  const productInfo = rec ? getProductInfo(rec.callId) : getProductInfo("co_slack");
   const personaInfo = getPersonaInfo("buy_polly");
 
   let pathContext = "No prior context.";
@@ -458,7 +458,7 @@ const REALTIME_URL = "wss://api.openai.com/v1/realtime?model=gpt-realtime-2";
 function generateSellerPrompt(recordingId: Id, currentNodeId: Id): string {
   const rec = getRecording(recordingId);
   const tree = rec ? getTree(rec.treeId) : undefined;
-  const productInfo = rec ? getProductInfo(rec.callId) : getProductInfo("co_convex");
+  const productInfo = rec ? getProductInfo(rec.callId) : getProductInfo("co_slack");
 
   let pathContext = "No prior context.";
   if (tree && currentNodeId) {

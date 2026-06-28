@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { decodePcm16ToFloat32 } from "../lib/audioPcm";
 
 // Live mock-interview session. Two stages over two WebSocket connections:
-//   1. precap — narrate the path root→parent of the start node (no mic). The
+//   1. precap — narrate the path root→start node inclusive (no mic). The
 //      user can then set breakpoints on the tree.
 //   2. live   — on Play, open a fresh socket with the chosen breakpoints as
 //      `targetNodeIds`, stream the mic, and talk to the OpenAI Realtime buyer.
@@ -276,13 +276,22 @@ export function useMockSession({
       }
       switch (msg.type) {
         case "session.updated":
-          // Once the backend has applied its instructions, if we're standing on
-          // a buyer-spoken node, have the buyer open the turn (server VAD would
-          // otherwise wait for the user). Fire exactly once.
+          // Once the backend has applied its instructions, have the AI buyer open
+          // the turn with a contextual line (server VAD would otherwise wait for
+          // the user). Send the opening as a per-response directive so the buyer
+          // speaks the natural next line given the conversation so far. Fire once.
           if (buyerFirstRef.current && !respondedRef.current) {
             respondedRef.current = true;
             if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: "response.create" }));
+              ws.send(
+                JSON.stringify({
+                  type: "response.create",
+                  response: {
+                    instructions:
+                      "Open this moment of the call as the buyer: say the natural next line given the conversation so far (1-2 sentences), then wait for the seller.",
+                  },
+                }),
+              );
             }
           }
           break;

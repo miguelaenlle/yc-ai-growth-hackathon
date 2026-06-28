@@ -8,7 +8,8 @@
     "dev": "node --use-system-ca --env-file=.env --import tsx --watch src/server.ts",
     "start": "node --use-system-ca --env-file=.env --import tsx src/server.ts",
     "build": "tsc --noEmit false",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "node --use-system-ca --import tsx ../seed/build.ts"
   },
   "dependencies": {
     "@types/multer": "^2.1.0",

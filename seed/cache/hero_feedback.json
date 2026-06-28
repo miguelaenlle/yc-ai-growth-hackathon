@@ -1,0 +1,27 @@
+{
+  "summary": "The rep's disparaging comments about Microsoft Teams immediately after the buyer mentioned it as their current solution caused the buyer to become defensive, leading to a loss of interest in continuing the conversation. This reaction ultimately derailed the opportunity to further explore Slack's value proposition.",
+  "strengths": [
+    "Warm opening that established rapport.",
+    "Effective discovery question to understand the buyer's current situation."
+  ],
+  "weaknesses": [
+    "Disparaging remarks about the incumbent solution alienated the buyer.",
+    "Failed to pivot the conversation positively after the incumbent objection."
+  ],
+  "practiceTargets": [
+    {
+      "nodeId": "n_knock",
+      "reason": "Disparaging the incumbent made the buyer defensive and closed off further discussion.",
+      "drill": "Practice reframing negative comments into constructive comparisons or questions that invite dialogue.",
+      "metric": "confidence",
+      "score": 0.2
+    },
+    {
+      "nodeId": "n_incumbent",
+      "reason": "This was a critical moment to acknowledge the buyer's current solution and position Slack as a complementary option.",
+      "drill": "Practice acknowledging the incumbent's strengths while highlighting Slack's unique benefits.",
+      "metric": "confidence",
+      "score": 0.3
+    }
+  ]
+}

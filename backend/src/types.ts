@@ -48,6 +48,14 @@ export interface TreeNode {
   successProbability: number; // 0..1   → green↔red spectrum
   expectedValue: number; // currency
   metrics: SignalMetrics;
+  stats?: NodeStats; // optional — observed traversal stats across this call's population
+}
+
+/** Beta-smoothed win statistics observed across the call population. */
+export interface NodeStats {
+  visits: number;
+  wins: number;
+  winRate: number; // (wins + 1) / (visits + 2)
 }
 
 export interface SignalMetrics {

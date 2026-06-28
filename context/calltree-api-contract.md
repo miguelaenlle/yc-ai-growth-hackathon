@@ -8,7 +8,7 @@ Definitive, self-contained contract. Types in §2, endpoints in §3, the live ev
 - **Format:** JSON in/out, except `POST /transcribe` (multipart) and `GET /stream/:id` (SSE).
 - **IDs:** opaque strings (`call_convex`, `n_push`, `rec_real`).
 - **Errors:** `{ "error": { "code": string, "message": string } }` with the matching HTTP status (`400` bad input, `404` not found, `500` server).
-- **Deal value:** Convex is a $48,000 deal; `expectedValue = round(successProbability * 48000)`.
+- **Deal value:** Slack is a $45,000 deal (250 seats); `expectedValue = round(successProbability * 45000)`.
 
 ## 2. Types
 
@@ -43,8 +43,10 @@ interface TreeNode {
   successProbability: number; // 0..1   → green↔red spectrum
   expectedValue: number;      // currency
   metrics: SignalMetrics;
+  stats?: NodeStats;          // optional — observed traversal stats across this call's population
 }
 
+interface NodeStats { visits: number; wins: number; winRate: number; } // Beta-smoothed: winRate = (wins+1)/(visits+2)
 interface SignalMetrics { confidence: number; hesitation: number; enthusiasm: number; } // each 0..1
 
 interface Recording {

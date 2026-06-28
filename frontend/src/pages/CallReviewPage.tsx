@@ -32,7 +32,6 @@ import { useCallDetail } from "../queries/useCallDetail";
 import { getWalkthrough, peekWalkthrough } from "../lib/walkthroughCache";
 import { participantsFor } from "../lib/placeholders";
 import { formatDateTime } from "../lib/format";
-import { isSimulatableUiNode, toBackendNodeId } from "../lib/nodeIdMap";
 import type { CallDetail, CallSummary, Outcome, WalkthroughBundle } from "../lib/types";
 
 const nodeTypes = { call: CallNode };
@@ -152,24 +151,21 @@ interface FlowProps {
 function Flow({ walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode, onWatchNode }: FlowProps) {
   const isSummarizePlaying = summarizeStatus === "playing";
 
-  // Inject per-node "simulate" + "watch AI" actions onto the simulatable nodes.
-  // CallNode renders them only on the focused node, so they're scoped to whatever
-  // node is selected. The augmented copy is what the animation repacks each
-  // frame, so the actions survive playback.
+  // Inject per-node "simulate" + "watch AI" actions onto every node. Node ids are
+  // unified with the backend tree, so every node is simulatable/watchable. CallNode
+  // renders the buttons only on the focused node, so they're scoped to the selection.
+  // The augmented copy is what the animation repacks each frame, so the actions
+  // survive playback.
   const baseNodes = useMemo(
     () =>
-      initialNodes.map((n) =>
-        isSimulatableUiNode(n.id)
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                onSimulate: () => onSimulateNode(n.id),
-                onWatch: () => onWatchNode(n.id),
-              },
-            }
-          : n,
-      ),
+      initialNodes.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          onSimulate: () => onSimulateNode(n.id),
+          onWatch: () => onWatchNode(n.id),
+        },
+      })),
     [onSimulateNode, onWatchNode],
   );
 
@@ -380,24 +376,22 @@ export function CallReviewPage() {
     setSummarizeStatus("ready");
   }, []);
 
-  // Simulate from a tree node: map the UI node id back to its backend node id
-  // (the simulate route resolves the start node against the real tree) and
-  // forward the buyer identity so the simulate screen can show real initials.
+  // Simulate from a tree node. Node ids are unified with the backend, so the id
+  // passes straight through to the simulate route (it resolves the start node
+  // against the real tree). Forward the buyer identity for real initials.
   const handleSimulateNode = useCallback(
-    (uiNodeId: string) => {
-      const backendId = toBackendNodeId(uiNodeId);
-      navigate(`/call/${id}/simulate?from=${backendId}`, {
+    (nodeId: string) => {
+      navigate(`/call/${id}/simulate?from=${nodeId}`, {
         state: { buyerName: buyer.name, company },
       });
     },
     [id, navigate, buyer.name, company],
   );
 
-  // Watch the AI ace the path from a tree node (same UI→backend node mapping).
+  // Watch the AI ace the path from a tree node (ids pass through unchanged).
   const handleWatchNode = useCallback(
-    (uiNodeId: string) => {
-      const backendId = toBackendNodeId(uiNodeId);
-      navigate(`/call/${id}/watch?from=${backendId}`, {
+    (nodeId: string) => {
+      navigate(`/call/${id}/watch?from=${nodeId}`, {
         state: { buyerName: buyer.name, company },
       });
     },

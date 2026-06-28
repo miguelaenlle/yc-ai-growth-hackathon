@@ -5,14 +5,14 @@ import { Logo } from "../components/Logo";
 import { TREE, initialNodes, initialEdges } from "../components/tree/treeData";
 import { participantsFor } from "../lib/placeholders";
 
-// The live call builds on the one seeded company (Convex). The tree is the
+// The live call builds on the one seeded company (Slack). The tree is the
 // static review tree, focused on the moment the call is currently at.
-const COMPANY = "Convex";
-const CURRENT_NODE = "pushback";
+const COMPANY = "Slack";
+const CURRENT_NODE = "n_incumbent";
 
 // Curated live intel for the demo — kept to exactly what the figma shows.
-const NOTES = ["Needs Tableau integration", "100 users", "Plans to purchase in Q4 2026"];
-const RECOMMENDATION = { text: "Talk about SQL connectors", confidence: "80% chance of success" };
+const NOTES = ["Currently on Microsoft Teams", "250 seats", "Plans to purchase in Q4 2026"];
+const RECOMMENDATION = { text: "Reframe: run Slack alongside Teams", confidence: "76% chance of success" };
 
 function BackArrow() {
   return (
@@ -133,7 +133,7 @@ export function LiveCallPage() {
           root={TREE}
           nodes={initialNodes}
           edges={initialEdges}
-          rootId="opening"
+          rootId="n_open"
           focusId={CURRENT_NODE}
         />
       </div>
