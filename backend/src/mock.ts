@@ -6,8 +6,10 @@ import {
   getNodeById,
   getNodeChildren,
 } from "./tree-ops.js";
-import { getRecording, getTree, store } from "./store.js";
+import { getCall, getBuyerVoiceId, getRecording, getTree, store } from "./store.js";
 import type { Id, Recording, Tree, TranscriptSegment, TreeNode } from "./types.js";
+import { streamElevenLabsTTS, synthesizeElevenLabsSpeech } from "./elevenlabs-tts.js";
+import { ensureNarratorVoice, FALLBACK_VOICE_ID } from "./voice-selector.js";
 
 import { promises as fs } from "node:fs";
 import { dirname, join } from "node:path";
@@ -94,7 +96,7 @@ async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNo
     return;
   }
 
-  const cachePath = join(CACHE_DIR, `precap_${currentNodeId}.json`);
+  const cachePath = join(CACHE_DIR, `precap_v2_${currentNodeId}.json`);
   try {
     const cached = await fs.readFile(cachePath, "utf-8");
     const script = JSON.parse(cached);
@@ -104,7 +106,7 @@ async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNo
       if (chunk.type === "precap_node") {
         clientWs.send(JSON.stringify({ type: "precap_node", nodeId: chunk.nodeId }));
       } else if (chunk.type === "precap_audio") {
-        clientWs.send(JSON.stringify({ type: "precap_audio", b64_data: chunk.b64_data }));
+        clientWs.send(JSON.stringify({ type: "precap_audio", b64_data: chunk.b64_data, mime: chunk.mime ?? "audio/mpeg" }));
       }
     }
     clientWs.send(JSON.stringify({ type: "precap_complete" }));
@@ -114,6 +116,7 @@ async function handlePrecapPhase(clientWs: WebSocket, recordingId: Id, currentNo
   }
 
   try {
+    const narratorVoiceId = await ensureNarratorVoice();
     const summary = getDecisionSummary(tree, currentNodeId);
 
     const promptText = `
@@ -159,27 +162,13 @@ Each object must have:
       cacheData.push({ type: "precap_node", nodeId: chunk.nodeId });
 
       const text = chunk.narration;
-      const response = await fetch("https://api.openai.com/v1/audio/speech", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "tts-1",
-          input: text,
-          voice: "alloy",
-          response_format: "opus",
-        }),
-      });
-
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        const b64_data = Buffer.from(arrayBuffer).toString("base64");
-        clientWs.send(JSON.stringify({ type: "precap_audio", b64_data }));
-        cacheData.push({ type: "precap_audio", b64_data });
-      } else {
-        console.error("TTS failed:", await response.text());
+      try {
+        const audioBuffer = await synthesizeElevenLabsSpeech(narratorVoiceId, text);
+        const b64_data = audioBuffer.toString("base64");
+        clientWs.send(JSON.stringify({ type: "precap_audio", b64_data, mime: "audio/mpeg" }));
+        cacheData.push({ type: "precap_audio", b64_data, mime: "audio/mpeg" });
+      } catch (e) {
+        console.error("ElevenLabs precap TTS failed:", e);
       }
     }
 
@@ -280,6 +269,49 @@ async function routeTurn(
   }
 }
 
+/**
+ * Generate the buyer's next spoken response as text using GPT-4o-mini.
+ * The system prompt is the full mock persona + tree context prompt.
+ * Recent conversation is passed as alternating user/assistant messages.
+ */
+async function generateBuyerResponse(
+  systemPrompt: string,
+  recentConversation: { role: string; text: string }[],
+): Promise<string | null> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+
+  const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
+    { role: "system", content: systemPrompt },
+    ...recentConversation.map((m) => ({
+      role: (m.role === "seller" ? "user" : "assistant") as "user" | "assistant",
+      content: m.text,
+    })),
+  ];
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages,
+      max_tokens: 150,
+      temperature: 0.8,
+    }),
+  });
+
+  if (!res.ok) {
+    console.error("[mock] GPT buyer response failed:", await res.text());
+    return null;
+  }
+
+  const data = (await res.json()) as { choices: { message: { content: string } }[] };
+  return data.choices[0]?.message?.content?.trim() ?? null;
+}
+
 export async function handleMockSession(
   clientWs: WebSocket,
   recordingId: Id,
@@ -299,6 +331,7 @@ export async function handleMockSession(
   let currentDepth = 0;
   let recentConversation: { role: string; text: string }[] = [];
   let routingQueue = Promise.resolve();
+  let isClosed = false;
 
   console.log(`Starting mock session for recording ${recordingId} at node ${currentNodeId} (precap: ${includePrecap}, persona: ${personaId}, maxDepth: ${maxDepth}, targetNodeIds: ${targetNodeIds})`);
 
@@ -306,9 +339,7 @@ export async function handleMockSession(
     await handlePrecapPhase(clientWs, recordingId, currentNodeId);
   }
 
-  // This is the LIVE interactive session (precap runs on its own socket). Reset
-  // the shared recording's transcript + traversal so it holds exactly this
-  // session's turns — the post-call analysis endpoint reads them straight back.
+  // Reset recording transcript + traversal for this session's turns.
   if (!includePrecap) {
     const rec = getRecording(recordingId);
     if (rec) {
@@ -317,88 +348,74 @@ export async function handleMockSession(
     }
   }
 
-  const systemPrompt = generateMockPrompt(recordingId, currentNodeId, personaId);
+  // Resolve buyer voiceId for ElevenLabs TTS.
+  const rec = getRecording(recordingId);
+  const call = rec ? getCall(rec.callId) : undefined;
+  const buyerVoiceId = (call ? getBuyerVoiceId(call.buyerId) : null) ?? FALLBACK_VOICE_ID;
+  console.log(`[mock] Buyer voiceId: ${buyerVoiceId}`);
 
+  // systemPrompt is kept in sync with currentNodeId so GPT always has current context.
+  let systemPrompt = generateMockPrompt(recordingId, currentNodeId, personaId);
+
+  // Connect to OpenAI Realtime in transcription-only mode (seller STT, no AI replies).
   const url = "wss://api.openai.com/v1/realtime?model=gpt-realtime-2";
   const openaiWs = new WebSocket(url, {
     headers: {
-      "Authorization": `Bearer ${OPENAI_API_KEY}`,
-      "voice": "marin",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      voice: "marin", // unused but required by the API
     },
   });
 
   openaiWs.on("open", () => {
-    console.log("Connected to OpenAI Realtime API.");
-    const sessionUpdate = {
-      type: "session.update",
-      session: {
-        type: "realtime",
-        audio: {
-          input: {
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.8,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 800,
+    console.log("[mock] Connected to OpenAI Realtime (transcription-only mode).");
+    openaiWs.send(
+      JSON.stringify({
+        type: "session.update",
+        session: {
+          type: "realtime",
+          audio: {
+            input: {
+              turn_detection: {
+                type: "server_vad",
+                threshold: 0.8,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 800,
+                create_response: false, // STT only — no AI-generated replies
+              },
+              transcription: { model: "whisper-1" },
             },
-            transcription: { model: "whisper-1" },
           },
+          instructions: "",
         },
-        instructions: systemPrompt,
-      },
-    };
-    openaiWs.send(JSON.stringify(sessionUpdate));
+      }),
+    );
   });
 
   const runRouter = async (speaker: "seller" | "buyer") => {
-    const rec = getRecording(recordingId);
-    const tree = rec ? getTree(rec.treeId) : undefined;
+    const currentRec = getRecording(recordingId);
+    const tree = currentRec ? getTree(currentRec.treeId) : undefined;
     if (!tree) return;
     if (!getNodeById(tree, currentNodeId)) return;
 
     try {
-      // Practice stays on the authored tree: the semantic router picks which
-      // child (spoken by whoever just talked) the turn lands on, or null to stay.
       const nextNodeId = await routeTurn(tree, currentNodeId, recentConversation, speaker);
 
       let switchedNode = false;
       if (nextNodeId && nextNodeId !== currentNodeId) {
-        console.log(`Routed (${speaker}) to node:`, nextNodeId);
+        console.log(`[mock] Routed (${speaker}) to node: ${nextNodeId}`);
         currentNodeId = nextNodeId;
         switchedNode = true;
         clientWs.send(JSON.stringify({ type: "mock_node_matched", nodeId: currentNodeId }));
       } else {
-        console.log(`Router stayed (${speaker}) at:`, currentNodeId);
+        console.log(`[mock] Router stayed (${speaker}) at: ${currentNodeId}`);
       }
 
       if (switchedNode) {
         recentConversation = [];
+        if (currentRec) currentRec.traversal.finalNodeId = currentNodeId;
 
-        // Keep the recording's traversal pointed at where we actually are, so the
-        // post-call analysis can derive the outcome from the final node reached.
-        if (rec) rec.traversal.finalNodeId = currentNodeId;
-
-        // Update OpenAI system prompt with new node context
-        const newSystemPrompt = generateMockPrompt(recordingId, currentNodeId, personaId);
-        const sessionUpdate = {
-          type: "session.update",
-          session: {
-            type: "realtime",
-            audio: {
-              input: {
-                turn_detection: {
-                  type: "server_vad",
-                  threshold: 0.8,
-                  prefix_padding_ms: 300,
-                  silence_duration_ms: 800,
-                },
-                transcription: { model: "whisper-1" },
-              },
-            },
-            instructions: newSystemPrompt,
-          },
-        };
-        openaiWs.send(JSON.stringify(sessionUpdate));
+        // Refresh system prompt for the next GPT buyer generation
+        systemPrompt = generateMockPrompt(recordingId, currentNodeId, personaId);
 
         currentDepth++;
         let breakpointHit = false;
@@ -413,19 +430,21 @@ export async function handleMockSession(
         }
 
         if (breakpointHit) {
-          console.log(`Breakpoint reached. Reason: ${breakpointReason}`);
-          clientWs.send(JSON.stringify({
-            type: "mock_breakpoint_reached",
-            reason: breakpointReason,
-            nodeId: currentNodeId,
-            depth: currentDepth,
-          }));
+          console.log(`[mock] Breakpoint reached. Reason: ${breakpointReason}`);
+          clientWs.send(
+            JSON.stringify({
+              type: "mock_breakpoint_reached",
+              reason: breakpointReason,
+              nodeId: currentNodeId,
+              depth: currentDepth,
+            }),
+          );
           setTimeout(() => openaiWs.close(), 500);
           return;
         }
       }
     } catch (e) {
-      console.error("Error branching:", e);
+      console.error("[mock] Router error:", e);
     }
   };
 
@@ -433,78 +452,118 @@ export async function handleMockSession(
     try {
       const event = JSON.parse(data.toString());
       if (event.type !== "response.audio.delta" && event.type !== "response.output_audio.delta") {
-        console.log("[OpenAI -> Client]", event.type);
+        console.log("[OpenAI STT]", event.type);
       }
 
-      if (event.type === "response.audio_transcript.done") {
-        const transcript = event.transcript;
-        if (transcript) {
-          routingQueue = routingQueue.then(async () => {
-            appendTranscript(recordingId, "buyer", transcript);
-            recentConversation.push({ role: "buyer", text: transcript });
-            await runRouter("buyer");
-          }).catch(console.error);
-        }
-      } else if (event.type === "response.done") {
-        // Fallback: extract transcript from the completed response item
-        try {
-          const item = event.response.output[0];
-          if (item?.content?.[0]?.transcript) {
-            const transcript = item.content[0].transcript;
-            routingQueue = routingQueue.then(async () => {
-              const lastLog = recentConversation[recentConversation.length - 1];
-              if (!lastLog || lastLog.text !== transcript) {
-                appendTranscript(recordingId, "buyer", transcript);
-                recentConversation.push({ role: "buyer", text: transcript });
-                await runRouter("buyer");
-                clientWs.send(JSON.stringify({ type: "response.audio_transcript.done", transcript }));
-              }
-            }).catch(console.error);
-          }
-        } catch (e) {}
-      }
-
+      // Seller transcript complete → generate buyer reply via GPT + ElevenLabs TTS
       if (event.type === "conversation.item.input_audio_transcription.completed") {
-        routingQueue = routingQueue.then(async () => {
-          appendTranscript(recordingId, "seller", event.transcript);
-          if (event.transcript) {
-            recentConversation.push({ role: "seller", text: event.transcript });
+        const sellerText = (event.transcript as string | undefined)?.trim();
+        if (!sellerText) return;
+
+        routingQueue = routingQueue
+          .then(async () => {
+            appendTranscript(recordingId, "seller", sellerText);
+            recentConversation.push({ role: "seller", text: sellerText });
+
+            // Route seller's turn (may update currentNodeId + systemPrompt)
             await runRouter("seller");
-          }
-        }).catch(console.error);
+            if (isClosed) return;
+
+            // Generate buyer's text response
+            const buyerText = await generateBuyerResponse(systemPrompt, recentConversation);
+            if (!buyerText || isClosed) return;
+
+            // Send buyer transcript to client before the audio starts
+            clientWs.send(JSON.stringify({ type: "response.audio_transcript.done", transcript: buyerText }));
+
+            // Stream buyer audio via ElevenLabs TTS
+            try {
+              await streamElevenLabsTTS(buyerVoiceId, buyerText, (base64) => {
+                if (!isClosed && clientWs.readyState === WebSocket.OPEN) {
+                  clientWs.send(JSON.stringify({ type: "response.audio.delta", delta: base64 }));
+                }
+              });
+            } catch (e) {
+              console.error("[mock] ElevenLabs TTS error:", e);
+            }
+
+            // Record buyer transcript and route buyer's turn
+            appendTranscript(recordingId, "buyer", buyerText);
+            recentConversation.push({ role: "buyer", text: buyerText });
+            await runRouter("buyer");
+          })
+          .catch(console.error);
       }
 
-      clientWs.send(data.toString());
+      // Forward non-audio OpenAI events to client (transcription progress, errors, etc.)
+      if (
+        event.type !== "response.audio.delta" &&
+        event.type !== "response.output_audio.delta"
+      ) {
+        clientWs.send(data.toString());
+      }
     } catch (e) {
-      console.error("Error parsing OpenAI message:", e);
+      console.error("[mock] Error parsing OpenAI message:", e);
     }
   });
 
   openaiWs.on("close", () => {
-    console.log("OpenAI Realtime connection closed.");
+    console.log("[mock] OpenAI Realtime connection closed.");
+    isClosed = true;
     clientWs.close();
   });
 
   openaiWs.on("error", (err) => {
-    console.error("OpenAI WebSocket Error:", err);
+    console.error("[mock] OpenAI WebSocket error:", err);
   });
 
   clientWs.on("message", (data) => {
-    if (openaiWs.readyState === WebSocket.OPEN) {
-      try {
-        const event = JSON.parse(data.toString());
-        if (event.type !== "input_audio_buffer.append") {
-          console.log("[Client -> OpenAI]", event.type);
-        }
-      } catch (e) {
-        // binary or unparseable — pass through
+    if (openaiWs.readyState !== WebSocket.OPEN) return;
+    try {
+      const event = JSON.parse(data.toString());
+
+      // Intercept response.create (used by buyerFirst feature) — since OpenAI is
+      // now in transcription-only mode it won't generate a reply, so we handle it
+      // ourselves: generate buyer text via GPT and stream via ElevenLabs TTS.
+      if (event.type === "response.create") {
+        routingQueue = routingQueue
+          .then(async () => {
+            if (isClosed) return;
+            const buyerText = await generateBuyerResponse(systemPrompt, recentConversation);
+            if (!buyerText || isClosed) return;
+
+            clientWs.send(JSON.stringify({ type: "response.audio_transcript.done", transcript: buyerText }));
+
+            try {
+              await streamElevenLabsTTS(buyerVoiceId, buyerText, (base64) => {
+                if (!isClosed && clientWs.readyState === WebSocket.OPEN) {
+                  clientWs.send(JSON.stringify({ type: "response.audio.delta", delta: base64 }));
+                }
+              });
+            } catch (e) {
+              console.error("[mock] ElevenLabs TTS error (buyerFirst):", e);
+            }
+
+            appendTranscript(recordingId, "buyer", buyerText);
+            recentConversation.push({ role: "buyer", text: buyerText });
+            await runRouter("buyer");
+          })
+          .catch(console.error);
+        return; // do NOT forward to OpenAI
       }
-      openaiWs.send(data);
+
+      if (event.type !== "input_audio_buffer.append") {
+        console.log("[Client -> OpenAI]", event.type);
+      }
+    } catch {
+      // binary or unparseable — pass through
     }
+    openaiWs.send(data);
   });
 
   clientWs.on("close", () => {
-    console.log("Client connection closed.");
+    console.log("[mock] Client connection closed.");
+    isClosed = true;
     openaiWs.close();
   });
 }

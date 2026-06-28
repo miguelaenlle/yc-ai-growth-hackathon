@@ -71,12 +71,21 @@ export const getCompany = (companyId: Id) =>
 export const companyName = (companyId: Id): string =>
   getCompany(companyId)?.name ?? "Unknown";
 
-export const getBuyer = (buyerId: Id): { name: string; title: string; personaId?: Id } => {
+export const getBuyer = (buyerId: Id): { name: string; title: string; personaId?: Id; voiceId?: string | null } => {
   for (const c of store.companies) {
     const b = c.buyers.find((x) => x.id === buyerId);
-    if (b) return { name: b.name, title: b.title, personaId: b.personaId };
+    if (b) return { name: b.name, title: b.title, personaId: b.personaId, voiceId: b.voiceId };
   }
   return { name: "Unknown", title: "" };
+};
+
+/** Return the stored ElevenLabs voiceId for a buyer, or null if not yet assigned. */
+export const getBuyerVoiceId = (buyerId: Id): string | null => {
+  for (const c of store.companies) {
+    const b = c.buyers.find((x) => x.id === buyerId);
+    if (b?.voiceId) return b.voiceId;
+  }
+  return null;
 };
 
 const getSalespersonName = (salespersonId: Id): string =>

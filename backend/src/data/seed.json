@@ -15,67 +15,78 @@
           "id": "buy_rachel",
           "name": "Rachel Kim",
           "title": "VP of Engineering",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_002",
           "name": "Sam Lopez",
           "title": "Head of IT",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_012",
           "name": "Kevin Lopez",
           "title": "Director of Engineering",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_022",
           "name": "David Carter",
           "title": "COO",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_032",
           "name": "Leo Carter",
           "title": "VP of People",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_042",
           "name": "Raj Nair",
           "title": "Head of Customer Success",
-          "personaId": "buy_tina"
+          "personaId": "buy_tina",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_052",
           "name": "Tom Becker",
           "title": "CTO",
-          "personaId": "buy_tina"
+          "personaId": "buy_tina",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_063",
           "name": "Hannah Becker",
           "title": "Head of RevOps",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_068",
           "name": "Tom Park",
           "title": "VP of People",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "pNInz6obpgDQGcFmaJgB"
         },
         {
           "id": "buy_079",
           "name": "Hannah Park",
           "title": "CTO",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_090",
           "name": "Raj Idris",
           "title": "Head of RevOps",
-          "personaId": "buy_bob"
+          "personaId": "buy_bob",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         }
       ]
     },
@@ -90,67 +101,78 @@
           "id": "buy_003",
           "name": "Priya Lopez",
           "title": "Director of Engineering",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_013",
           "name": "Sofia Lopez",
           "title": "COO",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_023",
           "name": "Aisha Carter",
           "title": "VP of People",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_033",
           "name": "Maria Nair",
           "title": "Head of Customer Success",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_043",
           "name": "Emma Nair",
           "title": "CTO",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_053",
           "name": "Lena Becker",
           "title": "VP of Engineering",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_sarah",
           "name": "Sarah Chen",
           "title": "VP of Operations",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_064",
           "name": "Leo Becker",
           "title": "VP of Operations",
-          "personaId": "buy_steve"
+          "personaId": "buy_steve",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_069",
           "name": "Lena Park",
           "title": "Head of Customer Success",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_080",
           "name": "Leo Park",
           "title": "VP of Engineering",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "pNInz6obpgDQGcFmaJgB"
         },
         {
           "id": "buy_091",
           "name": "Emma Idris",
           "title": "VP of Operations",
-          "personaId": "buy_greg"
+          "personaId": "buy_greg",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         }
       ]
     },
@@ -165,61 +187,71 @@
           "id": "buy_004",
           "name": "Tom Lopez",
           "title": "COO",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_014",
           "name": "Omar Lopez",
           "title": "VP of People",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "FGY2WhTYpPnrIDTdsKH5"
         },
         {
           "id": "buy_024",
           "name": "Carlos Carter",
           "title": "Head of Customer Success",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_034",
           "name": "Sam Nair",
           "title": "CTO",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_044",
           "name": "Kevin Nair",
           "title": "VP of Engineering",
-          "personaId": "buy_tina"
+          "personaId": "buy_tina",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_054",
           "name": "David Becker",
           "title": "Head of RevOps",
-          "personaId": "buy_tina"
+          "personaId": "buy_tina",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_065",
           "name": "Maria Park",
           "title": "Head of IT",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_070",
           "name": "David Park",
           "title": "CTO",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "pNInz6obpgDQGcFmaJgB"
         },
         {
           "id": "buy_081",
           "name": "Maria Idris",
           "title": "Head of RevOps",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_092",
           "name": "Kevin Idris",
           "title": "Head of IT",
-          "personaId": "buy_nate"
+          "personaId": "buy_nate",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         }
       ]
     },
@@ -234,61 +266,71 @@
           "id": "buy_005",
           "name": "Lena Lopez",
           "title": "VP of People",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_015",
           "name": "Hannah Lopez",
           "title": "Head of Customer Success",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_025",
           "name": "Nina Carter",
           "title": "CTO",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_035",
           "name": "Priya Nair",
           "title": "VP of Engineering",
-          "personaId": "buy_greg"
+          "personaId": "buy_greg",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_045",
           "name": "Sofia Nair",
           "title": "Head of RevOps",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_055",
           "name": "Aisha Becker",
           "title": "VP of Operations",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_066",
           "name": "Sam Park",
           "title": "Director of Engineering",
-          "personaId": "buy_steve"
+          "personaId": "buy_steve",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_071",
           "name": "Aisha Park",
           "title": "VP of Engineering",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_082",
           "name": "Sam Idris",
           "title": "VP of Operations",
-          "personaId": "buy_bob"
+          "personaId": "buy_bob",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_093",
           "name": "Sofia Idris",
           "title": "Director of Engineering",
-          "personaId": "buy_bob"
+          "personaId": "buy_bob",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         }
       ]
     },
@@ -303,19 +345,22 @@
           "id": "buy_072",
           "name": "Carlos Park",
           "title": "Head of RevOps",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_083",
           "name": "Priya Idris",
           "title": "Head of IT",
-          "personaId": "buy_nate"
+          "personaId": "buy_nate",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_094",
           "name": "Omar Idris",
           "title": "COO",
-          "personaId": "buy_greg"
+          "personaId": "buy_greg",
+          "voiceId": "CwhRBWXzGAHq8TQ4Fs17"
         }
       ]
     },
@@ -330,61 +375,71 @@
           "id": "buy_006",
           "name": "David Lopez",
           "title": "Head of Customer Success",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_016",
           "name": "Leo Lopez",
           "title": "CTO",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_026",
           "name": "Raj Carter",
           "title": "VP of Engineering",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "XrExE9yKIg1WjnnlVkGX"
         },
         {
           "id": "buy_036",
           "name": "Tom Nair",
           "title": "Head of RevOps",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_046",
           "name": "Omar Nair",
           "title": "VP of Operations",
-          "personaId": "buy_tina"
+          "personaId": "buy_tina",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_057",
           "name": "Nina Becker",
           "title": "Director of Engineering",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_067",
           "name": "Priya Park",
           "title": "COO",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_073",
           "name": "Nina Park",
           "title": "VP of Operations",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_084",
           "name": "Tom Idris",
           "title": "Director of Engineering",
-          "personaId": "buy_bob"
+          "personaId": "buy_bob",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_095",
           "name": "Hannah Idris",
           "title": "VP of People",
-          "personaId": "buy_nate"
+          "personaId": "buy_nate",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         }
       ]
     },
@@ -399,55 +454,64 @@
           "id": "buy_007",
           "name": "Aisha Lopez",
           "title": "CTO",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_017",
           "name": "Maria Carter",
           "title": "VP of Engineering",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_027",
           "name": "Emma Carter",
           "title": "Head of RevOps",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_037",
           "name": "Lena Nair",
           "title": "VP of Operations",
-          "personaId": "buy_greg"
+          "personaId": "buy_greg",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_047",
           "name": "Hannah Nair",
           "title": "Head of IT",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_058",
           "name": "Raj Becker",
           "title": "COO",
-          "personaId": "buy_steve"
+          "personaId": "buy_steve",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_074",
           "name": "Raj Park",
           "title": "Head of IT",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_085",
           "name": "Lena Idris",
           "title": "COO",
-          "personaId": "buy_nate"
+          "personaId": "buy_nate",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_096",
           "name": "Leo Idris",
           "title": "Head of Customer Success",
-          "personaId": "buy_bob"
+          "personaId": "buy_bob",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         }
       ]
     },
@@ -462,55 +526,64 @@
           "id": "buy_008",
           "name": "Carlos Lopez",
           "title": "VP of Engineering",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_018",
           "name": "Sam Carter",
           "title": "Head of RevOps",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_028",
           "name": "Kevin Carter",
           "title": "VP of Operations",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_038",
           "name": "David Nair",
           "title": "Head of IT",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_048",
           "name": "Leo Nair",
           "title": "Director of Engineering",
-          "personaId": "buy_tina"
+          "personaId": "buy_tina",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_059",
           "name": "Emma Becker",
           "title": "VP of People",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_075",
           "name": "Emma Park",
           "title": "Director of Engineering",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_086",
           "name": "David Idris",
           "title": "VP of People",
-          "personaId": "buy_bob"
+          "personaId": "buy_bob",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_097",
           "name": "Maria Cohen",
           "title": "CTO",
-          "personaId": "buy_greg"
+          "personaId": "buy_greg",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         }
       ]
     },
@@ -525,55 +598,64 @@
           "id": "buy_009",
           "name": "Nina Lopez",
           "title": "Head of RevOps",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_019",
           "name": "Priya Carter",
           "title": "VP of Operations",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_029",
           "name": "Sofia Carter",
           "title": "Head of IT",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_039",
           "name": "Aisha Nair",
           "title": "Director of Engineering",
-          "personaId": "buy_greg"
+          "personaId": "buy_greg",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_049",
           "name": "Maria Becker",
           "title": "COO",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_060",
           "name": "Kevin Becker",
           "title": "Head of Customer Success",
-          "personaId": "buy_steve"
+          "personaId": "buy_steve",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_076",
           "name": "Kevin Park",
           "title": "COO",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_087",
           "name": "Aisha Idris",
           "title": "Head of Customer Success",
-          "personaId": "buy_nate"
+          "personaId": "buy_nate",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_098",
           "name": "Sam Cohen",
           "title": "VP of Engineering",
-          "personaId": "buy_nate"
+          "personaId": "buy_nate",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         }
       ]
     },
@@ -588,55 +670,64 @@
           "id": "buy_010",
           "name": "Raj Lopez",
           "title": "VP of Operations",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_020",
           "name": "Tom Carter",
           "title": "Head of IT",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_030",
           "name": "Omar Carter",
           "title": "Director of Engineering",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_040",
           "name": "Carlos Nair",
           "title": "COO",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_050",
           "name": "Sam Becker",
           "title": "VP of People",
-          "personaId": "buy_tina"
+          "personaId": "buy_tina",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_061",
           "name": "Sofia Becker",
           "title": "CTO",
-          "personaId": "buy_sam"
+          "personaId": "buy_sam",
+          "voiceId": "EXAVITQu4vr4xnSDxMaL"
         },
         {
           "id": "buy_077",
           "name": "Sofia Park",
           "title": "VP of People",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_088",
           "name": "Carlos Idris",
           "title": "CTO",
-          "personaId": "buy_bob"
+          "personaId": "buy_bob",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_099",
           "name": "Priya Cohen",
           "title": "Head of RevOps",
-          "personaId": "buy_bob"
+          "personaId": "buy_bob",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         }
       ]
     },
@@ -651,55 +742,64 @@
           "id": "buy_011",
           "name": "Emma Lopez",
           "title": "Head of IT",
-          "personaId": "buy_polly"
+          "personaId": "buy_polly",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_021",
           "name": "Lena Carter",
           "title": "Director of Engineering",
-          "personaId": "buy_nina"
+          "personaId": "buy_nina",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_031",
           "name": "Hannah Carter",
           "title": "COO",
-          "personaId": "buy_charlie"
+          "personaId": "buy_charlie",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_041",
           "name": "Nina Nair",
           "title": "VP of People",
-          "personaId": "buy_greg"
+          "personaId": "buy_greg",
+          "voiceId": "hpp4J3VqNfWAUOO0d1Us"
         },
         {
           "id": "buy_051",
           "name": "Priya Becker",
           "title": "Head of Customer Success",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_062",
           "name": "Omar Becker",
           "title": "VP of Engineering",
-          "personaId": "buy_steve"
+          "personaId": "buy_steve",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_078",
           "name": "Omar Park",
           "title": "Head of Customer Success",
-          "personaId": "buy_ed"
+          "personaId": "buy_ed",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_089",
           "name": "Nina Idris",
           "title": "VP of Engineering",
-          "personaId": "buy_nate"
+          "personaId": "buy_nate",
+          "voiceId": "cjVigY5qzO86Huf0OWal"
         },
         {
           "id": "buy_100",
           "name": "Tom Cohen",
           "title": "VP of Operations",
-          "personaId": "buy_greg"
+          "personaId": "buy_greg",
+          "voiceId": "CwhRBWXzGAHq8TQ4Fs17"
         }
       ]
     }
@@ -30466,87 +30566,7 @@
         ],
         "recommendedStart": {
           "nodeId": "n_incumbent",
-          "heading": "When engineering decisions were discussed",
-          "reason": "You won the call, but **a stronger move** was available. [1] Asking about frustrations has better odds — **about 9 in 10**. [1] Same slip on **3 other calls**. [2][3][4]",
-          "reasons": [
-            "You won the call, but **a stronger move** was available. [1]",
-            "Asking about frustrations has better odds — **about 9 in 10**. [1]",
-            "Same slip on **3 other calls**. [2][3][4]"
-          ],
-          "citations": [
-            {
-              "id": 1,
-              "callId": "call_showcase",
-              "company": "Sundial Commerce",
-              "buyer": {
-                "name": "Rachel Kim",
-                "title": "VP of Engineering"
-              },
-              "outcome": "won",
-              "nodeId": "n_coexist",
-              "nodeTitle": "Incumbent",
-              "takenTitle": "Coexist",
-              "betterTitle": "Find Pain",
-              "winTaken": 0.7907,
-              "winBest": 0.9375,
-              "evGap": 6606,
-              "quote": "Search and threads. Engineering decisions stop getting buried, and your incidents and deploys can pipe straight into channels."
-            },
-            {
-              "id": 2,
-              "callId": "call_a_13",
-              "company": "Northwind Logistics",
-              "buyer": {
-                "name": "Sofia Lopez",
-                "title": "COO"
-              },
-              "outcome": "won",
-              "nodeId": "n_coexist",
-              "nodeTitle": "Incumbent",
-              "takenTitle": "Coexist",
-              "betterTitle": "Find Pain",
-              "winTaken": 0.7907,
-              "winBest": 0.9375,
-              "evGap": 6606,
-              "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-            },
-            {
-              "id": 3,
-              "callId": "call_a_21",
-              "company": "Helio Robotics",
-              "buyer": {
-                "name": "Lena Carter",
-                "title": "Director of Engineering"
-              },
-              "outcome": "won",
-              "nodeId": "n_coexist",
-              "nodeTitle": "Incumbent",
-              "takenTitle": "Coexist",
-              "betterTitle": "Find Pain",
-              "winTaken": 0.7907,
-              "winBest": 0.9375,
-              "evGap": 3964,
-              "quote": "Runs alongside Microsoft Teams — no rip-and-replace."
-            },
-            {
-              "id": 4,
-              "callId": "call_a_05",
-              "company": "Lumen Health",
-              "buyer": {
-                "name": "Lena Lopez",
-                "title": "VP of People"
-              },
-              "outcome": "won",
-              "nodeId": "n_coexist",
-              "nodeTitle": "Incumbent",
-              "takenTitle": "Coexist",
-              "betterTitle": "Find Pain",
-              "winTaken": 0.7907,
-              "winBest": 0.9375,
-              "evGap": 3699,
-              "quote": "Runs alongside Google Chat — no rip-and-replace."
-            }
-          ]
+          "reason": "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $6,606 swing in expected value. Start here."
         }
       }
     },
@@ -30563,50 +30583,29 @@
       "transcript": [
         {
           "index": 0,
-          "speaker": "seller",
-          "text": "Ja.",
+          "speaker": "buyer",
+          "text": "[SELLER]: Well, we usually use Microsoft Teams for our team chats.\n\nOh, that's great! Microsoft Teams is super popular! I'm really curious though, what do you think is missing from that experience? I just love the idea of enhancing team communication!",
           "tStartMs": 0,
           "tEndMs": 3000
         },
         {
           "index": 1,
-          "speaker": "buyer",
-          "text": "We mostly just use Slack right now.",
+          "speaker": "seller",
+          "text": "They said, hey, how's the video? Like, you could choose. Oh, that's cool. I think that is like, that's a totally other kind of project. Like, if what you're trying to do is basically... What's painful about Microsoft Teams? If you can... Okay, and then, how much of the things are currently... Wow, wait, what did I say about Amazon? Like, how much of this can't we do? What can't we do? And once we take that, essentially... Well, our product just runs alongside Microsoft Teams. We don't have to do some part of it, but like...",
           "tStartMs": 3000,
           "tEndMs": 6000
         },
         {
           "index": 2,
-          "speaker": "seller",
-          "text": "Hello",
+          "speaker": "buyer",
+          "text": "Oh, running alongside Microsoft Teams sounds great! I love that flexibility. But I'm curious, where does your product win compared to Teams? I just want to make sure we're making the best choice for our team!",
           "tStartMs": 6000,
           "tEndMs": 9000
-        },
-        {
-          "index": 3,
-          "speaker": "buyer",
-          "text": "Hi! I’m really excited to hear what you’ve got. We’re on Slack today, but",
-          "tStartMs": 9000,
-          "tEndMs": 12000
-        },
-        {
-          "index": 4,
-          "speaker": "seller",
-          "text": "Yay!",
-          "tStartMs": 12000,
-          "tEndMs": 15000
-        },
-        {
-          "index": 5,
-          "speaker": "buyer",
-          "text": "Awesome, I’m in. Can you walk me through how this would work for my team and how quickly we can get started?",
-          "tStartMs": 15000,
-          "tEndMs": 18000
         }
       ],
       "traversal": {
         "initialNodeId": "n_disc",
-        "finalNodeId": "n_disc",
+        "finalNodeId": "n_incumbent",
         "steps": []
       },
       "aiNotes": null,
@@ -31458,45 +31457,7 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": {
-        "summary": "The pivotal moment was the Incumbent: you played the Coexist (79% win) where the Find Pain converts 94% — about a $2,379 swing.",
-        "strengths": [
-          "Coexist — a 79% move",
-          "Pilot Offer — a 97% move"
-        ],
-        "weaknesses": [
-          "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $2,379 swing in expected value.",
-          "Hesitation spiked at the Opening (61% win at this move).",
-          "Hesitation spiked at the Discovery (61% win at this move)."
-        ],
-        "practiceTargets": [
-          {
-            "nodeId": "n_open",
-            "reason": "Hesitation spiked at the Opening (61% win at this move).",
-            "drill": "Practice handling \"Set the agenda\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.392
-          },
-          {
-            "nodeId": "n_disc",
-            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
-            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.392
-          },
-          {
-            "nodeId": "n_incumbent",
-            "reason": "Hesitation spiked at the Incumbent (70% win at this move).",
-            "drill": "Practice handling \"We already use a legacy chat tool\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.304
-          }
-        ],
-        "recommendedStart": {
-          "nodeId": "n_incumbent",
-          "reason": "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $2,379 swing in expected value. Start here."
-        }
-      }
+      "aiFeedback": null
     },
     "rec_a_10": {
       "id": "rec_a_10",
@@ -32344,7 +32305,45 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": null
+      "aiFeedback": {
+        "summary": "The pivotal moment was the Incumbent: you played the Coexist (79% win) where the Find Pain converts 94% — about a $1,585 swing.",
+        "strengths": [
+          "Coexist — a 79% move",
+          "Pilot Offer — a 97% move"
+        ],
+        "weaknesses": [
+          "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $1,585 swing in expected value.",
+          "Hesitation spiked at the Discovery (61% win at this move).",
+          "Hesitation spiked at the Opening (61% win at this move)."
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_disc",
+            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
+            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          },
+          {
+            "nodeId": "n_open",
+            "reason": "Hesitation spiked at the Opening (61% win at this move).",
+            "drill": "Practice handling \"Set the agenda\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          },
+          {
+            "nodeId": "n_incumbent",
+            "reason": "Hesitation spiked at the Incumbent (70% win at this move).",
+            "drill": "Practice handling \"We already use Discord\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.304
+          }
+        ],
+        "recommendedStart": {
+          "nodeId": "n_incumbent",
+          "reason": "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $1,585 swing in expected value. Start here."
+        }
+      }
     },
     "rec_a_18": {
       "id": "rec_a_18",
@@ -34360,7 +34359,44 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": null
+      "aiFeedback": {
+        "summary": "The pivotal moment was the Coexist: you played the Pushback (8% win) where the Curious converts 97% — about a $9,627 swing.",
+        "strengths": [
+          "Coexist — a 79% move"
+        ],
+        "weaknesses": [
+          "You played the Pushback (8% win) at the Coexist — the Curious wins 97%, about a $9,627 swing in expected value.",
+          "Hesitation spiked at the Pushback (8% win at this move).",
+          "Hesitation spiked at the Discovery (61% win at this move)."
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_unconvinced",
+            "reason": "Hesitation spiked at the Pushback (8% win at this move).",
+            "drill": "Practice handling \"We just standardized on Discord\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.92
+          },
+          {
+            "nodeId": "n_disc",
+            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
+            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          },
+          {
+            "nodeId": "n_open",
+            "reason": "Hesitation spiked at the Opening (61% win at this move).",
+            "drill": "Practice handling \"Set the agenda\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          }
+        ],
+        "recommendedStart": {
+          "nodeId": "n_coexist",
+          "reason": "You played the Pushback (8% win) at the Coexist — the Curious wins 97%, about a $9,627 swing in expected value. Start here."
+        }
+      }
     },
     "rec_b_05": {
       "id": "rec_b_05",
@@ -34680,7 +34716,44 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": null
+      "aiFeedback": {
+        "summary": "The pivotal moment was the Coexist: you played the Pushback (8% win) where the Curious converts 97% — about a $24,068 swing.",
+        "strengths": [
+          "Coexist — a 79% move"
+        ],
+        "weaknesses": [
+          "You played the Pushback (8% win) at the Coexist — the Curious wins 97%, about a $24,068 swing in expected value.",
+          "Hesitation spiked at the Pushback (8% win at this move).",
+          "Hesitation spiked at the Discovery (61% win at this move)."
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_unconvinced",
+            "reason": "Hesitation spiked at the Pushback (8% win at this move).",
+            "drill": "Practice handling \"We just standardized on Microsoft Teams\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.92
+          },
+          {
+            "nodeId": "n_disc",
+            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
+            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          },
+          {
+            "nodeId": "n_open",
+            "reason": "Hesitation spiked at the Opening (61% win at this move).",
+            "drill": "Practice handling \"Set the agenda\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          }
+        ],
+        "recommendedStart": {
+          "nodeId": "n_coexist",
+          "reason": "You played the Pushback (8% win) at the Coexist — the Curious wins 97%, about a $24,068 swing in expected value. Start here."
+        }
+      }
     },
     "rec_c_01": {
       "id": "rec_c_01",
@@ -36336,32 +36409,7 @@
             "metric": "confidence",
             "score": 0.3
           }
-        ],
-        "recommendedStart": {
-          "nodeId": "n_incumbent",
-          "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $38,975 swing in expected value. Start here.",
-          "description": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $38,975 swing in expected value. You make the Knock Incumbent on 4 of your calls — a pattern worth drilling.",
-          "citations": [
-            {
-              "id": 1,
-              "callId": "call_hero",
-              "company": "Northwind Logistics",
-              "buyer": {
-                "name": "Sarah Chen",
-                "title": "VP of Operations"
-              },
-              "outcome": "lost",
-              "nodeId": "n_knock",
-              "nodeTitle": "Incumbent",
-              "takenTitle": "Knock Incumbent",
-              "betterTitle": "Find Pain",
-              "winTaken": 0.0714,
-              "winBest": 0.9375,
-              "evGap": 38975,
-              "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
-            }
-          ]
-        }
+        ]
       }
     },
     "rec_mock": {
@@ -36396,69 +36444,44 @@
       "transcript": [
         {
           "index": 0,
-          "speaker": "seller",
-          "text": "Thanks for the time — quick agenda",
+          "speaker": "buyer",
+          "text": "We already use Microsoft Teams for our team communication. It works well for us, so I'm not sure if we need to look into something new. What makes your product different?",
           "tStartMs": 0,
-          "tEndMs": 11000
+          "tEndMs": 3000
         },
         {
           "index": 1,
           "speaker": "seller",
-          "text": "Walk me through your current setup",
-          "tStartMs": 11000,
-          "tEndMs": 22000
+          "text": "ANSWER!",
+          "tStartMs": 3000,
+          "tEndMs": 6000
         },
         {
           "index": 2,
           "speaker": "buyer",
-          "text": "We're on Microsoft Teams — it came with our license.",
-          "tStartMs": 22000,
-          "tEndMs": 33000
+          "text": "I understand that you're excited to share, but honestly, we're pretty set with Microsoft Teams right now. It covers our needs, and we've invested time in training everyone on it. Can you tell me what's unique about your product compared to Teams?",
+          "tStartMs": 6000,
+          "tEndMs": 9000
         },
         {
           "index": 3,
           "speaker": "seller",
-          "text": "Honestly, Microsoft Teams is bloated and slow.",
-          "tStartMs": 33000,
-          "tEndMs": 44000
+          "text": "I'm cool.",
+          "tStartMs": 9000,
+          "tEndMs": 12000
         },
         {
           "index": 4,
           "speaker": "buyer",
-          "text": "Microsoft Teams works fine for us, thanks.",
-          "tStartMs": 44000,
-          "tEndMs": 55000
+          "text": "I appreciate that! But just to clarify, we really are comfortable with Teams. It’s been working fine for us. What specific benefits does your product offer that might make us consider switching?",
+          "tStartMs": 12000,
+          "tEndMs": 15000
         }
       ],
       "traversal": {
         "initialNodeId": "n_open",
-        "finalNodeId": "n_defensive",
-        "steps": [
-          {
-            "transcriptIndex": 1,
-            "fromNodeId": "n_open",
-            "toNodeId": "n_disc",
-            "tMs": 11000
-          },
-          {
-            "transcriptIndex": 2,
-            "fromNodeId": "n_disc",
-            "toNodeId": "n_incumbent",
-            "tMs": 22000
-          },
-          {
-            "transcriptIndex": 3,
-            "fromNodeId": "n_incumbent",
-            "toNodeId": "n_knock",
-            "tMs": 33000
-          },
-          {
-            "transcriptIndex": 4,
-            "fromNodeId": "n_knock",
-            "toNodeId": "n_defensive",
-            "tMs": 44000
-          }
-        ]
+        "finalNodeId": "n_open",
+        "steps": []
       },
       "aiNotes": null,
       "aiFeedback": {
@@ -36496,28 +36519,7 @@
         ],
         "recommendedStart": {
           "nodeId": "n_incumbent",
-          "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $93,539 swing in expected value. Start here.",
-          "description": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $93,539 swing in expected value. You make the Knock Incumbent on 4 of your calls — a pattern worth drilling.",
-          "citations": [
-            {
-              "id": 1,
-              "callId": "call_d_02",
-              "company": "Cobalt Finance",
-              "buyer": {
-                "name": "Nina Becker",
-                "title": "Director of Engineering"
-              },
-              "outcome": "lost",
-              "nodeId": "n_knock",
-              "nodeTitle": "Incumbent",
-              "takenTitle": "Knock Incumbent",
-              "betterTitle": "Find Pain",
-              "winTaken": 0.0714,
-              "winBest": 0.9375,
-              "evGap": 93539,
-              "quote": "Honestly, Microsoft Teams is bloated and slow."
-            }
-          ]
+          "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $93,539 swing in expected value. Start here."
         }
       }
     },
@@ -36839,44 +36841,7 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": {
-        "summary": "The pivotal moment was the Incumbent: you played the Knock Incumbent (7% win) where the Find Pain converts 94% — about a $31,180 swing.",
-        "strengths": [
-          "Reached the decision point and kept the buyer engaged"
-        ],
-        "weaknesses": [
-          "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $31,180 swing in expected value.",
-          "Hesitation spiked at the Knock Incumbent (7% win at this move).",
-          "Hesitation spiked at the Defensive (7% win at this move)."
-        ],
-        "practiceTargets": [
-          {
-            "nodeId": "n_knock",
-            "reason": "Hesitation spiked at the Knock Incumbent (7% win at this move).",
-            "drill": "Practice handling \"Knock Google Chat as clunky\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.929
-          },
-          {
-            "nodeId": "n_defensive",
-            "reason": "Hesitation spiked at the Defensive (7% win at this move).",
-            "drill": "Practice handling \"Just send me some info\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.929
-          },
-          {
-            "nodeId": "n_disc",
-            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
-            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.392
-          }
-        ],
-        "recommendedStart": {
-          "nodeId": "n_incumbent",
-          "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $31,180 swing in expected value. Start here."
-        }
-      }
+      "aiFeedback": null
     },
     "rec_d_07": {
       "id": "rec_d_07",
@@ -38978,65 +38943,7 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": {
-        "summary": "The pivotal moment was the Anchor Value: you played the Too Pricey (8% win) where the Proof Ask converts 94% — about a $9,261 swing.",
-        "strengths": [
-          "Reached the decision point and kept the buyer engaged"
-        ],
-        "weaknesses": [
-          "You played the Too Pricey (8% win) at the Anchor Value — the Proof Ask wins 94%, about a $9,261 swing in expected value.",
-          "Hesitation spiked at the Too Pricey (8% win at this move).",
-          "Hesitation spiked at the Price Ask (43% win at this move)."
-        ],
-        "practiceTargets": [
-          {
-            "nodeId": "n_pushprice",
-            "reason": "Hesitation spiked at the Too Pricey (8% win at this move).",
-            "drill": "Practice handling \"Still too expensive\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.92
-          },
-          {
-            "nodeId": "n_price",
-            "reason": "Hesitation spiked at the Price Ask (43% win at this move).",
-            "drill": "Practice handling \"What's this run for 60?\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.571
-          },
-          {
-            "nodeId": "n_disc",
-            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
-            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
-            "metric": "hesitation",
-            "score": 0.392
-          }
-        ],
-        "recommendedStart": {
-          "nodeId": "n_value",
-          "reason": "You played the Too Pricey (8% win) at the Anchor Value — the Proof Ask wins 94%, about a $9,261 swing in expected value. Start here.",
-          "description": "You played the Too Pricey (8% win) at the Anchor Value — the Proof Ask wins 94%, about a $9,261 swing in expected value.",
-          "citations": [
-            {
-              "id": 1,
-              "callId": "call_f_04",
-              "company": "Driftwave",
-              "buyer": {
-                "name": "Lena Idris",
-                "title": "COO"
-              },
-              "outcome": "lost",
-              "nodeId": "n_pushprice",
-              "nodeTitle": "Anchor Value",
-              "takenTitle": "Too Pricey",
-              "betterTitle": "Proof Ask",
-              "winTaken": 0.08,
-              "winBest": 0.9375,
-              "evGap": 9261,
-              "quote": "Still too expensive."
-            }
-          ]
-        }
-      }
+      "aiFeedback": null
     },
     "rec_f_05": {
       "id": "rec_f_05",
@@ -40238,5 +40145,140 @@
       "aiNotes": null,
       "aiFeedback": null
     }
-  }
+  },
+  "_nodeStats": [
+    {
+      "title": "Opening",
+      "wins": 61,
+      "losses": 27,
+      "winRate": 0.6888888888888889,
+      "sampleSize": 88
+    },
+    {
+      "title": "Discovery",
+      "wins": 61,
+      "losses": 27,
+      "winRate": 0.6888888888888889,
+      "sampleSize": 88
+    },
+    {
+      "title": "Incumbent",
+      "wins": 47,
+      "losses": 20,
+      "winRate": 0.6956521739130435,
+      "sampleSize": 67
+    },
+    {
+      "title": "Coexist",
+      "wins": 33,
+      "losses": 8,
+      "winRate": 0.7906976744186046,
+      "sampleSize": 41
+    },
+    {
+      "title": "Curious",
+      "wins": 33,
+      "losses": 0,
+      "winRate": 0.9714285714285714,
+      "sampleSize": 33
+    },
+    {
+      "title": "Pilot Offer",
+      "wins": 33,
+      "losses": 0,
+      "winRate": 0.9714285714285714,
+      "sampleSize": 33
+    },
+    {
+      "title": "Pilot Won",
+      "wins": 33,
+      "losses": 0,
+      "winRate": 0.9714285714285714,
+      "sampleSize": 33
+    },
+    {
+      "title": "Price Ask",
+      "wins": 14,
+      "losses": 7,
+      "winRate": 0.6521739130434783,
+      "sampleSize": 21
+    },
+    {
+      "title": "Anchor Value",
+      "wins": 14,
+      "losses": 7,
+      "winRate": 0.6521739130434783,
+      "sampleSize": 21
+    },
+    {
+      "title": "Find Pain",
+      "wins": 14,
+      "losses": 0,
+      "winRate": 0.9375,
+      "sampleSize": 14
+    },
+    {
+      "title": "Pain Found",
+      "wins": 14,
+      "losses": 0,
+      "winRate": 0.9375,
+      "sampleSize": 14
+    },
+    {
+      "title": "Show Fit",
+      "wins": 14,
+      "losses": 0,
+      "winRate": 0.9375,
+      "sampleSize": 14
+    },
+    {
+      "title": "Demo Booked",
+      "wins": 14,
+      "losses": 0,
+      "winRate": 0.9375,
+      "sampleSize": 14
+    },
+    {
+      "title": "Proof Ask",
+      "wins": 14,
+      "losses": 0,
+      "winRate": 0.9375,
+      "sampleSize": 14
+    },
+    {
+      "title": "Case Closes",
+      "wins": 14,
+      "losses": 0,
+      "winRate": 0.9375,
+      "sampleSize": 14
+    },
+    {
+      "title": "Knock Incumbent",
+      "wins": 0,
+      "losses": 12,
+      "winRate": 0.07142857142857142,
+      "sampleSize": 12
+    },
+    {
+      "title": "Defensive",
+      "wins": 0,
+      "losses": 12,
+      "winRate": 0.07142857142857142,
+      "sampleSize": 12
+    },
+    {
+      "title": "Pushback",
+      "wins": 0,
+      "losses": 8,
+      "winRate": 0.1,
+      "sampleSize": 8
+    },
+    {
+      "title": "Too Pricey",
+      "wins": 0,
+      "losses": 7,
+      "winRate": 0.1111111111111111,
+      "sampleSize": 7
+    }
+  ]
 }

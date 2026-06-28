@@ -75,6 +75,7 @@ import type {
   TreeNode,
 } from "./types.js";
 import { handleBothSession, handleMockSession } from "./mock.js";
+import { backfillBuyerVoices, ensureNarratorVoice } from "./voice-selector.js";
 import { getOrBuildWalkthrough } from "./walkthrough.js";
 
 const { app } = expressWs(express());
@@ -908,6 +909,17 @@ if (!store._nodeStats || store._nodeStats.length === 0) {
 } else {
   console.log(`[startup] Stat cache loaded — ${store._nodeStats.length} node titles`);
 }
+
+// Backfill ElevenLabs voiceIds for buyers + pick narrator voice for summaries.
+// Runs async so it doesn't delay server listen; persists to seed.json when done.
+(async () => {
+  try {
+    await ensureNarratorVoice();
+    await backfillBuyerVoices();
+  } catch (e) {
+    console.error("[startup] Voice setup failed:", e);
+  }
+})();
 
 app.listen(PORT, () => {
   console.log(`CallTree backend listening on http://localhost:${PORT}`);

@@ -8,6 +8,8 @@ import {
   getPathFromTraversal,
 } from "./tree-ops.js";
 import { getTree } from "./store.js";
+import { synthesizeElevenLabsSpeech } from "./elevenlabs-tts.js";
+import { ensureNarratorVoice } from "./voice-selector.js";
 import type {
   Id,
   Recording,
@@ -35,16 +37,13 @@ interface CachedWalkthrough extends WalkthroughBundle {
   script?: ScriptSegment[];
 }
 
-/** Estimate mp3 duration from buffer size. OpenAI tts-1 mp3 is 160 kbps CBR
- *  (verified via afinfo); using 128k over-estimated duration by ~25%, which
- *  spaced the timeline cues too wide — node highlights lagged the narration and
- *  the final cue landed past the end of the audio. */
+/** Estimate mp3 duration from buffer size. ElevenLabs mp3_44100_128 is 128 kbps CBR. */
 function getMp3DurationMs(buffer: Buffer): number {
-  const bitrate = 160_000;
+  const bitrate = 128_000;
   return Math.round(((buffer.length * 8) / bitrate) * 1000);
 }
 
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 
 function cacheKey(recordingId: Id, kind: WalkthroughKind): string {
   return `walkthrough_${CACHE_VERSION}_${recordingId}_${kind}`;
@@ -200,29 +199,8 @@ async function generateScript(
   return parsed.script ?? [];
 }
 
-async function synthesizeSegment(text: string): Promise<Buffer> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
-
-  const response = await fetch("https://api.openai.com/v1/audio/speech", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "tts-1",
-      input: text,
-      voice: "alloy",
-      response_format: "mp3",
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`TTS failed: ${await response.text()}`);
-  }
-
-  return Buffer.from(await response.arrayBuffer());
+async function synthesizeSegment(text: string, voiceId: string): Promise<Buffer> {
+  return synthesizeElevenLabsSpeech(voiceId, text);
 }
 
 /**
@@ -235,13 +213,14 @@ async function synthesizeSegment(text: string): Promise<Buffer> {
 async function renderWalkthroughAudio(
   recordingId: Id,
   kind: WalkthroughKind,
-  script: ScriptSegment[]
+  script: ScriptSegment[],
+  voiceId: string,
 ): Promise<{ audio: Buffer; timeline: TimelineCue[]; segments: WalkthroughSegment[] }> {
   const key = cacheKey(recordingId, kind);
   await fs.mkdir(AUDIO_DIR, { recursive: true });
 
   const clips = await Promise.all(
-    script.map((s) => synthesizeSegment(s.narration.trim())),
+    script.map((s) => synthesizeSegment(s.narration.trim(), voiceId)),
   );
 
   const segments: WalkthroughSegment[] = [];
@@ -283,7 +262,13 @@ async function generateWalkthrough(
     throw new Error("LLM returned empty walkthrough script");
   }
 
-  const { audio, timeline, segments } = await renderWalkthroughAudio(recording.id, kind, script);
+  const narratorVoiceId = await ensureNarratorVoice();
+  const { audio, timeline, segments } = await renderWalkthroughAudio(
+    recording.id,
+    kind,
+    script,
+    narratorVoiceId,
+  );
 
   const fileName = audioFileName(recording.id, kind);
   await fs.writeFile(join(AUDIO_DIR, fileName), audio);

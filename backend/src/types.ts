@@ -22,6 +22,8 @@ export interface Buyer {
   /** Buyer archetype the AI plays in practice. Synthetic now; LLM-derived from the
    *  transcript later. References a persona id from GET /personas. */
   personaId?: Id;
+  /** ElevenLabs voice_id assigned to this buyer for TTS. Null until backfilled. */
+  voiceId?: string | null;
 }
 export interface Salesperson {
   id: Id;
