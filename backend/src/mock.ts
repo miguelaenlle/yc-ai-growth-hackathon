@@ -198,75 +198,86 @@ Each object must have:
 }
 
 /**
- * Mock routing: decide which EXISTING child of `currentNodeId` the latest
- * utterance lands on. Unlike the real-call flow, this NEVER creates a node — in
- * practice mode we constrain the conversation to the authored tree.
+ * Mock routing (semantic, LLM-driven). Decides which authored node the latest
+ * turn lands on — practice NEVER creates a node, so the action is match-or-stay.
  *
- * Primary path: ask gpt-4o-mini to classify the utterance into one of the child
- * options (or "none" → stay). Fallback (no key / error): highest Jaccard token
- * overlap among the children. Returns the chosen child id, or null to stay put
- * (no confident match, or `currentNodeId` is a leaf so the conversation ends).
+ * Candidate frontier = the current node's children spoken by the SAME party who
+ * just talked (`child.speaker === speaker`). This generalises the old
+ * "opposite-of-current-speaker" gate and correctly handles same-speaker links in
+ * the authored tree (e.g. seller "Opening" → seller "Discovery", or buyer
+ * "Proof Request" → buyer "Case Study Success"). If no such child exists it is
+ * the other party's turn (or a leaf), so we stay.
+ *
+ * Given a candidate set, gpt-4o-mini reads the full role-tagged recent
+ * conversation and returns {action:"match"|"stay", nodeId}. On any error / no
+ * key we stay put rather than guess. Returns the chosen node id, or null to stay.
  */
-async function chooseExistingChild(
+async function routeTurn(
   tree: Tree,
   currentNodeId: Id,
-  utterance: string,
+  recentConversation: { role: string; text: string }[],
+  speaker: "seller" | "buyer",
 ): Promise<Id | null> {
-  const children = getNodeChildren(tree, currentNodeId);
-  if (children.length === 0) return null; // leaf — the call plays out / ends
-  if (children.length === 1) return children[0].id; // only one way forward
+  if (!getNodeById(tree, currentNodeId)) return null;
+
+  // Only children spoken by whoever just talked are reachable this turn.
+  const candidates = getNodeChildren(tree, currentNodeId).filter(
+    (c) => c.speaker === speaker,
+  );
+  if (candidates.length === 0) return null; // not this party's turn / leaf
 
   const apiKey = process.env.OPENAI_API_KEY;
-  const text = utterance.trim();
+  if (!apiKey) return null;
 
-  if (apiKey && text) {
-    const options = children
-      .map((c, i) => `${i + 1}. [${c.title}] ${c.description}`)
-      .join("\n");
-    const prompt =
-      `A sales conversation is at a decision point. The speaker just said:\n` +
-      `"${text}"\n\n` +
-      `Which ONE of these possible next moves best matches what they said?\n` +
-      `${options}\n\n` +
-      `Reply with JSON {"choice": <number>} — the option number ` +
-      `(1-${children.length}), or 0 if none of them fit.`;
-    try {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{ role: "system", content: prompt }],
-          response_format: { type: "json_object" },
-          temperature: 0,
-        }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as {
-          choices: { message: { content: string } }[];
-        };
-        const choice = Number(
-          JSON.parse(data.choices[0].message.content)?.choice,
-        );
-        if (Number.isInteger(choice) && choice >= 1 && choice <= children.length) {
-          return children[choice - 1].id;
-        }
-        if (choice === 0) return null; // model says nothing fits → stay
-      } else {
-        console.error("[mock route] LLM failed:", await res.text());
-      }
-    } catch (e) {
-      console.error("[mock route] LLM error:", e);
+  const conversationText = recentConversation
+    .map((m) => `${m.role.toUpperCase()}: ${m.text}`)
+    .join("\n");
+  if (!conversationText.trim()) return null;
+
+  const systemPrompt =
+    `You are a semantic conversational router for a sales call between a SELLER and a BUYER.\n` +
+    `We are at a node in a decision tree and the ${speaker.toUpperCase()} just spoke.\n` +
+    `Candidate next branches (each is a possible ${speaker.toUpperCase()} move):\n` +
+    candidates.map((c) => `- ID: ${c.id} | ${c.title}: ${c.description}`).join("\n") +
+    `\n\nBased on the ${speaker.toUpperCase()}'s intent in the recent transcript, choose:\n` +
+    `- "match": their intent clearly aligns with one candidate branch — return its ID.\n` +
+    `- "stay": filler/acknowledgement ("uh huh", "okay", "go on"), or they are still\n` +
+    `  developing the current point without committing to any of the branches.\n\n` +
+    `Return JSON ONLY: {"action":"match"|"stay","nodeId":"<candidate ID, or null>"}`;
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: conversationText },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      }),
+    });
+    if (!res.ok) {
+      console.error("[mock route] LLM failed:", await res.text());
+      return null;
     }
+    const data = (await res.json()) as {
+      choices: { message: { content: string } }[];
+    };
+    const out = JSON.parse(data.choices[0].message.content ?? "{}");
+    if (out.action === "match" && candidates.some((c) => c.id === out.nodeId)) {
+      return out.nodeId as Id;
+    }
+    return null; // stay
+  } catch (e) {
+    console.error("[mock route] LLM error:", e);
+    return null;
   }
-
-  // Fallback: closest child by token overlap. No threshold — we never create
-  // here, so advancing to the nearest authored branch is the safe default.
-  const match = bestMatch(tree, currentNodeId, text);
-  return match ? match.nodeId : null;
 }
 
 export async function handleMockSession(
@@ -343,33 +354,21 @@ export async function handleMockSession(
     const rec = getRecording(recordingId);
     const tree = rec ? getTree(rec.treeId) : undefined;
     if (!tree) return;
-
-    const current = tree.nodes.find(n => n.id === currentNodeId);
-    if (!current) return;
-
-    // Only route if this is the expected responding speaker
-    const expectedSpeaker = current.speaker === "buyer" ? "seller" : "buyer";
-    if (speaker !== expectedSpeaker) return;
+    if (!getNodeById(tree, currentNodeId)) return;
 
     try {
-      const utterance =
-        recentConversation
-          .filter((m) => m.role === speaker)
-          .map((m) => m.text)
-          .join(" ") ||
-        recentConversation.map((m) => m.text).join(" ");
-      // Practice mode is constrained to the authored tree: route to an existing
-      // child only, never create a new node.
-      const nextNodeId = await chooseExistingChild(tree, currentNodeId, utterance);
+      // Practice stays on the authored tree: the semantic router picks which
+      // child (spoken by whoever just talked) the turn lands on, or null to stay.
+      const nextNodeId = await routeTurn(tree, currentNodeId, recentConversation, speaker);
 
       let switchedNode = false;
       if (nextNodeId && nextNodeId !== currentNodeId) {
-        console.log(`Routed (${speaker}) to existing node:`, nextNodeId);
+        console.log(`Routed (${speaker}) to node:`, nextNodeId);
         currentNodeId = nextNodeId;
         switchedNode = true;
         clientWs.send(JSON.stringify({ type: "mock_node_matched", nodeId: currentNodeId }));
       } else {
-        console.log(`Router stayed at current node (${speaker}):`, currentNodeId);
+        console.log(`Router stayed (${speaker}) at:`, currentNodeId);
       }
 
       if (switchedNode) {
