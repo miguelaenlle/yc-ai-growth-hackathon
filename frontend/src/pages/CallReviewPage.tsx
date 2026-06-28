@@ -19,6 +19,7 @@ import { buildTreeView, type TreeView } from "../lib/treeView";
 import { applyFocus } from "../components/tree/focus";
 import { CallNode } from "../components/tree/CallNode";
 import { NodePreview } from "../components/tree/NodePreview";
+import { CitedText } from "../components/CitationRef";
 import { TreeMiniMap } from "../components/tree/TreeMiniMap";
 import { CallEvaluation } from "../components/CallEvaluation";
 import { CallTabs } from "../components/CallTabs";
@@ -148,7 +149,12 @@ interface FlowProps {
   /** Watch the AI ace the path from a (UI) tree node id. */
   onWatchNode: (uiNodeId: string) => void;
   /** System 2 — the top "start practicing here" pick, or undefined while loading. */
-  recommendation?: { nodeId: string; nodeTitle: string; reason: string };
+  recommendation?: {
+    nodeId: string;
+    nodeTitle: string;
+    reason: string;
+    citations?: import("../lib/types").Citation[];
+  };
 }
 
 function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, onSimulateNode, onWatchNode, recommendation }: FlowProps) {
@@ -170,9 +176,10 @@ function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, 
           ...n.data,
           onSimulate: () => onSimulateNode(n.id),
           onWatch: () => onWatchNode(n.id),
+          aiRecommended: recommendation?.nodeId === n.id,
         },
       })),
-    [view, onSimulateNode, onWatchNode],
+    [view, onSimulateNode, onWatchNode, recommendation],
   );
 
   const [selectedId, setSelectedId] = useState(startNodeId);
@@ -194,6 +201,16 @@ function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, 
     baseNodes,
     baseEdges: view.edges,
   });
+
+  // Re-apply focus when baseNodes change (e.g. the AI-recommended badge arrives
+  // once feedback loads) — the animation hook only re-applies on selectedId change.
+  useEffect(() => {
+    if (isSummarizePlaying) return;
+    const f = applyFocus(view.root, baseNodes, view.edges, selectedId);
+    setNodes(f.nodes);
+    setEdges(f.edges);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseNodes]);
 
   const handleSummarizeNodeFocus = useCallback((uiNodeId: string) => {
     setSelectedId((prev) => (prev === uiNodeId ? prev : uiNodeId));
@@ -278,14 +295,17 @@ function Flow({ view, walkthrough, summarizeStatus, onSummarize, onPlaybackEnd, 
         {recommendation && !isSummarizePlaying && (
           <Panel position="top-left" className="max-w-sm">
             <div className="rounded-xl border border-accent/40 bg-surface/95 p-4 shadow-[0_8px_40px_rgba(0,0,0,0.5)] backdrop-blur-sm">
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent/80">
+              <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent/80">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 3L13.6 8.4L19 10L13.6 11.6L12 17L10.4 11.6L5 10L10.4 8.4L12 3Z" />
+                </svg>
                 Practice from here
               </p>
               <p className="text-sm font-semibold text-text">
                 {recommendation.nodeTitle}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-text-muted">
-                {recommendation.reason}
+                <CitedText text={recommendation.reason} citations={recommendation.citations} />
               </p>
               <button
                 onClick={() => onSimulateNode(recommendation.nodeId)}
@@ -462,7 +482,12 @@ export function CallReviewPage() {
     : undefined;
   const recommendation =
     recStart && recNode
-      ? { nodeId: recStart.nodeId, nodeTitle: recNode.title, reason: recStart.reason }
+      ? {
+          nodeId: recStart.nodeId,
+          nodeTitle: recNode.title,
+          reason: recStart.description ?? recStart.reason,
+          citations: recStart.citations,
+        }
       : undefined;
 
   return (

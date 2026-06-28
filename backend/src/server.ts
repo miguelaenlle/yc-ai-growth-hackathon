@@ -51,6 +51,7 @@ import {
   buildRecommendedPractice,
   listSalespeople,
 } from "./practice-reco.js";
+import { generateInsights, loadInsights } from "./insights.js";
 import { computeMetrics } from "./signal-engine.js";
 import { createAudioAnalyzer } from "./audio/index.js";
 import type { AudioScoreByIndex } from "./audio/types.js";
@@ -173,10 +174,30 @@ app.get("/salespeople", (_req: Request, res: Response) => {
 });
 
 // 4d. GET /salespeople/:id/recommended-practice → RecommendedPractice (System 1)
+// Prefer the LLM-generated, citation-backed insight (regenerated from /admin);
+// fall back to the live deterministic recommendation when none has been generated.
 app.get("/salespeople/:id/recommended-practice", (req: Request, res: Response) => {
+  const insights = loadInsights();
+  if (insights && insights.salespersonId === req.params.id) {
+    return res.json(insights.perfectPractice);
+  }
   const reco = buildRecommendedPractice(req.params.id);
   if (!reco) return notFound(res, `salesperson ${req.params.id} not found`);
+  const call = store.calls.find((c) => c.id === reco.callId);
+  if (call) reco.call = toCallSummary(call); // give the UI a card even in fallback
   res.json(reco);
+});
+
+// 4e. POST /admin/refresh → regenerate the cached insights (LLM-backed). Manual,
+// on demand — no cron. GET /admin/status reports when it last ran.
+app.post("/admin/refresh", async (_req: Request, res: Response) => {
+  const bundle = await generateInsights();
+  res.json({ generatedAt: bundle.generatedAt, usedLLM: bundle.usedLLM });
+});
+
+app.get("/admin/status", (_req: Request, res: Response) => {
+  const insights = loadInsights();
+  res.json({ generatedAt: insights?.generatedAt ?? null, usedLLM: insights?.usedLLM ?? false });
 });
 
 // ---------------------------------------------------------------------------
@@ -379,22 +400,24 @@ app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
   const tree = getTree(rec.treeId);
   if (!tree) return notFound(res, `tree ${rec.treeId} not found`);
 
-  // Idempotent: keep curated/cached feedback, but attach recommendedStart when an
-  // older feedback predates the field so System 2 still surfaces on seed calls.
+  // The LLM-generated, citation-backed "practice from here" pick for this call (if
+  // insights have been generated). Takes precedence so the review banner is data-driven.
+  const insightStart = loadInsights()?.perCall[rec.callId];
+
+  // Idempotent: keep curated/cached feedback, but (re)attach the recommendedStart.
   if (rec.aiFeedback) {
-    if (!rec.aiFeedback.recommendedStart) {
-      const { recommendedStart } = buildAiFeedback(tree, rec.traversal);
-      if (recommendedStart) {
-        rec.aiFeedback.recommendedStart = recommendedStart;
-        putRecording(rec);
-        persist();
-      }
+    if (insightStart) rec.aiFeedback.recommendedStart = insightStart;
+    else if (!rec.aiFeedback.recommendedStart) {
+      rec.aiFeedback.recommendedStart = buildAiFeedback(tree, rec.traversal).recommendedStart;
     }
+    putRecording(rec);
+    persist();
     return res.json(rec.aiFeedback);
   }
 
   // Fresh feedback, grounded in this call's tree + the path it actually walked.
   const feedback: AiFeedback = buildAiFeedback(tree, rec.traversal, { limit: 3 });
+  if (insightStart) feedback.recommendedStart = insightStart;
 
   rec.aiFeedback = feedback;
   putRecording(rec);

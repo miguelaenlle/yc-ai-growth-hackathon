@@ -1,5 +1,6 @@
 import axios from "axios";
 import type {
+  AdminStatus,
   AiFeedback,
   CallDetail,
   CallSummary,
@@ -75,5 +76,17 @@ export async function fetchWalkthrough(
     `/recordings/${recordingId}/walkthrough`,
     { params: { kind } }
   );
+  return data;
+}
+
+/** GET /admin/status → when insights were last regenerated. */
+export async function fetchAdminStatus(): Promise<AdminStatus> {
+  const { data } = await api.get<AdminStatus>("/admin/status");
+  return data;
+}
+
+/** POST /admin/refresh → regenerate the LLM-backed insights; returns the new timestamp. */
+export async function refreshInsights(): Promise<AdminStatus> {
+  const { data } = await api.post<AdminStatus>("/admin/refresh");
   return data;
 }

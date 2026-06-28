@@ -185,6 +185,15 @@ function CallNodeImpl({ data }: NodeProps) {
           </div>
         )}
 
+        {d.aiRecommended === true && (
+          <div className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bg shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 3L13.6 8.4L19 10L13.6 11.6L12 17L10.4 11.6L5 10L10.4 8.4L12 3Z" />
+            </svg>
+            AI recommended
+          </div>
+        )}
+
         {d.focused === true &&
           (typeof d.onSimulate === "function" || typeof d.onWatch === "function") && (
             <div className="absolute left-1/2 top-full mt-3 flex -translate-x-1/2 flex-col items-center gap-2">

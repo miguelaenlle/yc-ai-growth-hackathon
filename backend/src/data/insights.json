@@ -1,0 +1,349 @@
+{
+  "generatedAt": "2026-06-28T16:22:54.430Z",
+  "salespersonId": "sp_jane",
+  "perfectPractice": {
+    "salespersonId": "sp_jane",
+    "salespersonName": "Jane Doe",
+    "callId": "call_d_02",
+    "treeId": "tree_call_d_02",
+    "startNodeId": "n_incumbent",
+    "startNodeTitle": "Incumbent",
+    "personaId": "buy_sam",
+    "personaName": "Status-Quo Sam",
+    "headline": "Stop 'Knock Incumbent' at Cobalt Finance",
+    "reasons": [
+      "Using 'Knock Incumbent' results in only a 7% win rate vs. 94% for 'Find Pain' [1][2][3].",
+      "There's a $93,539 EV swing when failing to leverage buyer pain points.",
+      "You've made this mistake on 4 calls; adapt to win with Status-Quo Sam."
+    ],
+    "citations": [
+      {
+        "id": 1,
+        "callId": "call_d_02",
+        "company": "Cobalt Finance",
+        "buyer": {
+          "name": "Nina Becker",
+          "title": "Director of Engineering"
+        },
+        "outcome": "lost",
+        "nodeId": "n_knock",
+        "nodeTitle": "Incumbent",
+        "takenTitle": "Knock Incumbent",
+        "betterTitle": "Find Pain",
+        "winTaken": 0.0714,
+        "winBest": 0.9375,
+        "evGap": 93539,
+        "quote": "Honestly, Microsoft Teams is bloated and slow."
+      },
+      {
+        "id": 2,
+        "callId": "call_hero",
+        "company": "Northwind Logistics",
+        "buyer": {
+          "name": "Sarah Chen",
+          "title": "VP of Operations"
+        },
+        "outcome": "lost",
+        "nodeId": "n_knock",
+        "nodeTitle": "Incumbent",
+        "takenTitle": "Knock Incumbent",
+        "betterTitle": "Find Pain",
+        "winTaken": 0.0714,
+        "winBest": 0.9375,
+        "evGap": 38975,
+        "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
+      },
+      {
+        "id": 3,
+        "callId": "call_d_06",
+        "company": "Quill",
+        "buyer": {
+          "name": "Sofia Becker",
+          "title": "CTO"
+        },
+        "outcome": "lost",
+        "nodeId": "n_knock",
+        "nodeTitle": "Incumbent",
+        "takenTitle": "Knock Incumbent",
+        "betterTitle": "Find Pain",
+        "winTaken": 0.0714,
+        "winBest": 0.9375,
+        "evGap": 31180,
+        "quote": "Honestly, Google Chat is bloated and slow."
+      }
+    ],
+    "call": {
+      "id": "call_d_02",
+      "company": "Cobalt Finance",
+      "industry": "Fintech",
+      "seats": 600,
+      "incumbent": "Microsoft Teams",
+      "startedAt": "2026-06-26T08:00:00.000Z",
+      "outcome": "lost",
+      "bestEV": 104911,
+      "finalEV": 7250,
+      "buyer": {
+        "name": "Nina Becker",
+        "title": "Director of Engineering",
+        "personaId": "buy_sam"
+      },
+      "salesperson": {
+        "id": "sp_jane",
+        "name": "Jane Doe"
+      }
+    }
+  },
+  "perCall": {
+    "call_d_02": {
+      "nodeId": "n_incumbent",
+      "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $93,539 swing in expected value. Start here.",
+      "description": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $93,539 swing in expected value. You make the Knock Incumbent on 4 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_d_02",
+          "company": "Cobalt Finance",
+          "buyer": {
+            "name": "Nina Becker",
+            "title": "Director of Engineering"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "evGap": 93539,
+          "quote": "Honestly, Microsoft Teams is bloated and slow."
+        }
+      ]
+    },
+    "call_hero": {
+      "nodeId": "n_incumbent",
+      "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $38,975 swing in expected value. Start here.",
+      "description": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $38,975 swing in expected value. You make the Knock Incumbent on 4 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_hero",
+          "company": "Northwind Logistics",
+          "buyer": {
+            "name": "Sarah Chen",
+            "title": "VP of Operations"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "evGap": 38975,
+          "quote": "I get that, but imagine how much more efficient your team could be with a tool that doesn’t feel like a chore to use."
+        }
+      ]
+    },
+    "call_d_06": {
+      "nodeId": "n_incumbent",
+      "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $31,180 swing in expected value. Start here.",
+      "description": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $31,180 swing in expected value. You make the Knock Incumbent on 4 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_d_06",
+          "company": "Quill",
+          "buyer": {
+            "name": "Sofia Becker",
+            "title": "CTO"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "evGap": 31180,
+          "quote": "Honestly, Google Chat is bloated and slow."
+        }
+      ]
+    },
+    "call_b_08": {
+      "nodeId": "n_coexist",
+      "reason": "You played the Pushback (8% win) at the Coexist — the Curious wins 97%, about a $24,068 swing in expected value. Start here.",
+      "description": "You played the Pushback (8% win) at the Coexist — the Curious wins 97%, about a $24,068 swing in expected value. You make the Pushback on 2 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_b_08",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Nina Nair",
+            "title": "VP of People"
+          },
+          "outcome": "lost",
+          "nodeId": "n_unconvinced",
+          "nodeTitle": "Coexist",
+          "takenTitle": "Pushback",
+          "betterTitle": "Curious",
+          "winTaken": 0.08,
+          "winBest": 0.9714,
+          "evGap": 24068,
+          "quote": "Not now — bad timing."
+        }
+      ]
+    },
+    "call_g_01": {
+      "nodeId": "n_price",
+      "reason": "You played the Discount (7% win) at the Price Ask — the Anchor Value wins 65%, about a $15,681 swing in expected value. Start here.",
+      "description": "You played the Discount (7% win) at the Price Ask — the Anchor Value wins 65%, about a $15,681 swing in expected value. You make the Discount on 3 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_g_01",
+          "company": "Helio Robotics",
+          "buyer": {
+            "name": "Nina Idris",
+            "title": "VP of Engineering"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "evGap": 15681,
+          "quote": "Open with a discount to win it."
+        }
+      ]
+    },
+    "call_g_05": {
+      "nodeId": "n_price",
+      "reason": "You played the Discount (7% win) at the Price Ask — the Anchor Value wins 65%, about a $14,636 swing in expected value. Start here.",
+      "description": "You played the Discount (7% win) at the Price Ask — the Anchor Value wins 65%, about a $14,636 swing in expected value. You make the Discount on 3 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_g_05",
+          "company": "Lumen Health",
+          "buyer": {
+            "name": "Sofia Idris",
+            "title": "Director of Engineering"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "evGap": 14636,
+          "quote": "Open with a discount to win it."
+        }
+      ]
+    },
+    "call_d_10": {
+      "nodeId": "n_incumbent",
+      "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $12,472 swing in expected value. Start here.",
+      "description": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $12,472 swing in expected value. You make the Knock Incumbent on 4 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_d_10",
+          "company": "Meridian Labs",
+          "buyer": {
+            "name": "Maria Park",
+            "title": "Head of IT"
+          },
+          "outcome": "lost",
+          "nodeId": "n_knock",
+          "nodeTitle": "Incumbent",
+          "takenTitle": "Knock Incumbent",
+          "betterTitle": "Find Pain",
+          "winTaken": 0.0714,
+          "winBest": 0.9375,
+          "evGap": 12472,
+          "quote": "Honestly, Discord is bloated and slow."
+        }
+      ]
+    },
+    "call_g_09": {
+      "nodeId": "n_price",
+      "reason": "You played the Discount (7% win) at the Price Ask — the Anchor Value wins 65%, about a $11,500 swing in expected value. Start here.",
+      "description": "You played the Discount (7% win) at the Price Ask — the Anchor Value wins 65%, about a $11,500 swing in expected value. You make the Discount on 3 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_g_09",
+          "company": "Arboretum",
+          "buyer": {
+            "name": "Maria Cohen",
+            "title": "CTO"
+          },
+          "outcome": "open",
+          "nodeId": "n_discount",
+          "nodeTitle": "Price Ask",
+          "takenTitle": "Discount",
+          "betterTitle": "Anchor Value",
+          "winTaken": 0.0714,
+          "winBest": 0.6522,
+          "evGap": 11500,
+          "quote": "Open with a discount to win it."
+        }
+      ]
+    },
+    "call_b_04": {
+      "nodeId": "n_coexist",
+      "reason": "You played the Pushback (8% win) at the Coexist — the Curious wins 97%, about a $9,627 swing in expected value. Start here.",
+      "description": "You played the Pushback (8% win) at the Coexist — the Curious wins 97%, about a $9,627 swing in expected value. You make the Pushback on 2 of your calls — a pattern worth drilling.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_b_04",
+          "company": "Driftwave",
+          "buyer": {
+            "name": "Lena Nair",
+            "title": "VP of Operations"
+          },
+          "outcome": "lost",
+          "nodeId": "n_unconvinced",
+          "nodeTitle": "Coexist",
+          "takenTitle": "Pushback",
+          "betterTitle": "Curious",
+          "winTaken": 0.08,
+          "winBest": 0.9714,
+          "evGap": 9627,
+          "quote": "We just standardized on Discord."
+        }
+      ]
+    },
+    "call_f_04": {
+      "nodeId": "n_value",
+      "reason": "You played the Too Pricey (8% win) at the Anchor Value — the Proof Ask wins 94%, about a $9,261 swing in expected value. Start here.",
+      "description": "You played the Too Pricey (8% win) at the Anchor Value — the Proof Ask wins 94%, about a $9,261 swing in expected value.",
+      "citations": [
+        {
+          "id": 1,
+          "callId": "call_f_04",
+          "company": "Driftwave",
+          "buyer": {
+            "name": "Lena Idris",
+            "title": "COO"
+          },
+          "outcome": "lost",
+          "nodeId": "n_pushprice",
+          "nodeTitle": "Anchor Value",
+          "takenTitle": "Too Pricey",
+          "betterTitle": "Proof Ask",
+          "winTaken": 0.08,
+          "winBest": 0.9375,
+          "evGap": 9261,
+          "quote": "Still too expensive."
+        }
+      ]
+    }
+  },
+  "usedLLM": true
+}

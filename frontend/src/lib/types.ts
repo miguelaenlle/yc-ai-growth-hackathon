@@ -123,7 +123,29 @@ export interface AiFeedback {
   weaknesses: string[];
   practiceTargets: PracticeTarget[];
   /** Top "start practicing here" pick (System 2) — cites in-call signal + history. */
-  recommendedStart?: { nodeId: Id; reason: string };
+  recommendedStart?: {
+    nodeId: Id;
+    reason: string;
+    description?: string;
+    citations?: Citation[];
+  };
+}
+
+/** A real, hoverable transcript citation behind an insight ([n] marker). */
+export interface Citation {
+  id: number;
+  callId: Id;
+  company: string;
+  buyer: { name: string; title: string };
+  outcome: "won" | "lost" | "open";
+  nodeId: Id;
+  nodeTitle: string;
+  takenTitle: string;
+  betterTitle: string;
+  winTaken: number;
+  winBest: number;
+  evGap: number;
+  quote: string;
 }
 
 export interface Recording {
@@ -177,6 +199,14 @@ export interface RecommendedPractice {
   personaName: string;
   headline: string;
   reasons: string[];
+  citations?: Citation[];
+  call?: CallSummary;
+}
+
+/** GET /admin/status — when insights were last regenerated. */
+export interface AdminStatus {
+  generatedAt: string | null;
+  usedLLM: boolean;
 }
 
 /** A skill verdict for a single mock call. */

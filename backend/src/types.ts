@@ -136,7 +136,33 @@ export interface AiFeedback {
   weaknesses: string[];
   practiceTargets: PracticeTarget[];
   /** Top "start practicing here" pick (System 2) — cites in-call signal + history. */
-  recommendedStart?: { nodeId: Id; reason: string };
+  recommendedStart?: {
+    nodeId: Id;
+    reason: string;
+    /** LLM-written rationale; may contain [n] markers into citations. */
+    description?: string;
+    citations?: Citation[];
+  };
+}
+
+/**
+ * A real, hoverable citation: the exact transcript moment where a rep played a
+ * sub-optimal move on an actual call. `[n]` markers in insight text resolve here.
+ */
+export interface Citation {
+  id: number; // the [n] number
+  callId: Id;
+  company: string;
+  buyer: { name: string; title: string };
+  outcome: "won" | "lost" | "open";
+  nodeId: Id;
+  nodeTitle: string;
+  takenTitle: string; // the move they played
+  betterTitle: string; // the higher-win sibling move
+  winTaken: number; // 0..1
+  winBest: number; // 0..1
+  evGap: number;
+  quote: string; // exact transcript line at the taken node
 }
 
 // ---------- Derived / transport (not persisted) ----------
@@ -204,7 +230,28 @@ export interface RecommendedPractice {
   personaId: Id;
   personaName: string;
   headline: string;
+  /** Reason lines; may contain [n] markers that resolve into `citations`. */
   reasons: string[];
+  /** Real-quote evidence behind the reasons (hoverable [n] refs). */
+  citations?: Citation[];
+  /** The recommended call, so the UI can show its card. */
+  call?: CallSummary;
+}
+
+/** GET /admin/status — when insights were last regenerated. */
+export interface AdminStatus {
+  generatedAt: string | null;
+  usedLLM: boolean;
+}
+
+/** The cached insight bundle (backend/src/data/insights.json). */
+export interface InsightsBundle {
+  generatedAt: string;
+  usedLLM: boolean;
+  salespersonId: Id;
+  perfectPractice: RecommendedPractice;
+  /** Per-call recommended-start override, keyed by callId. */
+  perCall: Record<Id, NonNullable<AiFeedback["recommendedStart"]>>;
 }
 
 /** A skill verdict for a single mock call, from the analysis LLM. */

@@ -19,6 +19,7 @@ export interface CallNodeData {
   actor?: Actor;
   onSimulate?: () => void; // shown on the focused node → start a simulation here
   onWatch?: () => void; // shown on the focused node → watch the AI ace it from here
+  aiRecommended?: boolean; // the LLM-picked "practice from here" node → badge
   marker?: "start" | "breakpoint" | "end"; // simulation role badge
   [key: string]: unknown;
 }

@@ -13,6 +13,7 @@ export default defineConfig({
       '/recordings': 'http://localhost:3001',
       '/personas': 'http://localhost:3001',
       '/salespeople': 'http://localhost:3001',
+      '/admin': 'http://localhost:3001',
       '/stream': 'http://localhost:3001',
       '/transcribe': 'http://localhost:3001',
       '/agent': 'http://localhost:3001',

@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useRecommendedPractice } from "../queries/useRecommendedPractice";
+import { CitedText } from "./CitationRef";
+import { CallCard } from "./CallCard";
 
 // This account belongs to one rep — we don't surface the whole team's weaknesses.
 const FEATURED_REP_ID = "sp_jane";
@@ -59,20 +61,35 @@ export function PerfectPracticeCard() {
       )}
 
       {reco && !isLoading && !isError && (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold tracking-tight text-text">
               {reco.headline}
             </h2>
             <ul className="mt-2 space-y-1">
               {reco.reasons.map((reason, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-text-muted">
+                <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-text-muted">
                   <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent" />
-                  <span>{reason}</span>
+                  <span>
+                    <CitedText text={reason} citations={reco.citations} />
+                  </span>
                 </li>
               ))}
             </ul>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-text-faint">
+          </div>
+
+          {/* The actual call to replay — so it's clear which deal this is. */}
+          {reco.call && (
+            <div>
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-faint">
+                The call to replay
+              </p>
+              <CallCard call={reco.call} index={0} />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-text-faint">
               <span className="rounded-md border border-border bg-surface px-2 py-1">
                 Buyer: <span className="text-text">{reco.personaName}</span>
               </span>
@@ -80,15 +97,15 @@ export function PerfectPracticeCard() {
                 Start: <span className="text-text">{reco.startNodeTitle}</span>
               </span>
             </div>
-          </div>
 
-          <button
-            onClick={startPractice}
-            className="flex shrink-0 items-center gap-2 self-start rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98] sm:self-auto"
-          >
-            <PlayIcon />
-            Start this practice
-          </button>
+            <button
+              onClick={startPractice}
+              className="flex shrink-0 items-center gap-2 self-start rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-bg shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98] sm:self-auto"
+            >
+              <PlayIcon />
+              Start this practice
+            </button>
+          </div>
         </div>
       )}
     </section>

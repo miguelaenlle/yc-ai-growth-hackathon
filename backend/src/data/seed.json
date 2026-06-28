@@ -30463,7 +30463,11 @@
             "metric": "enthusiasm",
             "score": 0.3
           }
-        ]
+        ],
+        "recommendedStart": {
+          "nodeId": "n_incumbent",
+          "reason": "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $6,606 swing in expected value. Start here."
+        }
       }
     },
     "rec_showcase_mock": {
@@ -31331,7 +31335,45 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": null
+      "aiFeedback": {
+        "summary": "The pivotal moment was the Incumbent: you played the Coexist (79% win) where the Find Pain converts 94% — about a $2,379 swing.",
+        "strengths": [
+          "Coexist — a 79% move",
+          "Pilot Offer — a 97% move"
+        ],
+        "weaknesses": [
+          "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $2,379 swing in expected value.",
+          "Hesitation spiked at the Opening (61% win at this move).",
+          "Hesitation spiked at the Discovery (61% win at this move)."
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_open",
+            "reason": "Hesitation spiked at the Opening (61% win at this move).",
+            "drill": "Practice handling \"Set the agenda\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          },
+          {
+            "nodeId": "n_disc",
+            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
+            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          },
+          {
+            "nodeId": "n_incumbent",
+            "reason": "Hesitation spiked at the Incumbent (70% win at this move).",
+            "drill": "Practice handling \"We already use a legacy chat tool\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.304
+          }
+        ],
+        "recommendedStart": {
+          "nodeId": "n_incumbent",
+          "reason": "You played the Coexist (79% win) at the Incumbent — the Find Pain wins 94%, about a $2,379 swing in expected value. Start here."
+        }
+      }
     },
     "rec_a_10": {
       "id": "rec_a_10",
@@ -36271,7 +36313,65 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": null
+      "aiFeedback": {
+        "summary": "The pivotal moment was the Incumbent: you played the Knock Incumbent (7% win) where the Find Pain converts 94% — about a $93,539 swing.",
+        "strengths": [
+          "Reached the decision point and kept the buyer engaged"
+        ],
+        "weaknesses": [
+          "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $93,539 swing in expected value.",
+          "Hesitation spiked at the Knock Incumbent (7% win at this move).",
+          "Hesitation spiked at the Defensive (7% win at this move)."
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_knock",
+            "reason": "Hesitation spiked at the Knock Incumbent (7% win at this move).",
+            "drill": "Practice handling \"Knock Microsoft Teams as clunky\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.929
+          },
+          {
+            "nodeId": "n_defensive",
+            "reason": "Hesitation spiked at the Defensive (7% win at this move).",
+            "drill": "Practice handling \"Just send me some info\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.929
+          },
+          {
+            "nodeId": "n_open",
+            "reason": "Hesitation spiked at the Opening (61% win at this move).",
+            "drill": "Practice handling \"Set the agenda\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          }
+        ],
+        "recommendedStart": {
+          "nodeId": "n_incumbent",
+          "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $93,539 swing in expected value. Start here.",
+          "description": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $93,539 swing in expected value. You make the Knock Incumbent on 4 of your calls — a pattern worth drilling.",
+          "citations": [
+            {
+              "id": 1,
+              "callId": "call_d_02",
+              "company": "Cobalt Finance",
+              "buyer": {
+                "name": "Nina Becker",
+                "title": "Director of Engineering"
+              },
+              "outcome": "lost",
+              "nodeId": "n_knock",
+              "nodeTitle": "Incumbent",
+              "takenTitle": "Knock Incumbent",
+              "betterTitle": "Find Pain",
+              "winTaken": 0.0714,
+              "winBest": 0.9375,
+              "evGap": 93539,
+              "quote": "Honestly, Microsoft Teams is bloated and slow."
+            }
+          ]
+        }
+      }
     },
     "rec_d_03": {
       "id": "rec_d_03",
@@ -36591,7 +36691,44 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": null
+      "aiFeedback": {
+        "summary": "The pivotal moment was the Incumbent: you played the Knock Incumbent (7% win) where the Find Pain converts 94% — about a $31,180 swing.",
+        "strengths": [
+          "Reached the decision point and kept the buyer engaged"
+        ],
+        "weaknesses": [
+          "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $31,180 swing in expected value.",
+          "Hesitation spiked at the Knock Incumbent (7% win at this move).",
+          "Hesitation spiked at the Defensive (7% win at this move)."
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_knock",
+            "reason": "Hesitation spiked at the Knock Incumbent (7% win at this move).",
+            "drill": "Practice handling \"Knock Google Chat as clunky\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.929
+          },
+          {
+            "nodeId": "n_defensive",
+            "reason": "Hesitation spiked at the Defensive (7% win at this move).",
+            "drill": "Practice handling \"Just send me some info\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.929
+          },
+          {
+            "nodeId": "n_disc",
+            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
+            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          }
+        ],
+        "recommendedStart": {
+          "nodeId": "n_incumbent",
+          "reason": "You played the Knock Incumbent (7% win) at the Incumbent — the Find Pain wins 94%, about a $31,180 swing in expected value. Start here."
+        }
+      }
     },
     "rec_d_07": {
       "id": "rec_d_07",
@@ -38693,7 +38830,65 @@
         ]
       },
       "aiNotes": null,
-      "aiFeedback": null
+      "aiFeedback": {
+        "summary": "The pivotal moment was the Anchor Value: you played the Too Pricey (8% win) where the Proof Ask converts 94% — about a $9,261 swing.",
+        "strengths": [
+          "Reached the decision point and kept the buyer engaged"
+        ],
+        "weaknesses": [
+          "You played the Too Pricey (8% win) at the Anchor Value — the Proof Ask wins 94%, about a $9,261 swing in expected value.",
+          "Hesitation spiked at the Too Pricey (8% win at this move).",
+          "Hesitation spiked at the Price Ask (43% win at this move)."
+        ],
+        "practiceTargets": [
+          {
+            "nodeId": "n_pushprice",
+            "reason": "Hesitation spiked at the Too Pricey (8% win at this move).",
+            "drill": "Practice handling \"Still too expensive\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.92
+          },
+          {
+            "nodeId": "n_price",
+            "reason": "Hesitation spiked at the Price Ask (43% win at this move).",
+            "drill": "Practice handling \"What's this run for 60?\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.571
+          },
+          {
+            "nodeId": "n_disc",
+            "reason": "Hesitation spiked at the Discovery (61% win at this move).",
+            "drill": "Practice handling \"How does your team chat today?\" with stronger hesitation.",
+            "metric": "hesitation",
+            "score": 0.392
+          }
+        ],
+        "recommendedStart": {
+          "nodeId": "n_value",
+          "reason": "You played the Too Pricey (8% win) at the Anchor Value — the Proof Ask wins 94%, about a $9,261 swing in expected value. Start here.",
+          "description": "You played the Too Pricey (8% win) at the Anchor Value — the Proof Ask wins 94%, about a $9,261 swing in expected value.",
+          "citations": [
+            {
+              "id": 1,
+              "callId": "call_f_04",
+              "company": "Driftwave",
+              "buyer": {
+                "name": "Lena Idris",
+                "title": "COO"
+              },
+              "outcome": "lost",
+              "nodeId": "n_pushprice",
+              "nodeTitle": "Anchor Value",
+              "takenTitle": "Too Pricey",
+              "betterTitle": "Proof Ask",
+              "winTaken": 0.08,
+              "winBest": 0.9375,
+              "evGap": 9261,
+              "quote": "Still too expensive."
+            }
+          ]
+        }
+      }
     },
     "rec_f_05": {
       "id": "rec_f_05",

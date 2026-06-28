@@ -5,6 +5,7 @@ import { RecordingsPage } from "./pages/RecordingsPage";
 import { SimulateCallPage } from "./pages/SimulateCallPage";
 import { WatchAiPage } from "./pages/WatchAiPage";
 import { LiveCallPage } from "./pages/LiveCallPage";
+import { AdminPage } from "./pages/AdminPage";
 import { Placeholder } from "./pages/Placeholder";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       <Route path="/call/:id/recordings" element={<RecordingsPage />} />
       <Route path="/call/:id/simulate" element={<SimulateCallPage />} />
       <Route path="/call/:id/watch" element={<WatchAiPage />} />
+      <Route path="/admin" element={<AdminPage />} />
       <Route path="*" element={<Placeholder title="Not found" />} />
     </Routes>
   );

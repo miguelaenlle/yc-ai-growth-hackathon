@@ -55,6 +55,7 @@ function buyerPersonaId(buyerId: Id): Id | undefined {
 export interface RegretFork {
   forkNodeId: Id;
   forkTitle: string;
+  takenNodeId: Id; // the move node the rep actually played (for the transcript quote)
   takenTitle: string;
   takenP: number;
   bestTitle: string;
@@ -88,6 +89,7 @@ export function bestRegretFork(tree: Tree, traversal: Traversal): RegretFork | n
       best = {
         forkNodeId: fork.id,
         forkTitle: fork.title,
+        takenNodeId: taken.id,
         takenTitle: taken.title,
         takenP: taken.successProbability,
         bestTitle: bestChild.title,
