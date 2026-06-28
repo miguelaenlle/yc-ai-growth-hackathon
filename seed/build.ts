@@ -120,6 +120,7 @@ interface FlatNode {
   speaker: Speaker;
   title: string;
   descTpl: string;
+  examples: string[];
   intent: string;
   depth: number;
   tMs: number;
@@ -136,6 +137,7 @@ function flattenTree(): FlatNode[] {
       speaker: node.speaker,
       title: node.title,
       descTpl: node.descTpl,
+      examples: node.examples?.length ? node.examples : [node.descTpl],
       intent: node.intent,
       depth,
       tMs: depth * STEP_MS,
@@ -452,14 +454,24 @@ const FIRST = ["Maria", "Sam", "Priya", "Tom", "Lena", "David", "Aisha", "Carlos
 const LAST = ["Lopez", "Carter", "Nair", "Becker", "Park", "Idris", "Cohen", "Vance", "Okafor", "Reyes"];
 const TITLES = ["VP of Operations", "Head of IT", "Director of Engineering", "COO", "VP of People", "Head of Customer Success", "CTO", "VP of Engineering", "Head of RevOps"];
 
-function codeBuiltTranscript(path: TreeNode[]): TranscriptSegment[] {
-  return path.map((n, i) => ({
-    index: i,
-    speaker: n.speaker,
-    text: n.description,
-    tStartMs: n.tMs,
-    tEndMs: n.tMs + STEP_MS,
-  }));
+/**
+ * Per-call transcript built from each node's `examples`, rotated by the call's
+ * instance index so different calls through the same move read differently. This
+ * backs the win-rate stats, the "you failed at X" [1][2][3] citations, and gives
+ * the AI tree generator varied few-shot examples per node.
+ */
+function exampleTranscript(arc: Archetype, prospect: Prospect, instanceIdx: number, pathNodes: TreeNode[]): TranscriptSegment[] {
+  return arc.path.map((id, k) => {
+    const f = flatById.get(id)!;
+    const ex = f.examples[instanceIdx % f.examples.length] ?? f.descTpl;
+    return {
+      index: k,
+      speaker: f.speaker,
+      text: render(ex, prospect),
+      tStartMs: pathNodes[k].tMs,
+      tEndMs: pathNodes[k].tMs + STEP_MS,
+    };
+  });
 }
 
 function heroTranscript(lines: { speaker: Speaker; text: string }[], lengthMs: number): TranscriptSegment[] {
@@ -591,7 +603,7 @@ function buildPopulation(
         pathNodes = arc.path.map((id) => byId.get(id)!);
       }
 
-      const transcript = special?.transcript ?? codeBuiltTranscript(pathNodes);
+      const transcript = special?.transcript ?? exampleTranscript(arc, prospect, i, pathNodes);
       const lengthMs = special?.lengthMs ?? pathNodes.length * STEP_MS;
 
       // Special transcripts are free-form (attribute steps to evenly-spaced

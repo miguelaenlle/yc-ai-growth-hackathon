@@ -96,7 +96,16 @@ export interface SeedTreeNode {
   key: string;
   speaker: Speaker;
   title: string;
+  /** Short card line (the canonical phrasing). Equals examples[0]. */
   descTpl: string;
+  /**
+   * 3–5 concise, specific, VARIED phrasings of this move (buyer = quotes,
+   * seller = moves). `{incumbent}`/`{seats}` are substituted per prospect.
+   * The builder rotates these across the population so every call through a node
+   * reads differently — backing the win-rate stats, the "you failed at X" [1][2][3]
+   * citations, and few-shot examples for the AI tree generator.
+   */
+  examples: string[];
   intent: string;
   children?: SeedTreeNode[];
 }
@@ -105,53 +114,73 @@ export interface SeedTreeNode {
 // with a parallel price branch. Every seller fork is a plausible move; the two
 // "weak" plays (n_knock, n_discount) are real mistakes a rep could make.
 export const tree: SeedTreeNode = {
-  key: "n_open", speaker: "seller", title: "Warm Opening", descTpl: "Open warm, set a light agenda",
+  key: "n_open", speaker: "seller", title: "Warm Opening", descTpl: "Set the agenda",
+  examples: ["Set the agenda", "Thanks for the time — quick agenda", "Open warm, frame the next 20 min"],
   intent: "Warm opening — thank the buyer for the time and set a light agenda.",
   children: [
     {
-      key: "n_disc", speaker: "seller", title: "Discovery", descTpl: "How does your team communicate today?",
+      key: "n_disc", speaker: "seller", title: "Discovery", descTpl: "How does your team chat today?",
+      examples: ["How does your team chat today?", "Walk me through your current setup", "Where does collaboration happen now?"],
       intent: "Discovery: ask how the team communicates and collaborates today.",
       children: [
         {
           key: "n_incumbent", speaker: "buyer", title: "Incumbent Objection", descTpl: "We already use {incumbent}",
+          examples: [
+            "We already use {incumbent}.",
+            "We're on {incumbent} — it came with our license.",
+            "Honestly, {incumbent} is fine for us.",
+            "Everyone here already lives in {incumbent}.",
+          ],
           intent: "Incumbent objection: the buyer already uses a competing chat tool.",
           children: [
             {
-              key: "n_coexist", speaker: "seller", title: "Coexist Reframe", descTpl: "Slack runs alongside {incumbent}, not a rip-and-replace",
+              key: "n_coexist", speaker: "seller", title: "Coexist Reframe", descTpl: "Runs alongside {incumbent}",
+              examples: [
+                "Runs alongside {incumbent} — no rip-and-replace.",
+                "Keep {incumbent}; add Slack on top.",
+                "Most customers run both side by side.",
+                "Not a migration — Slack layers in.",
+              ],
               intent: "Reframe: Slack can run alongside the incumbent; it's not a rip-and-replace.",
               children: [
                 {
-                  key: "n_curious", speaker: "buyer", title: "Curious Buyer", descTpl: "Where does Slack win over {incumbent}?",
+                  key: "n_curious", speaker: "buyer", title: "Curious Buyer", descTpl: "Where does Slack win?",
+                  examples: ["Where does Slack actually win?", "What does Slack do better than {incumbent}?", "Okay — so why switch any of it?"],
                   intent: "Buyer warms up and asks where Slack actually wins.",
                   children: [
                     {
-                      key: "n_pilot", speaker: "seller", title: "Pilot Offer", descTpl: "Low-risk 2-week pilot with one team",
+                      key: "n_pilot", speaker: "seller", title: "Pilot Offer", descTpl: "Offer a 2-week pilot",
+                      examples: ["Offer a 2-week pilot with one team.", "Low-risk pilot — one squad, two weeks.", "Try it with a single team first."],
                       intent: "Propose a low-risk 2-week pilot with one team.",
                       children: [
-                        { key: "n_yes", speaker: "buyer", title: "Pilot Agreement", descTpl: "Buyer agrees to run the pilot", intent: "Buyer agrees to run the pilot. (deal won)" },
+                        { key: "n_yes", speaker: "buyer", title: "Pilot Agreement", descTpl: "Let's run the pilot", examples: ["Let's run the pilot.", "One team, two weeks — I can say yes.", "That's low-risk enough, let's do it."], intent: "Buyer agrees to run the pilot. (deal won)" },
                       ],
                     },
                   ],
                 },
                 {
-                  key: "n_unconvinced", speaker: "buyer", title: "Pushback", descTpl: "We just standardized on {incumbent} — not now",
+                  key: "n_unconvinced", speaker: "buyer", title: "Pushback", descTpl: "We just standardized on {incumbent}",
+                  examples: ["We just standardized on {incumbent}.", "Not now — bad timing.", "We're locked into {incumbent} for the year."],
                   intent: "Buyer pushes back: just standardized on the incumbent. (deal lost)",
                 },
               ],
             },
             {
-              key: "n_discover", speaker: "seller", title: "Discovery First", descTpl: "What's painful about {incumbent} day-to-day?",
+              key: "n_discover", speaker: "seller", title: "Discovery First", descTpl: "What's painful about {incumbent}?",
+              examples: ["What's painful about {incumbent} day-to-day?", "Where does {incumbent} slow you down?", "What breaks down in {incumbent}?"],
               intent: "Discovery-first: ask what about the incumbent is actually painful.",
               children: [
                 {
                   key: "n_pain", speaker: "buyer", title: "Real Pain", descTpl: "Search is weak, threads get lost",
+                  examples: ["Search is weak and threads get lost.", "We lose decisions in {incumbent} constantly.", "Finding anything later is a nightmare."],
                   intent: "Buyer admits real pain: search is weak and threads get lost.",
                   children: [
                     {
-                      key: "n_show", speaker: "seller", title: "Show Solution", descTpl: "Tie pain to Slack's search + threads",
+                      key: "n_show", speaker: "seller", title: "Show Solution", descTpl: "Pitch search + threads",
+                      examples: ["Tie it to Slack's search + threads.", "That's exactly what search and threads fix.", "Show how decisions stay findable."],
                       intent: "Tie the pain to Slack's search + threads and offer a demo.",
                       children: [
-                        { key: "n_demo", speaker: "buyer", title: "Demo Booked", descTpl: "Buyer books a demo", intent: "Buyer books a demo. (deal won)" },
+                        { key: "n_demo", speaker: "buyer", title: "Demo Booked", descTpl: "Book me a demo", examples: ["Book me a demo.", "I'd want to see that live.", "Let's get a demo on the calendar."], intent: "Buyer books a demo. (deal won)" },
                       ],
                     },
                   ],
@@ -159,11 +188,18 @@ export const tree: SeedTreeNode = {
               ],
             },
             {
-              key: "n_knock", speaker: "seller", title: "Weak Move", descTpl: "{incumbent} is clunky and outdated",
+              key: "n_knock", speaker: "seller", title: "Weak Move", descTpl: "Knock {incumbent} as clunky",
+              examples: [
+                "{incumbent} is clunky and outdated.",
+                "Honestly, {incumbent} is bloated and slow.",
+                "Your team deserves better than {incumbent}.",
+                "Nobody actually likes {incumbent}.",
+              ],
               intent: "Disparage the incumbent as clunky and outdated — a weak, dismissive move.",
               children: [
                 {
                   key: "n_defensive", speaker: "buyer", title: "Defensive Buyer", descTpl: "Just send me some info",
+                  examples: ["Just send me some info.", "{incumbent} works fine for us, thanks.", "We've adapted to it — I'll review materials."],
                   intent: "Buyer gets defensive and disengages. (deal lost)",
                 },
               ],
@@ -171,35 +207,47 @@ export const tree: SeedTreeNode = {
           ],
         },
         {
-          key: "n_price", speaker: "buyer", title: "Price Inquiry", descTpl: "What does this run for {seats} people?",
+          key: "n_price", speaker: "buyer", title: "Price Inquiry", descTpl: "What's this run for {seats}?",
+          examples: ["What does this run for {seats} people?", "Ballpark the cost for {seats} seats.", "What's the price at our size?"],
           intent: "Buyer jumps to cost for their team size.",
           children: [
             {
-              key: "n_value", speaker: "seller", title: "Value Anchor", descTpl: "Time saved per seat, not sticker price",
+              key: "n_value", speaker: "seller", title: "Value Anchor", descTpl: "Anchor on value per seat",
+              examples: ["Anchor on value, not sticker price.", "It's time saved per seat — here's the math.", "Frame ROI before the number."],
               intent: "Anchor on value — time saved per seat, not sticker price.",
               children: [
                 {
-                  key: "n_proof", speaker: "buyer", title: "Proof Request", descTpl: "Need proof it pays off at our size",
+                  key: "n_proof", speaker: "buyer", title: "Proof Request", descTpl: "Prove it pays off at our size",
+                  examples: ["Prove it pays off at our size.", "Show me ROI for a team like ours.", "I need numbers before I commit."],
                   intent: "Buyer wants proof it pays off at their size.",
                   children: [
                     {
-                      key: "n_caseclose", speaker: "buyer", title: "Case Study Success", descTpl: "Relevant case study lands, buyer moves forward",
+                      key: "n_caseclose", speaker: "buyer", title: "Case Study Success", descTpl: "That case study sells me",
+                      examples: ["That case study sells me.", "If it worked for them, let's move.", "Okay — the numbers check out."],
                       intent: "A relevant case study lands and the buyer moves forward. (deal won)",
                     },
                   ],
                 },
                 {
-                  key: "n_pushprice", speaker: "buyer", title: "Price Resistance", descTpl: "Buyer balks at the price",
+                  key: "n_pushprice", speaker: "buyer", title: "Price Resistance", descTpl: "Still too expensive",
+                  examples: ["Still too expensive.", "That's over our budget.", "Can't justify it at that price."],
                   intent: "Buyer still balks at the price. (deal lost)",
                 },
               ],
             },
             {
-              key: "n_discount", speaker: "seller", title: "Discount Offer", descTpl: "Lead with a discount to win",
+              key: "n_discount", speaker: "seller", title: "Discount Offer", descTpl: "Lead with a discount",
+              examples: [
+                "Open with a discount to win it.",
+                "Drop the price before proving value.",
+                "Lead with 20% off.",
+                "Cave on price to keep them engaged.",
+              ],
               intent: "Lead with a discount to win the deal — a weak, margin-eroding move.",
               children: [
                 {
-                  key: "n_anchor", speaker: "buyer", title: "Buyer Anchors", descTpl: "Buyer anchors lower and stalls",
+                  key: "n_anchor", speaker: "buyer", title: "Buyer Anchors", descTpl: "Can you go lower?",
+                  examples: ["Can you go lower?", "Match that and we'll talk.", "We'd need a deeper cut than that."],
                   intent: "Buyer anchors even lower and stalls. (no decision — still open)",
                 },
               ],
