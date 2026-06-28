@@ -1,0 +1,47 @@
+{
+  "audioUrl": "/data/audio/walkthrough_rec_real_review.mp3",
+  "timeline": [
+    {
+      "atMs": 0,
+      "nodeId": "n_open"
+    },
+    {
+      "atMs": 3270,
+      "nodeId": "n_disc"
+    },
+    {
+      "atMs": 8310,
+      "nodeId": "n_push"
+    },
+    {
+      "atMs": 12480,
+      "nodeId": "n_road"
+    },
+    {
+      "atMs": 16290,
+      "nodeId": "n_lost"
+    }
+  ],
+  "script": [
+    {
+      "nodeId": "n_open",
+      "narration": "Good opening, confident and welcoming to John."
+    },
+    {
+      "nodeId": "n_disc",
+      "narration": "Solid discovery question on ticket volume initiated conversation."
+    },
+    {
+      "nodeId": "n_push",
+      "narration": "Buyer raised a valid concern about Tableau integration."
+    },
+    {
+      "nodeId": "n_road",
+      "narration": "Stating it's on the roadmap was a weak response."
+    },
+    {
+      "nodeId": "n_lost",
+      "narration": "You failed to address the buyer's needs effectively."
+    }
+  ]
+}

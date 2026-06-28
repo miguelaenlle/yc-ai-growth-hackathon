@@ -4,8 +4,10 @@ import type { WalkthroughBundle } from "./types";
 const bundleCache = new Map<string, WalkthroughBundle>();
 const inflight = new Map<string, Promise<WalkthroughBundle>>();
 
+const CACHE_VERSION = "v2";
+
 function cacheKey(recordingId: string, kind: "intro" | "review"): string {
-  return `${recordingId}:${kind}`;
+  return `${CACHE_VERSION}:${recordingId}:${kind}`;
 }
 
 /** Session cache — one fetch per recording/kind; replays reuse the in-memory bundle. */

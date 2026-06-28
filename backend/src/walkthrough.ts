@@ -40,8 +40,10 @@ function getMp3DurationMs(buffer: Buffer): number {
   return Math.round(((buffer.length * 8) / bitrate) * 1000);
 }
 
+const CACHE_VERSION = "v2";
+
 function cacheKey(recordingId: Id, kind: WalkthroughKind): string {
-  return `walkthrough_${recordingId}_${kind}`;
+  return `walkthrough_${CACHE_VERSION}_${recordingId}_${kind}`;
 }
 
 function cacheJsonPath(recordingId: Id, kind: WalkthroughKind): string {
@@ -134,21 +136,21 @@ function buildIntroContext(tree: Tree, endNodeId: Id): string {
 }
 
 function reviewPrompt(context: string): string {
-  return `You are a sales coach grading a rep's just-finished call.
-The rep took this path (in order):
+  return `You are a sales coach giving a brief spoken debrief right after a rep finished a call. Write the way you'd actually talk — one continuous review, not a checklist or report card.
+
+Call path and evidence:
 ${context}
 
-Write a JSON object with key "script" containing an array of objects, one per path node in the exact order listed above.
-Each object must have:
-- "nodeId": the exact node ID from the path
-- "narration": one short sentence (max ~12 words) grading what happened at that step
+Return JSON: { "script": [{ "nodeId": "<exact node id>", "narration": "<spoken phrase>" }, ...] }
 
-Rules:
-- Total narration when read aloud must be ~20 seconds (~55 words max across all segments)
-- Tone: direct, specific, evidence-based — grade what happened, do not set up future practice
-- Quote transcript briefly when provided
-- At seller decision points, say whether the choice was good or bad vs sibling EV alternatives
-- Return ONLY valid JSON`;
+Requirements:
+- Exactly one entry per path node, in the order listed above.
+- All segments together must read as ONE flowing ~20-second monologue (~60–75 words total). Each segment should hand off naturally to the next — use connectors like "From there", "But when", "That left you with", "So".
+- Example flow (do not copy verbatim): "Clean open — you got John talking fast." → "You pulled out real ticket pain within two minutes." → "Then Tableau hit, and your hesitation showed." → "You had a thirty-eight-K SQL connector path, but you went roadmap instead — EV dropped to four K." → "He checked out. Deal lost."
+- Grade what happened: strengths, mistakes, and at seller forks whether the choice beat the EV of alternatives. Quote transcript briefly when provided.
+- Avoid staccato labels ("Good opening.", "Weak response.") — keep it conversational.
+- Do not assign homework or future practice — only grade this call.
+- Return ONLY valid JSON.`;
 }
 
 function introPrompt(context: string): string {
@@ -222,18 +224,21 @@ async function synthesizeSegment(text: string): Promise<Buffer> {
 async function renderWalkthroughAudio(
   script: ScriptSegment[]
 ): Promise<{ audio: Buffer; timeline: TimelineCue[] }> {
-  const buffers: Buffer[] = [];
+  // Single TTS pass — reads as one continuous coach monologue, not choppy clips.
+  const fullText = script.map((s) => s.narration.trim()).join(" ");
+  const audio = await synthesizeSegment(fullText);
+  const totalMs = getMp3DurationMs(audio);
+
+  const totalChars = script.reduce((sum, s) => sum + s.narration.length, 0) || 1;
   const timeline: TimelineCue[] = [];
   let atMs = 0;
 
   for (const segment of script) {
     timeline.push({ atMs, nodeId: segment.nodeId });
-    const chunk = await synthesizeSegment(segment.narration);
-    buffers.push(chunk);
-    atMs += getMp3DurationMs(chunk);
+    atMs += Math.round(totalMs * (segment.narration.length / totalChars));
   }
 
-  return { audio: Buffer.concat(buffers), timeline };
+  return { audio, timeline };
 }
 
 async function generateWalkthrough(
