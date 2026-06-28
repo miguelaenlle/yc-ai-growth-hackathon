@@ -77,12 +77,12 @@
   inset: 0;
   background: linear-gradient(
     100deg,
-    transparent 30%,
-    rgba(61, 214, 208, 0.1) 50%,
-    transparent 70%
+    transparent 42%,
+    rgba(61, 214, 208, 0.045) 50%,
+    transparent 58%
   );
   transform: translateX(-120%);
-  animation: shimmer 4.5s ease-in-out infinite;
+  animation: shimmer 2.6s linear infinite;
   pointer-events: none;
 }
 

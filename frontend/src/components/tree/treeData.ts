@@ -198,32 +198,35 @@ const TREE: RawNode = {
   ],
 };
 
-// ---- Tidy top-down layout (center parents over their children's spans) -----
-const COL_GAP = 300; // horizontal slot per leaf
-const ROW_GAP = 170; // vertical gap per depth level
-const NODE_W = 240;
+// ---- Tidy left-to-right layout (center parents over their children's spans) -
+const LEVEL_GAP = 300; // horizontal gap per depth level
+const SIBLING_GAP = 110; // vertical slot per leaf
+
+// Base node box — the size at full fish-eye scale (s = 1).
+export const BASE_W = 240;
+export const BASE_H = 104;
 
 interface Positioned {
   node: RawNode;
-  x: number;
-  depth: number;
+  cross: number; // vertical position (sibling axis)
+  depth: number; // horizontal level
 }
 
 function layout(root: RawNode): Positioned[] {
   const out: Positioned[] = [];
-  let cursor = 0; // next free leaf slot (in COL_GAP units)
+  let cursor = 0; // next free leaf slot (in SIBLING_GAP units)
 
   function place(node: RawNode, depth: number): number {
     if (!node.children || node.children.length === 0) {
-      const x = cursor * COL_GAP;
+      const cross = cursor * SIBLING_GAP;
       cursor += 1;
-      out.push({ node, x, depth });
-      return x;
+      out.push({ node, cross, depth });
+      return cross;
     }
-    const childXs = node.children.map((c) => place(c, depth + 1));
-    const x = (childXs[0] + childXs[childXs.length - 1]) / 2;
-    out.push({ node, x, depth });
-    return x;
+    const childCross = node.children.map((c) => place(c, depth + 1));
+    const cross = (childCross[0] + childCross[childCross.length - 1]) / 2;
+    out.push({ node, cross, depth });
+    return cross;
   }
 
   place(root, 0);
@@ -233,10 +236,10 @@ function layout(root: RawNode): Positioned[] {
 // ---- Derive React Flow nodes + edges --------------------------------------
 function build(): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
   const positioned = layout(TREE);
-  const nodes: Node<CallNodeData>[] = positioned.map(({ node, x, depth }) => ({
+  const nodes: Node<CallNodeData>[] = positioned.map(({ node, cross, depth }) => ({
     id: node.id,
     type: "call",
-    position: { x, y: depth * ROW_GAP },
+    position: { x: depth * LEVEL_GAP, y: cross },
     data: {
       kind: node.kind,
       title: node.title,
@@ -245,7 +248,8 @@ function build(): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
       onPath: node.onPath,
       depth,
     },
-    width: NODE_W,
+    width: BASE_W,
+    height: BASE_H,
   }));
 
   const edges: Edge[] = [];
@@ -272,3 +276,13 @@ function build(): { nodes: Node<CallNodeData>[]; edges: Edge[] } {
 
 export const { nodes: initialNodes, edges: initialEdges } = build();
 export const NODE_COUNT = initialNodes.length;
+
+// Each node's fixed center (from layout) — fish-eye pins centers and only
+// varies size, so the tree shape stays stable.
+export const BASE_CENTERS: Record<string, { x: number; y: number }> =
+  Object.fromEntries(
+    initialNodes.map((n) => [
+      n.id,
+      { x: n.position.x + BASE_W / 2, y: n.position.y + BASE_H / 2 },
+    ]),
+  );

@@ -1,13 +1,17 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ReactFlow,
+  ReactFlowProvider,
   Background,
   BackgroundVariant,
   MiniMap,
   Panel,
+  useStore,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { initialNodes, initialEdges } from "../components/tree/treeData";
+import { applyFisheye } from "../components/tree/fisheye";
 import { CallNode } from "../components/tree/CallNode";
 import { OutcomeBadge } from "../components/OutcomeBadge";
 import { Logo } from "../components/Logo";
@@ -82,23 +86,32 @@ function Avatar() {
   );
 }
 
-export function CallReviewPage() {
-  return (
-    <div className="flex h-screen bg-bg text-text">
-      <Sidebar />
+function Flow() {
+  // Recompute fish-eye scale from the live viewport center on every pan/zoom.
+  const tx = useStore((s) => s.transform[0]);
+  const ty = useStore((s) => s.transform[1]);
+  const zoom = useStore((s) => s.transform[2]);
+  const width = useStore((s) => s.width);
+  const height = useStore((s) => s.height);
 
-      <div className="relative flex-1">
-        <ReactFlow
-          nodes={initialNodes}
-          edges={initialEdges}
-          nodeTypes={nodeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          minZoom={0.2}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          proOptions={{ hideAttribution: true }}
-        >
+  const nodes = useMemo(() => {
+    if (!width || !height) return initialNodes;
+    const focus = { x: (width / 2 - tx) / zoom, y: (height / 2 - ty) / zoom };
+    return applyFisheye(initialNodes, focus);
+  }, [tx, ty, zoom, width, height]);
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={initialEdges}
+      nodeTypes={nodeTypes}
+      fitView
+      fitViewOptions={{ padding: 0.2 }}
+      minZoom={0.2}
+      nodesDraggable={false}
+      nodesConnectable={false}
+      proOptions={{ hideAttribution: true }}
+    >
           <Background
             variant={BackgroundVariant.Dots}
             gap={22}
@@ -127,7 +140,18 @@ export function CallReviewPage() {
             </button>
             <Avatar />
           </Panel>
-        </ReactFlow>
+    </ReactFlow>
+  );
+}
+
+export function CallReviewPage() {
+  return (
+    <div className="flex h-screen bg-bg text-text">
+      <Sidebar />
+      <div className="relative flex-1">
+        <ReactFlowProvider>
+          <Flow />
+        </ReactFlowProvider>
       </div>
     </div>
   );

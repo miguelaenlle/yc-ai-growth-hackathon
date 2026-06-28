@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import type { CallNodeData } from "./treeData";
+import { BASE_W, BASE_H, type CallNodeData } from "./treeData";
 
 function rampColor(p: number): string {
   if (p >= 0.7) return "var(--color-signal-high)";
@@ -26,22 +26,29 @@ function CallNodeImpl({ data }: NodeProps) {
   const d = data as CallNodeData;
   const isAi = d.kind === "ai";
   const depth = typeof d.depth === "number" ? d.depth : 0;
+  const scale = typeof d.scale === "number" ? d.scale : 1;
 
   return (
-    <div
-      style={{ animationDelay: `${depth * 70}ms`, width: 240 }}
-      className={
-        "group rounded-lg border bg-surface px-4 py-3 " +
-        "shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-colors duration-150 " +
-        (isAi
-          ? "ct-glimmer border-accent/40 hover:border-accent/70"
-          : d.onPath
-            ? "animate-fade-up border-accent/60"
-            : "animate-fade-up border-border hover:border-border-strong")
-      }
-    >
-      <Handle type="target" position={Position.Top} style={handleStyle} />
+    // Outer wrapper fills the (fish-eye-scaled) React Flow box; handles anchor
+    // here so edges stay correct. The card inside is fixed-size and scaled.
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <Handle type="target" position={Position.Left} style={handleStyle} />
 
+      <div
+        style={{
+          width: BASE_W,
+          height: BASE_H,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          animationDelay: `${depth * 70}ms`,
+        }}
+        className={
+          "group flex flex-col rounded-lg px-4 py-3 transition-colors duration-150 " +
+          (isAi
+            ? "ct-glimmer border border-accent/60 bg-surface shadow-[0_0_16px_-6px_rgba(61,214,208,0.45)] hover:border-accent/90"
+            : "animate-fade-up border-l-[3px] border-y border-r border-y-border-strong border-r-border-strong border-l-text-muted bg-surface-2 shadow-[0_1px_2px_rgba(0,0,0,0.4)] hover:border-l-text")
+        }
+      >
       {/* tag row */}
       <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">
         {isAi ? (
@@ -58,8 +65,8 @@ function CallNodeImpl({ data }: NodeProps) {
           </>
         ) : (
           <>
-            <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />
-            <span className="text-text-muted">Real</span>
+            <span className="h-2 w-2 shrink-0 rounded-full bg-text-muted" />
+            <span className="uppercase tracking-wide text-text-muted">Real</span>
           </>
         )}
       </div>
@@ -70,8 +77,9 @@ function CallNodeImpl({ data }: NodeProps) {
           {d.description}
         </div>
       )}
+      </div>
 
-      <Handle type="source" position={Position.Bottom} style={handleStyle} />
+      <Handle type="source" position={Position.Right} style={handleStyle} />
     </div>
   );
 }
