@@ -1,33 +1,33 @@
 {
   "sp_jane": {
     "salespersonId": "sp_jane",
-    "totalCalls": 23,
+    "totalCalls": 28,
     "wins": 11,
     "skills": {
       "discovery": {
-        "attempts": 20,
-        "fails": 6
+        "attempts": 25,
+        "fails": 11
       },
       "objection-handling": {
-        "attempts": 19,
-        "fails": 12
+        "attempts": 22,
+        "fails": 15
       },
       "pricing": {
-        "attempts": 16,
-        "fails": 10
+        "attempts": 17,
+        "fails": 11
       },
       "closing": {
-        "attempts": 14,
-        "fails": 7
+        "attempts": 15,
+        "fails": 8
       },
       "rapport": {
-        "attempts": 17,
+        "attempts": 22,
         "fails": 4
       }
     },
     "personas": {
       "buy_polly": {
-        "attempts": 8,
+        "attempts": 10,
         "wins": 7,
         "fails": 1
       },
@@ -50,16 +50,26 @@
         "attempts": 1,
         "wins": 0,
         "fails": 1
+      },
+      "buy_sam": {
+        "attempts": 2,
+        "wins": 0,
+        "fails": 0
+      },
+      "buy_greg": {
+        "attempts": 1,
+        "wins": 0,
+        "fails": 0
       }
     },
     "nodes": {
       "n_unconvinced": {
-        "attempts": 14,
-        "fails": 8
+        "attempts": 15,
+        "fails": 9
       },
       "n_incumbent": {
-        "attempts": 9,
-        "fails": 5
+        "attempts": 12,
+        "fails": 8
       },
       "n_price": {
         "attempts": 2,
@@ -76,6 +86,26 @@
       "n_caseclose": {
         "attempts": 1,
         "fails": 1
+      },
+      "n_disc": {
+        "attempts": 3,
+        "fails": 3
+      },
+      "n_coexist": {
+        "attempts": 1,
+        "fails": 1
+      },
+      "n_curious": {
+        "attempts": 1,
+        "fails": 1
+      },
+      "n_defensive": {
+        "attempts": 2,
+        "fails": 2
+      },
+      "n_pain": {
+        "attempts": 2,
+        "fails": 2
       }
     }
   },

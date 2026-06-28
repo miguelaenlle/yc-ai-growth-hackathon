@@ -391,7 +391,7 @@ export function useMockSession({
           precapQueueRef.current.push({
             type: "audio",
             b64: msg.b64_data as string,
-            mime: "audio/webm;codecs=opus",
+            mime: (msg.mime as string) ?? "audio/mpeg",
           });
           processPrecapQueue();
           break;
