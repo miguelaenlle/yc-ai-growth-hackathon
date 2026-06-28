@@ -18,6 +18,7 @@ export interface Buyer {
 export interface Salesperson {
   id: Id;
   name: string;
+  title: string;
 }
 
 export interface Call {
@@ -123,6 +124,9 @@ export interface CallDetail {
   call: Call;
   tree: Tree;
   recordings: Recording[];
+  company: Company;
+  buyer: Buyer;
+  salesperson: Salesperson;
 }
 export interface TimelineCue {
   atMs: number;
