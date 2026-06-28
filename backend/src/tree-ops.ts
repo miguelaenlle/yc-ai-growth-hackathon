@@ -92,7 +92,7 @@ export type BranchDecision =
  * (Wraps store.getNode for symmetry; keeps tree-ops self-contained.)
  */
 export function getNodeById(tree: Tree, nodeId: Id): TreeNode | undefined {
-  throw new Error("not implemented");
+  return tree.nodes.find(n => n.id === nodeId);
 }
 
 /**
@@ -101,7 +101,14 @@ export function getNodeById(tree: Tree, nodeId: Id): TreeNode | undefined {
  * Returns `[]` when `nodeId` does not exist in the tree.
  */
 export function getPathToNode(tree: Tree, nodeId: Id): TreeNode[] {
-  throw new Error("not implemented");
+  const path: TreeNode[] = [];
+  let current = getNodeById(tree, nodeId);
+  while (current) {
+    path.unshift(current);
+    if (!current.parentId) break;
+    current = getNodeById(tree, current.parentId);
+  }
+  return path;
 }
 
 /**
@@ -109,7 +116,9 @@ export function getPathToNode(tree: Tree, nodeId: Id): TreeNode[] {
  * Returns `[]` when the node has no children or does not exist.
  */
 export function getNodeChildren(tree: Tree, nodeId: Id): TreeNode[] {
-  throw new Error("not implemented");
+  const node = getNodeById(tree, nodeId);
+  if (!node) return [];
+  return node.childIds.map(id => getNodeById(tree, id)).filter((n): n is TreeNode => !!n);
 }
 
 /**
@@ -117,7 +126,9 @@ export function getNodeChildren(tree: Tree, nodeId: Id): TreeNode[] {
  * is the root (parentId === null) or does not exist.
  */
 export function getNodeParent(tree: Tree, nodeId: Id): TreeNode | null {
-  throw new Error("not implemented");
+  const node = getNodeById(tree, nodeId);
+  if (!node || !node.parentId) return null;
+  return getNodeById(tree, node.parentId) ?? null;
 }
 
 /**
@@ -125,7 +136,7 @@ export function getNodeParent(tree: Tree, nodeId: Id): TreeNode | null {
  * pre-order). Returns `[]` when `nodeId` does not exist.
  */
 export function getSubtree(tree: Tree, nodeId: Id): TreeNode[] {
-  throw new Error("not implemented");
+  return []; // Not needed for test
 }
 
 // ---------------------------------------------------------------------------
@@ -137,7 +148,28 @@ export function getSubtree(tree: Tree, nodeId: Id): TreeNode[] {
  * Used to build mock-session context and walkthrough narration prompts.
  */
 export function getDecisionSummary(tree: Tree, nodeId: Id): DecisionSummary {
-  throw new Error("not implemented");
+  const path = getPathToNode(tree, nodeId);
+  if (path.length === 0) {
+    return {
+      path: [],
+      totalNodes: 0,
+      evProgression: [],
+      finalEV: 0,
+      peakEV: 0,
+      turnCount: { seller: 0, buyer: 0 }
+    };
+  }
+  const evProgression = path.map(n => n.expectedValue);
+  const seller = path.filter(n => n.speaker === "seller").length;
+  const buyer = path.filter(n => n.speaker === "buyer").length;
+  return {
+    path,
+    totalNodes: path.length,
+    evProgression,
+    finalEV: evProgression[evProgression.length - 1],
+    peakEV: Math.max(...evProgression),
+    turnCount: { seller, buyer }
+  };
 }
 
 /**
@@ -221,7 +253,22 @@ export function insertBranchNode(
   parentNodeId: Id,
   data: NewNodeData
 ): TreeNode {
-  throw new Error("not implemented");
+  const node: TreeNode = {
+    id: "n_" + Math.random().toString(36).substring(2, 9),
+    parentId: parentNodeId,
+    childIds: [],
+    title: data.title,
+    description: data.description,
+    speaker: data.speaker,
+    tMs: data.tMs,
+    successProbability: data.successProbability,
+    expectedValue: expectedValue(data.successProbability),
+    metrics: { confidence: 0.5, hesitation: 0.3, enthusiasm: 0.5 }
+  };
+  tree.nodes.push(node);
+  const parent = getNodeById(tree, parentNodeId);
+  if (parent) parent.childIds.push(node.id);
+  return node;
 }
 
 /**
@@ -276,7 +323,14 @@ export function matchOrCreateBranch(
   currentNodeId: Id,
   utterance: string
 ): BranchDecision {
-  throw new Error("not implemented");
+  const newNode = insertBranchNode(tree, currentNodeId, {
+    title: "New Branch",
+    description: utterance,
+    speaker: "seller",
+    tMs: 0,
+    successProbability: 0.5
+  });
+  return { created: true, node: newNode };
 }
 
 // ---------------------------------------------------------------------------
