@@ -220,11 +220,14 @@ app.ws("/mock/session/:recordingId", (ws, req) => {
   const { recordingId } = req.params;
   const currentNodeId = req.query.currentNodeId as string;
   const includePrecap = req.query.includePrecap === "true";
+  const maxDepth = req.query.maxDepth ? parseInt(req.query.maxDepth as string, 10) : undefined;
+  const targetNodeIds = req.query.targetNodeIds ? (req.query.targetNodeIds as string).split(",") : [];
+
   if (!recordingId || !currentNodeId) {
     ws.close(1008, "recordingId and currentNodeId required");
     return;
   }
-  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap);
+  handleMockSession(ws as any, recordingId, currentNodeId, includePrecap, maxDepth, targetNodeIds);
 });
 
 // 15. POST /tts (TtsReq) → { audioUrl }

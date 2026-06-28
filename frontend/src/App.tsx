@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type PrecapEvent = 
   | { type: "node", nodeId: string } 
@@ -8,6 +8,19 @@ type PrecapEvent =
 export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [connected, setConnected] = useState(false);
+  const [breakpoint, setBreakpoint] = useState<{ reached: boolean, reason: string }>({ reached: false, reason: "" });
+  const [treeNodes, setTreeNodes] = useState<any[]>([]);
+  const [currentNodeId, setCurrentNodeId] = useState<string>("n_push");
+
+  useEffect(() => {
+    fetch("http://localhost:3001/trees/tree_convex")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.nodes) setTreeNodes(data.nodes);
+      })
+      .catch(err => console.error("Failed to fetch tree:", err));
+  }, []);
+  
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -21,6 +34,7 @@ export default function App() {
   const addLog = (msg: string) => setLogs((prev) => [...prev, msg]);
 
   const connectAndStart = async () => {
+    setCurrentNodeId("n_push");
     if (connected) return;
 
     addLog("Requesting mic permissions...");
@@ -34,7 +48,9 @@ export default function App() {
     }
 
     addLog("Connecting to WebSocket...");
-    const ws = new WebSocket("ws://localhost:3001/mock/session/rec_mock1?currentNodeId=n_push&includePrecap=true");
+    const targetNodes = "n_looker,n_sql";
+    const wsUrl = `ws://localhost:3001/mock/session/rec_mock1?currentNodeId=n_push&includePrecap=true&maxDepth=2&targetNodeIds=${targetNodes}`;
+    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -53,6 +69,17 @@ export default function App() {
         } else if (msg.type === "precap_audio") {
           precapQueueRef.current.push({ type: "audio", b64: msg.b64_data, mime: "audio/webm;codecs=opus" });
           processPrecapQueue();
+        } else if (msg.type === "mock_breakpoint_reached") {
+          addLog(`[BREAKPOINT] Reached reason: ${msg.reason}`);
+          setBreakpoint({ reached: true, reason: msg.reason === "depth" ? "Maximum depth reached." : `Target node reached (${msg.nodeId}).` });
+          disconnect();
+        } else if (msg.type === "mock_node_matched") {
+          setCurrentNodeId(msg.nodeId);
+          addLog(`[TREE] Moved to existing node: ${msg.nodeId}`);
+        } else if (msg.type === "mock_node_created") {
+          setCurrentNodeId(msg.nodeId);
+          setTreeNodes(prev => [...prev, { id: msg.nodeId, title: msg.title, description: "New branch created by LLM" }]);
+          addLog(`[TREE] Created and moved to new node: ${msg.nodeId} (${msg.title})`);
         } else if (msg.type === "precap_complete") {
           precapQueueRef.current.push({ type: "complete" });
           processPrecapQueue();
@@ -210,6 +237,27 @@ export default function App() {
     nextPlayTimeRef.current = startTime + audioBuffer.duration;
   };
 
+  const handleRedo = () => {
+    setBreakpoint({ reached: false, reason: "" });
+    setLogs([]);
+    connectAndStart();
+  };
+
+  if (breakpoint.reached) {
+    return (
+      <div style={{ padding: 40, fontFamily: 'sans-serif', textAlign: 'center', background: '#f9fafb', height: '100vh' }}>
+        <h1 style={{ color: '#111827' }}>Practice Session Ended</h1>
+        <p style={{ fontSize: '1.2rem', color: '#4b5563', margin: '20px 0' }}>{breakpoint.reason}</p>
+        <button 
+          onClick={handleRedo} 
+          style={{ padding: "12px 24px", fontSize: "1.1rem", background: "#3b82f6", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+        >
+          Redo Practice
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: 20, fontFamily: 'sans-serif' }}>
       <h1>Minimal Test Rig: Precap + OpenAI Realtime</h1>
@@ -220,15 +268,32 @@ export default function App() {
           <button onClick={disconnect} style={{ padding: "10px 20px", background: "red", color: "white" }}>Disconnect</button>
         )}
       </div>
-      <div style={{
-        background: "#1e1e1e",
-        color: "#00ff00",
-        padding: 15,
-        height: 400,
-        overflowY: "auto",
-        fontFamily: "monospace"
-      }}>
-        {logs.map((log, i) => <div key={i}>{log}</div>)}
+      <div style={{ display: 'flex', gap: '20px', marginTop: 20 }}>
+        {/* Logs */}
+        <div style={{ flex: 1, height: '400px', overflowY: 'scroll', background: '#eee', padding: 10, fontFamily: 'monospace' }}>
+          {logs.map((l, i) => (
+            <div key={i}>{l}</div>
+          ))}
+        </div>
+
+        {/* Tree Visualization */}
+        <div style={{ flex: 1, height: '400px', overflowY: 'scroll', background: '#fff', border: '1px solid #ccc', padding: 10, borderRadius: 4 }}>
+          <h3 style={{ marginTop: 0 }}>Tree Nodes</h3>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {treeNodes.map(node => (
+              <li key={node.id} style={{ 
+                padding: '8px', 
+                margin: '4px 0', 
+                background: node.id === currentNodeId ? '#dbeafe' : '#f3f4f6',
+                border: node.id === currentNodeId ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                borderRadius: '4px'
+              }}>
+                <strong>{node.title}</strong> 
+                <div style={{ fontSize: '0.85em', color: '#666' }}>ID: {node.id} | Desc: {node.description}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

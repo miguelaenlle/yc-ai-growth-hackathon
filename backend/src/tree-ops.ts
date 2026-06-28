@@ -3,18 +3,8 @@
 // Imports from ../types cover all contract shapes.
 // Imports from ./tree cover the shared similarity helpers and BRANCH_THRESHOLD.
 
-<<<<<<< HEAD
 import { DEAL_VALUE, expectedValue } from "./store.js";
 import type {
-=======
-// NOTE: Since ./tree doesn't exist yet, we will mock these dependencies here.
-const DEAL_VALUE = 48000;
-const BRANCH_THRESHOLD = 0.8;
-function bestMatch() { return null; }
-function expectedValue(p: number) { return Math.round(p * DEAL_VALUE); }
-
-import {
->>>>>>> alex-agent
   Id,
   SignalMetrics,
   TimelineCue,
@@ -22,8 +12,8 @@ import {
   Traversal,
   Tree,
   TreeNode,
-<<<<<<< HEAD
 } from "./types.js";
+import OpenAI from "openai";
 
 /** Minimum Jaccard similarity score required to match an existing branch node. */
 export const BRANCH_THRESHOLD = 0.8;
@@ -61,9 +51,6 @@ export function bestMatch(
 
   return best;
 }
-=======
-} from "./types";
->>>>>>> alex-agent
 
 // ---------------------------------------------------------------------------
 // Supporting types (backend-internal; not part of the API contract)
@@ -138,11 +125,8 @@ export type BranchDecision =
  * (Wraps store.getNode for symmetry; keeps tree-ops self-contained.)
  */
 export function getNodeById(tree: Tree, nodeId: Id): TreeNode | undefined {
-<<<<<<< HEAD
-  throw new Error("not implemented");
-=======
   return tree.nodes.find(n => n.id === nodeId);
->>>>>>> alex-agent
+
 }
 
 /**
@@ -151,9 +135,6 @@ export function getNodeById(tree: Tree, nodeId: Id): TreeNode | undefined {
  * Returns `[]` when `nodeId` does not exist in the tree.
  */
 export function getPathToNode(tree: Tree, nodeId: Id): TreeNode[] {
-<<<<<<< HEAD
-  throw new Error("not implemented");
-=======
   const path: TreeNode[] = [];
   let current = getNodeById(tree, nodeId);
   while (current) {
@@ -162,7 +143,7 @@ export function getPathToNode(tree: Tree, nodeId: Id): TreeNode[] {
     current = getNodeById(tree, current.parentId);
   }
   return path;
->>>>>>> alex-agent
+
 }
 
 /**
@@ -170,13 +151,10 @@ export function getPathToNode(tree: Tree, nodeId: Id): TreeNode[] {
  * Returns `[]` when the node has no children or does not exist.
  */
 export function getNodeChildren(tree: Tree, nodeId: Id): TreeNode[] {
-<<<<<<< HEAD
-  throw new Error("not implemented");
-=======
   const node = getNodeById(tree, nodeId);
   if (!node) return [];
   return node.childIds.map(id => getNodeById(tree, id)).filter((n): n is TreeNode => !!n);
->>>>>>> alex-agent
+
 }
 
 /**
@@ -184,13 +162,10 @@ export function getNodeChildren(tree: Tree, nodeId: Id): TreeNode[] {
  * is the root (parentId === null) or does not exist.
  */
 export function getNodeParent(tree: Tree, nodeId: Id): TreeNode | null {
-<<<<<<< HEAD
-  throw new Error("not implemented");
-=======
   const node = getNodeById(tree, nodeId);
   if (!node || !node.parentId) return null;
   return getNodeById(tree, node.parentId) ?? null;
->>>>>>> alex-agent
+
 }
 
 /**
@@ -198,11 +173,8 @@ export function getNodeParent(tree: Tree, nodeId: Id): TreeNode | null {
  * pre-order). Returns `[]` when `nodeId` does not exist.
  */
 export function getSubtree(tree: Tree, nodeId: Id): TreeNode[] {
-<<<<<<< HEAD
-  throw new Error("not implemented");
-=======
   return []; // Not needed for test
->>>>>>> alex-agent
+
 }
 
 // ---------------------------------------------------------------------------
@@ -214,9 +186,6 @@ export function getSubtree(tree: Tree, nodeId: Id): TreeNode[] {
  * Used to build mock-session context and walkthrough narration prompts.
  */
 export function getDecisionSummary(tree: Tree, nodeId: Id): DecisionSummary {
-<<<<<<< HEAD
-  throw new Error("not implemented");
-=======
   const path = getPathToNode(tree, nodeId);
   if (path.length === 0) {
     return {
@@ -239,7 +208,7 @@ export function getDecisionSummary(tree: Tree, nodeId: Id): DecisionSummary {
     peakEV: Math.max(...evProgression),
     turnCount: { seller, buyer }
   };
->>>>>>> alex-agent
+
 }
 
 /**
@@ -323,9 +292,6 @@ export function insertBranchNode(
   parentNodeId: Id,
   data: NewNodeData
 ): TreeNode {
-<<<<<<< HEAD
-  throw new Error("not implemented");
-=======
   const node: TreeNode = {
     id: "n_" + Math.random().toString(36).substring(2, 9),
     parentId: parentNodeId,
@@ -342,7 +308,7 @@ export function insertBranchNode(
   const parent = getNodeById(tree, parentNodeId);
   if (parent) parent.childIds.push(node.id);
   return node;
->>>>>>> alex-agent
+
 }
 
 /**
@@ -382,33 +348,81 @@ export function routeTranscriptToNode(
 }
 
 /**
- * Given a free-form utterance at `currentNodeId`, decide whether it maps to
- * an existing child node or represents a genuinely new conversational fork.
- *
- * - score >= BRANCH_THRESHOLD → existing match; returns `{ created: false, matchedNodeId, score }`.
- * - score <  BRANCH_THRESHOLD → new fork; calls `insertBranchNode` and returns
- *   `{ created: true, node }`.
- *
- * Combines `bestMatch` (from tree.ts) with `insertBranchNode` (above).
- * Backs the `/agent/branch` endpoint.
+ * Given a free-form utterance and recent conversation, use gpt-4o-mini to decide
+ * whether it maps to an existing child node, represents a completely new fork,
+ * or is just conversational filler (staying on the current node).
  */
-export function matchOrCreateBranch(
+export async function matchOrCreateBranch(
   tree: Tree,
   currentNodeId: Id,
-  utterance: string
-): BranchDecision {
-<<<<<<< HEAD
-  throw new Error("not implemented");
-=======
-  const newNode = insertBranchNode(tree, currentNodeId, {
-    title: "New Branch",
-    description: utterance,
-    speaker: "seller",
-    tMs: 0,
-    successProbability: 0.5
-  });
-  return { created: true, node: newNode };
->>>>>>> alex-agent
+  recentConversation: { role: string; text: string }[]
+): Promise<BranchDecision> {
+  const current = tree.nodes.find((n) => n.id === currentNodeId);
+  if (!current) throw new Error("Current node not found");
+
+  const childNodes = current.childIds
+    .map((id) => tree.nodes.find((n) => n.id === id))
+    .filter((n): n is TreeNode => !!n);
+
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  const conversationText = recentConversation
+    .map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`)
+    .join("\n");
+
+  const systemPrompt = `You are a semantic conversational router. 
+The user (SELLER) is speaking to a prospect (BUYER). We are at a specific node in a decision tree.
+Available child branches from here:
+${childNodes.length > 0 ? childNodes.map((n) => `- ID: ${n.id} | Title: ${n.title} | Desc: ${n.description}`).join("\n") : "(None)"}
+
+Here is the recent conversation transcript since the last node switch.
+Determine the next action based on the seller's intent.
+- "match": The seller's intent closely aligns with one of the available child branches.
+- "stay": The seller is using conversational filler (e.g. "uh huh", "okay", "go on", "right"), confirming, or continuing the current thought without branching.
+- "new": The seller is proposing a completely new direction that does not match any child branch.
+
+Return JSON ONLY:
+{
+  "action": "match" | "stay" | "new",
+  "nodeId": "id of the matched node, or null",
+  "newTitle": "2-4 word title if new, else null",
+  "newDescription": "1-2 sentence description if new, else null"
+}`;
+
+  try {
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: conversationText }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+    });
+
+    const outText = res.choices[0].message.content || "{}";
+    const out = JSON.parse(outText);
+
+    if (out.action === "match" && out.nodeId) {
+      return { created: false, matchedNodeId: out.nodeId, score: 1.0 };
+    } else if (out.action === "new") {
+      const newNode = insertBranchNode(tree, currentNodeId, {
+        title: out.newTitle || "New Branch",
+        description: out.newDescription || "No description provided",
+        speaker: "seller",
+        tMs: 0,
+        successProbability: 0.5
+      });
+      return { created: true, node: newNode };
+    } else {
+      return { created: false, matchedNodeId: currentNodeId, score: 1.0 };
+    }
+  } catch (e) {
+    console.error("\n[Router Error] LLM returned nonsense JSON or failed. Staying at current node.");
+    console.error(e);
+    console.error("--------------------------------------------------\n");
+    return { created: false, matchedNodeId: currentNodeId, score: 1.0 };
+  }
 }
 
 // ---------------------------------------------------------------------------
