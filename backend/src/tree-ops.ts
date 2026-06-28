@@ -431,6 +431,45 @@ Return JSON ONLY:
 // ---------------------------------------------------------------------------
 
 /**
+ * Return ordered nodes along a recording's traversal path (root → each step).
+ */
+export function getPathFromTraversal(tree: Tree, traversal: Traversal): TreeNode[] {
+  const path: TreeNode[] = [];
+  const seen = new Set<Id>();
+
+  const root = getNodeById(tree, traversal.initialNodeId);
+  if (root) {
+    path.push(root);
+    seen.add(root.id);
+  }
+
+  for (const step of traversal.steps) {
+    const node = getNodeById(tree, step.toNodeId);
+    if (node && !seen.has(node.id)) {
+      path.push(node);
+      seen.add(node.id);
+    }
+  }
+
+  return path;
+}
+
+/**
+ * Sibling branches the rep did not take at a seller decision node.
+ */
+export function getDecisionAlternatives(
+  tree: Tree,
+  nodeId: Id,
+  _pathNodeIds: Set<Id>
+): TreeNode[] {
+  const node = getNodeById(tree, nodeId);
+  if (!node || node.speaker !== "seller") return [];
+  const parent = getNodeParent(tree, nodeId);
+  if (!parent) return [];
+  return getNodeChildren(tree, parent.id).filter((n) => n.id !== nodeId);
+}
+
+/**
  * Map a recording's traversal steps to a `TimelineCue[]` for audio sync.
  * Each cue marks the millisecond offset (`atMs`) at which the narration
  * should highlight a particular node (`nodeId`).
@@ -438,5 +477,5 @@ Return JSON ONLY:
  * Used by `GET /recordings/:id/walkthrough` to build `WalkthroughBundle.timeline`.
  */
 export function buildWalkthroughTimeline(traversal: Traversal): TimelineCue[] {
-  throw new Error("not implemented");
+  return traversal.steps.map((s) => ({ atMs: s.tMs, nodeId: s.toNodeId }));
 }

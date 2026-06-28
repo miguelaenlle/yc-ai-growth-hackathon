@@ -8,6 +8,8 @@
 import cors from "cors";
 import express, { type Request, type Response } from "express";
 import expressWs from "express-ws";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   getCall,
   getRecording,
@@ -23,18 +25,19 @@ import type {
   CallSummary,
   CreateCallReq,
   TreeNode,
-  WalkthroughBundle,
 } from "./types.js";
 import { handleMockSession } from "./mock.js";
+import { getOrBuildWalkthrough } from "./walkthrough.js";
 
 const { app } = expressWs(express());
 const PORT = 3001;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(cors());
 app.use(express.json());
 
 // Serve generated/seed audio from /data/audio (referenced by audioPath/audioUrl).
-app.use("/data", express.static(new URL("../public/data", import.meta.url).pathname));
+app.use("/data", express.static(join(__dirname, "../public/data")));
 
 const fail = (res: Response, status: number, code: string, message: string) =>
   res.status(status).json({ error: { code, message } });
@@ -148,20 +151,17 @@ app.post("/recordings/:id/feedback", (req: Request, res: Response) => {
 });
 
 // 9. GET /recordings/:id/walkthrough?kind=intro|review → WalkthroughBundle
-app.get("/recordings/:id/walkthrough", (req: Request, res: Response) => {
+app.get("/recordings/:id/walkthrough", async (req: Request, res: Response) => {
   const rec = getRecording(req.params.id);
   if (!rec) return notFound(res, `recording ${req.params.id} not found`);
   const kind = req.query.kind === "intro" ? "intro" : "review";
-  // TODO(real): build script (LLM) + render via /tts. Timeline is derived here
-  // straight from traversal.steps[].tMs, which is real.
-  const bundle: WalkthroughBundle = {
-    audioUrl: `/data/audio/walkthrough_${rec.id}_${kind}.mp3`,
-    timeline: rec.traversal.steps.map((s) => ({
-      atMs: s.tMs,
-      nodeId: s.toNodeId,
-    })),
-  };
-  res.json(bundle);
+  try {
+    const bundle = await getOrBuildWalkthrough(rec, kind);
+    res.json(bundle);
+  } catch (e) {
+    console.error("Walkthrough error:", e);
+    fail(res, 500, "walkthrough_failed", e instanceof Error ? e.message : "Walkthrough generation failed");
+  }
 });
 
 // ---------------------------------------------------------------------------
