@@ -1,3 +1,4 @@
+<!-- SAVEPOINT: animations snappy, mock calls terminate, AI-acing-sales works -->
 # CallTree — YC AI Growth Hackathon
 
 CallTree turns every sales call into a decision tree, then lets reps rewind to
